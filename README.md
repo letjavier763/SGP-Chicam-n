@@ -14,7 +14,7 @@ Sistema web para el registro y gestión de pacientes del **Centro de Atención P
 
 ## Requisitos
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (ya instalado ✅)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) 
 - Git
 
 ## Inicio Rápido
