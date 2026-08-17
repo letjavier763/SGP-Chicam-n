@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
     
     <!-- Estilos Adicionales Personalizados -->
-    <link rel="stylesheet" href="{{ asset('css/style.css') }}?v=3">
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}?v=11">
     @yield('styles')
 </head>
 <body>
@@ -20,8 +20,8 @@
         <!-- Sidebar Navigation (Menú Lateral Tabler) -->
         <aside class="navbar navbar-vertical navbar-expand-lg navbar-dark bg-dark">
             <div class="container-fluid">
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
+                <button class="navbar-toggler text-white border-0" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="Toggle navigation" style="padding: 4px 8px;">
+                    <i class="ti ti-menu" style="font-size: 1.65rem; color: #ffffff !important;"></i>
                 </button>
                 
                 <h1 class="navbar-brand navbar-brand-autodark">
@@ -103,11 +103,14 @@
 
                             {{-- ── Desplegable: Administración ──────────────────── --}}
                             @if(Auth::user()->esAdministrador())
-                                <li class="nav-item dropdown {{ Request::routeIs('alertas.*', 'bitacora.*') ? 'active' : '' }}">
-                                    <a class="nav-link dropdown-toggle" href="#sidebar-admin" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="{{ Request::routeIs('alertas.*', 'bitacora.*') ? 'true' : 'false' }}">
+                                <li class="nav-item dropdown {{ Request::routeIs('alertas.*', 'bitacora.*', 'personal.*') ? 'active' : '' }}">
+                                    <a class="nav-link dropdown-toggle" href="#sidebar-admin" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="{{ Request::routeIs('alertas.*', 'bitacora.*', 'personal.*') ? 'true' : 'false' }}">
                                         <span class="nav-link-title">Administración</span>
                                     </a>
-                                    <div class="dropdown-menu {{ Request::routeIs('alertas.*', 'bitacora.*') ? 'show' : '' }}">
+                                    <div class="dropdown-menu {{ Request::routeIs('alertas.*', 'bitacora.*', 'personal.*') ? 'show' : '' }}">
+                                        <a class="dropdown-item {{ Request::routeIs('personal.*') ? 'active' : '' }}" href="{{ route('personal.index') }}">
+                                            Gestión de Personal
+                                        </a>
                                         <a class="dropdown-item {{ Request::routeIs('alertas.*') ? 'active' : '' }}" href="{{ route('alertas.index') }}">
                                             Alertas Duplicidad
                                         </a>

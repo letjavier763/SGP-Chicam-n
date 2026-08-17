@@ -41,7 +41,7 @@
     <!-- Ficha Personal del Paciente -->
     <div class="col-lg-4">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <div>
                     <span class="text-secondary small fw-bold text-uppercase">No. Expediente / Familia</span>
                     <h3 class="card-title text-primary fs-2 mb-0">{{ $paciente->numero_expediente_fisico }}</h3>
@@ -86,7 +86,7 @@
                     <div class="text-dark small">{{ optional($paciente->fecha_registro)->format('d/m/Y H:i A') ?? 'N/A' }}</div>
                 </div>
             </div>
-            <div class="card-footer d-flex gap-2">
+            <div class="card-footer d-flex flex-column flex-sm-row gap-2">
                 <button type="button" class="btn btn-primary flex-fill" data-bs-toggle="modal" data-bs-target="#modalEditarPacienteShow">
                     <i class="ti ti-edit me-1"></i> Editar Ficha
                 </button>
@@ -112,7 +112,7 @@
                 </div>
                 <div class="card-body">
                     @if($paciente->familia)
-                        <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex justify-content-between align-items-start align-items-sm-center flex-column flex-sm-row gap-3">
                             <div>
                                 <h4 class="text-primary mb-1">Familia #{{ $paciente->familia->numero_familia }}</h4>
                                 <div class="text-secondary small">
@@ -120,7 +120,7 @@
                                     <strong>Comunidad:</strong> {{ $paciente->familia->comunidad->nombre ?? 'N/A' }}
                                 </div>
                             </div>
-                            <a href="{{ route('familias.show', $paciente->familia->id_family) }}" class="btn btn-outline-primary">
+                            <a href="{{ route('familias.show', $paciente->familia->id_family) }}" class="btn btn-outline-primary w-100 w-sm-auto">
                                 <i class="ti ti-eye me-1"></i> Ver Ficha Familiar
                             </a>
                         </div>
@@ -135,7 +135,8 @@
                 <div class="card-header">
                     <h3 class="card-title"><i class="ti ti-history me-2"></i> Historial de Visitas y Atenciones en CAP</h3>
                 </div>
-                <div class="table-responsive">
+                <!-- Vista de Tabla para Escritorio -->
+                <div class="table-responsive d-none d-md-block">
                     <table class="table table-vcenter card-table">
                         <thead>
                             <tr>
@@ -166,6 +167,31 @@
                             @endforelse
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Vista de Tarjetas para Móviles -->
+                <div class="divide-y d-md-none">
+                    @forelse($paciente->registrosLlegada as $llegada)
+                        <div class="p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="fw-bold text-dark">
+                                    {{ optional($llegada->fecha)->format('d/m/Y') }}
+                                </div>
+                                <span class="badge bg-secondary-lt">
+                                    {{ $llegada->estado }}
+                                </span>
+                            </div>
+                            <div class="text-secondary small">
+                                <strong>Hora:</strong> {{ optional($llegada->fecha)->format('H:i A') }}<br>
+                                <strong>Servicio:</strong> {{ $llegada->tipo_servicio }}<br>
+                                <strong>Turno:</strong> Turno #{{ $llegada->numero_turno }}
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center text-secondary py-4">
+                            No hay registros de visitas de ventanilla para este paciente aún.
+                        </div>
+                    @endforelse
                 </div>
             </div>
 

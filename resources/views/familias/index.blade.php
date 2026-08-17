@@ -4,12 +4,12 @@
 @section('page_title', 'Gestión de Núcleos Familiares')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex justify-content-between align-items-start align-items-md-center flex-wrap gap-2 mb-3">
     <div>
         <h3 class="mb-1 text-dark">Núcleos Familiares Registrados</h3>
-        <p class="text-secondary mb-0 small">Consulte y gestione las familias de la comunidad de Chicamán y sus alrededores.</p>
+        <p class="text-secondary mb-0 small d-none d-md-block">Consulte y gestione las familias de la comunidad de Chicamán y sus alrededores.</p>
     </div>
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrearFamilia">
+    <button type="button" class="btn btn-primary w-100 w-md-auto" data-bs-toggle="modal" data-bs-target="#modalCrearFamilia">
         <i class="ti ti-plus me-1"></i> Registrar Nueva Familia
     </button>
 </div>
@@ -43,7 +43,7 @@
 
 <!-- Filtros de búsqueda Tabler -->
 <div class="card mb-3">
-    <div class="card-body">
+    <div class="card-body p-2 p-md-3">
         <form method="GET" action="{{ route('familias.index') }}" class="row g-2 align-items-end" id="search-form">
             <div class="col-md-4 position-relative">
                 <label class="form-label" for="buscar">Buscar No. Familia / Cabeza / DPI</label>
@@ -77,8 +77,8 @@
 </div>
 
 <div id="table-container">
-<!-- Tabla de Familias -->
-<div class="card">
+<!-- Tabla de Familias (Escritorio) -->
+<div class="card d-none d-md-block">
     <div class="table-responsive">
         <table class="table table-vcenter card-table">
             <thead>
@@ -158,6 +158,70 @@
     </div>
 </div>
 
+<!-- Vista de Tarjetas (Móvil) -->
+<div class="divide-y d-md-none bg-white border rounded">
+    @forelse($familias as $familia)
+        <div class="p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <div>
+                    <strong class="text-primary" style="font-size: 0.95rem;">{{ $familia->numero_familia }}</strong>
+                    <div class="fw-bold text-dark mt-1">{{ $familia->apellido_cabeza }}</div>
+                </div>
+                <div>
+                    @if($familia->activo)
+                        <span class="badge bg-green-lt">Activo</span>
+                    @else
+                        <span class="badge bg-red-lt">Inactivo</span>
+                    @endif
+                </div>
+            </div>
+            
+            <div class="small text-secondary mb-3" style="font-size: 0.8rem;">
+                <strong>DPI Cabeza:</strong> {{ $familia->dpi ?? 'No registrado' }}
+                @if($familia->comunidad)
+                    <br>
+                    <strong>Comunidad:</strong> {{ $familia->comunidad->nombre }} ({{ $familia->comunidad->municipio->nombre ?? '' }})
+                @endif
+                <br>
+                <span class="badge bg-blue-lt mt-1">
+                    <i class="ti ti-users me-1"></i> {{ $familia->pacientes->count() }} miembros
+                </span>
+            </div>
+            
+            <div class="d-flex gap-2 justify-content-end pt-2 border-top">
+                <a href="{{ route('familias.show', $familia->id_family) }}" class="btn btn-sm btn-outline-info py-1 px-2" style="font-size: 0.75rem;">
+                    <i class="ti ti-eye me-1"></i> Ficha
+                </a>
+                <button type="button" class="btn btn-sm btn-outline-warning btn-editar-familia py-1 px-2" style="font-size: 0.75rem;"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalEditarFamilia"
+                        data-id="{{ $familia->id_family }}"
+                        data-numero="{{ $familia->numero_familia }}"
+                        data-cabeza="{{ $familia->apellido_cabeza }}"
+                        data-dpi="{{ $familia->dpi }}"
+                        data-nacimiento="{{ optional($familia->fecha_nacimiento)->format('Y-m-d') }}"
+                        data-comunidad="{{ $familia->id_comunidad }}"
+                        data-municipio="{{ optional(optional($familia->comunidad)->municipio)->id_municipio }}"
+                        data-depto="{{ optional(optional(optional($familia->comunidad)->municipio)->departamento)->id_departamento }}">
+                    <i class="ti ti-edit me-1"></i> Editar
+                </button>
+                <form action="{{ route('familias.toggle-status', $familia->id_family) }}" method="POST" class="d-inline">
+                    @csrf
+                    @method('PATCH')
+                    <button type="submit" class="btn btn-sm {{ $familia->activo ? 'btn-outline-secondary' : 'btn-outline-success' }} py-1 px-2" style="font-size: 0.75rem;">
+                        {{ $familia->activo ? 'Desactivar' : 'Activar' }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    @empty
+        <div class="text-center text-secondary py-4">
+            <i class="ti ti-user-off fs-1 d-block mb-2 opacity-50"></i>
+            No se encontraron familias registradas con los filtros aplicados.
+        </div>
+    @endforelse
+</div>
+
 <div class="mt-3">
     {{ $familias->links() }}
 </div>
@@ -212,7 +276,7 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label required" for="create_id_muni">Municipio</label>
-                            <select id="create_id_muni" class="form-select" required disabled>
+                            <select id="create_id_muni" name="id_municipio" class="form-select" required disabled>
                                 <option value="">-- Seleccionar Depto Primero --</option>
                             </select>
                         </div>
@@ -221,6 +285,10 @@
                             <select id="create_id_comunidad" name="id_comunidad" class="form-select" required disabled>
                                 <option value="">-- Seleccionar Muni Primero --</option>
                             </select>
+                            <div id="create_new_comunidad_wrapper" style="display: none;" class="mt-2">
+                                <label class="form-label required small mb-1" for="create_nueva_comunidad">Nombre de Nueva Comunidad</label>
+                                <input type="text" id="create_nueva_comunidad" name="nueva_comunidad" class="form-control form-control-sm" placeholder="Nombre de nueva comunidad...">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -284,7 +352,7 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label required" for="edit_id_muni">Municipio</label>
-                            <select id="edit_id_muni" class="form-select" required disabled>
+                            <select id="edit_id_muni" name="id_municipio" class="form-select" required disabled>
                                 <option value="">-- Seleccionar Depto Primero --</option>
                             </select>
                         </div>
@@ -293,6 +361,10 @@
                             <select id="edit_id_comunidad" name="id_comunidad" class="form-select" required disabled>
                                 <option value="">-- Seleccionar Muni Primero --</option>
                             </select>
+                            <div id="edit_new_comunidad_wrapper" style="display: none;" class="mt-2">
+                                <label class="form-label required small mb-1" for="edit_nueva_comunidad">Nombre de Nueva Comunidad</label>
+                                <input type="text" id="edit_nueva_comunidad" name="nueva_comunidad" class="form-control form-control-sm" placeholder="Nombre de nueva comunidad...">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -310,10 +382,13 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     // Cascada de Ubicaciones en un helper reutilizable
-    function setupCascadingUbicaciones(deptoId, muniId, comId, defaultComunidadId = null) {
+    // Cascada de Ubicaciones en un helper reutilizable
+    function setupCascadingUbicaciones(deptoId, muniId, comId, wrapperId, inputId, defaultComunidadId = null) {
         const deptoSelect = document.getElementById(deptoId);
         const muniSelect = document.getElementById(muniId);
         const comSelect = document.getElementById(comId);
+        const wrapper = document.getElementById(wrapperId);
+        const input = document.getElementById(inputId);
 
         if (deptoSelect) {
             deptoSelect.addEventListener('change', function () {
@@ -322,6 +397,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 muniSelect.disabled = true;
                 comSelect.innerHTML = '<option value="">-- Seleccionar Muni Primero --</option>';
                 comSelect.disabled = true;
+                if (wrapper && input) {
+                    wrapper.style.display = 'none';
+                    input.required = false;
+                    input.value = '';
+                }
                 if (!val) return;
 
                 fetch(`/api/ubicaciones/municipios/${val}`)
@@ -341,6 +421,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 const val = this.value;
                 comSelect.innerHTML = '<option value="">-- Cargando... --</option>';
                 comSelect.disabled = true;
+                if (wrapper && input) {
+                    wrapper.style.display = 'none';
+                    input.required = false;
+                    input.value = '';
+                }
                 if (!val) return;
 
                 fetch(`/api/ubicaciones/comunidades/${val}`)
@@ -352,14 +437,31 @@ document.addEventListener('DOMContentLoaded', function () {
                             const sel = defaultComunidadId == c.id_comunidad ? 'selected' : '';
                             comSelect.innerHTML += `<option value="${c.id_comunidad}" ${sel}>${c.nombre}${zonaText}</option>`;
                         });
+                        comSelect.innerHTML += '<option value="OTRO" style="font-weight:bold; color:var(--primary);">+ Registrar Nueva Comunidad</option>';
                         comSelect.disabled = false;
                     });
             });
         }
+
+        if (comSelect) {
+            comSelect.addEventListener('change', function () {
+                if (wrapper && input) {
+                    if (this.value === 'OTRO') {
+                        wrapper.style.display = 'block';
+                        input.required = true;
+                        input.focus();
+                    } else {
+                        wrapper.style.display = 'none';
+                        input.required = false;
+                        input.value = '';
+                    }
+                }
+            });
+        }
     }
 
-    setupCascadingUbicaciones('create_id_depto', 'create_id_muni', 'create_id_comunidad');
-    setupCascadingUbicaciones('edit_id_depto', 'edit_id_muni', 'edit_id_comunidad');
+    setupCascadingUbicaciones('create_id_depto', 'create_id_muni', 'create_id_comunidad', 'create_new_comunidad_wrapper', 'create_nueva_comunidad');
+    setupCascadingUbicaciones('edit_id_depto', 'edit_id_muni', 'edit_id_comunidad', 'edit_new_comunidad_wrapper', 'edit_nueva_comunidad');
 
     // Llenar Modal de Editar Familia (Función Re-vinculable)
     function bindEditEvents() {
@@ -435,69 +537,16 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-    // Búsqueda y Sugerencias en Tiempo Real (Autocompletado debajo de la barra)
+    // Búsqueda y Filtrado en Tiempo Real (asíncrono al ir ingresando datos)
     const buscarInput = document.getElementById('buscar');
-    const suggestionsBox = document.getElementById('search-suggestions');
     let debounceTimer;
 
-    if (buscarInput && suggestionsBox) {
+    if (buscarInput) {
         buscarInput.addEventListener('input', function() {
-            const val = this.value.trim();
-            if (val.length < 2) {
-                suggestionsBox.style.display = 'none';
-                suggestionsBox.innerHTML = '';
-                return;
-            }
-
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
-                const formData = new FormData(searchForm);
-                const query = new URLSearchParams(formData).toString();
-                const url = `${searchForm.action}?${query}`;
-
-                fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                    .then(res => res.text())
-                    .then(html => {
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(html, 'text/html');
-                        const rows = doc.querySelectorAll('#table-container tbody tr');
-                        suggestionsBox.innerHTML = '';
-
-                        if (rows.length === 0 || (rows.length === 1 && rows[0].querySelector('td[colspan]'))) {
-                            suggestionsBox.innerHTML = '<div class="dropdown-item text-muted">No se encontraron coincidencias</div>';
-                        } else {
-                            rows.forEach(row => {
-                                const numFam = row.cells[0]?.textContent.trim();
-                                const cabeza = row.cells[1]?.textContent.trim();
-                                const comunidad = row.cells[3]?.textContent.trim();
-                                const viewLink = row.cells[6]?.querySelector('a.btn-info')?.getAttribute('href');
-
-                                if (numFam && viewLink) {
-                                    const item = document.createElement('a');
-                                    item.href = viewLink;
-                                    item.className = 'dropdown-item d-flex justify-content-between align-items-center py-2 border-bottom';
-                                    item.style.borderBottomColor = '#f1f5f9';
-                                    item.innerHTML = `
-                                        <div>
-                                            <div class="fw-bold text-dark">${numFam} — ${cabeza}</div>
-                                            <small class="text-secondary">${comunidad}</small>
-                                        </div>
-                                        <i class="ti ti-chevron-right text-muted"></i>
-                                    `;
-                                    suggestionsBox.appendChild(item);
-                                }
-                            });
-                        }
-                        suggestionsBox.style.display = 'block';
-                    });
-            }, 200);
-        });
-
-        // Cerrar sugerencias al hacer clic fuera
-        document.addEventListener('click', function(e) {
-            if (!buscarInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
-                suggestionsBox.style.display = 'none';
-            }
+                performSearch();
+            }, 300);
         });
     }
 

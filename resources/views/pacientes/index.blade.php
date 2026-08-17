@@ -4,12 +4,12 @@
 @section('page_title', 'Gestión de Pacientes')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex justify-content-between align-items-start align-items-md-center flex-wrap gap-2 mb-3">
     <div>
         <h3 class="mb-1 text-dark">Pacientes Registrados</h3>
-        <p class="text-secondary mb-0 small">Consulte expedientes y realice búsquedas por DPI, nombre o expediente físico.</p>
+        <p class="text-secondary mb-0 small d-none d-md-block">Consulte expedientes y realice búsquedas por DPI, nombre o expediente físico.</p>
     </div>
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrearPaciente">
+    <button type="button" class="btn btn-primary w-100 w-md-auto" data-bs-toggle="modal" data-bs-target="#modalCrearPaciente">
         <i class="ti ti-user-plus me-1"></i> Registrar Nuevo Paciente
     </button>
 </div>
@@ -43,7 +43,7 @@
 
 <!-- Filtros de búsqueda Tabler -->
 <div class="card mb-3">
-    <div class="card-body">
+    <div class="card-body p-2 p-md-3">
         <form method="GET" action="{{ route('pacientes.index') }}" class="row g-2 align-items-end" id="search-form">
             <div class="col-md-5 position-relative">
                 <label class="form-label" for="buscar">Buscar Paciente / DPI / Expediente</label>
@@ -75,7 +75,8 @@
 
 <div id="table-container">
 <!-- Tabla de Pacientes -->
-<div class="card">
+<!-- Tabla de Pacientes (Escritorio) -->
+<div class="card d-none d-md-block">
     <div class="table-responsive">
         <table class="table table-vcenter card-table">
             <thead>
@@ -161,6 +162,79 @@
             </tbody>
         </table>
     </div>
+</div>
+
+<!-- Vista de Tarjetas (Móvil) -->
+<div class="divide-y d-md-none bg-white border rounded">
+    @forelse($pacientes as $paciente)
+        <div class="p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="avatar avatar-sm bg-{{ $paciente->sexo === 'F' ? 'pink' : 'blue' }}-lt
+                          text-{{ $paciente->sexo === 'F' ? 'pink' : 'blue' }} rounded-circle">
+                        <i class="ti ti-user{{ $paciente->sexo === 'F' ? '-female' : '' }}"></i>
+                    </span>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.95rem;">
+                            {{ $paciente->nombres }} {{ $paciente->apellidos }}
+                        </div>
+                        <div class="text-secondary small">
+                            Exp: <strong class="text-primary">{{ $paciente->numero_expediente_fisico }}</strong>
+                            @if($paciente->dpi) · DPI: {{ $paciente->dpi }} @endif
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    @if($paciente->activo)
+                        <span class="badge bg-green-lt">Activo</span>
+                    @else
+                        <span class="badge bg-red-lt">Inactivo</span>
+                    @endif
+                </div>
+            </div>
+            
+            <div class="small text-secondary mb-3" style="font-size: 0.8rem;">
+                <strong>Edad/Sexo:</strong> {{ optional($paciente->fecha_nacimiento)->age ?? '?' }} años ({{ $paciente->sexo }})
+                @if($paciente->telefono) · <strong>Tel:</strong> {{ $paciente->telefono }} @endif
+                @if($paciente->familia)
+                    <br>
+                    <strong>Familia:</strong> {{ $paciente->familia->numero_familia }} ({{ $paciente->familia->apellido_cabeza }})
+                @endif
+            </div>
+            
+            <div class="d-flex gap-2 justify-content-end pt-2 border-top">
+                <a href="{{ route('pacientes.show', $paciente->id_paciente) }}" class="btn btn-sm btn-outline-info py-1 px-2" style="font-size: 0.75rem;">
+                    <i class="ti ti-eye me-1"></i> Ficha
+                </a>
+                <button type="button" class="btn btn-sm btn-outline-warning btn-editar-paciente py-1 px-2" style="font-size: 0.75rem;"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalEditarPaciente"
+                        data-id="{{ $paciente->id_paciente }}"
+                        data-family="{{ $paciente->id_family }}"
+                        data-expediente="{{ $paciente->numero_expediente_fisico }}"
+                        data-nombres="{{ $paciente->nombres }}"
+                        data-apellidos="{{ $paciente->apellidos }}"
+                        data-nacimiento="{{ optional($paciente->fecha_nacimiento)->format('Y-m-d') }}"
+                        data-sexo="{{ $paciente->sexo }}"
+                        data-dpi="{{ $paciente->dpi }}"
+                        data-telefono="{{ $paciente->telefono }}">
+                    <i class="ti ti-edit me-1"></i> Editar
+                </button>
+                <form action="{{ route('pacientes.toggle-status', $paciente->id_paciente) }}" method="POST" class="d-inline">
+                    @csrf
+                    @method('PATCH')
+                    <button type="submit" class="btn btn-sm {{ $paciente->activo ? 'btn-outline-secondary' : 'btn-outline-success' }} py-1 px-2" style="font-size: 0.75rem;">
+                        {{ $paciente->activo ? 'Desactivar' : 'Activar' }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    @empty
+        <div class="text-center text-secondary py-4">
+            <i class="ti ti-user-off fs-1 d-block mb-2 opacity-50"></i>
+            No se encontraron pacientes registrados con los filtros aplicados.
+        </div>
+    @endforelse
 </div>
 
 <div class="mt-3">
@@ -398,69 +472,16 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-    // Búsqueda y Sugerencias en Tiempo Real (Autocompletado debajo de la barra)
+    // Búsqueda y Filtrado en Tiempo Real (asíncrono al ir ingresando datos)
     const buscarInput = document.getElementById('buscar');
-    const suggestionsBox = document.getElementById('search-suggestions');
     let debounceTimer;
 
-    if (buscarInput && suggestionsBox) {
+    if (buscarInput) {
         buscarInput.addEventListener('input', function() {
-            const val = this.value.trim();
-            if (val.length < 2) {
-                suggestionsBox.style.display = 'none';
-                suggestionsBox.innerHTML = '';
-                return;
-            }
-
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
-                const formData = new FormData(searchForm);
-                const query = new URLSearchParams(formData).toString();
-                const url = `${searchForm.action}?${query}`;
-
-                fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                    .then(res => res.text())
-                    .then(html => {
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(html, 'text/html');
-                        const rows = doc.querySelectorAll('#table-container tbody tr');
-                        suggestionsBox.innerHTML = '';
-
-                        if (rows.length === 0 || (rows.length === 1 && rows[0].querySelector('td[colspan]'))) {
-                            suggestionsBox.innerHTML = '<div class="dropdown-item text-muted">No se encontraron coincidencias</div>';
-                        } else {
-                            rows.forEach(row => {
-                                const exp = row.cells[0]?.textContent.trim();
-                                const name = row.cells[1]?.querySelector('.fw-bold')?.textContent.trim() || row.cells[1]?.textContent.trim();
-                                const dpi = row.cells[2]?.textContent.trim();
-                                const viewLink = row.cells[7]?.querySelector('a.btn-info')?.getAttribute('href');
-
-                                if (name && viewLink) {
-                                    const item = document.createElement('a');
-                                    item.href = viewLink;
-                                    item.className = 'dropdown-item d-flex justify-content-between align-items-center py-2 border-bottom';
-                                    item.style.borderBottomColor = '#f1f5f9';
-                                    item.innerHTML = `
-                                        <div>
-                                            <div class="fw-bold text-dark">${name}</div>
-                                            <small class="text-secondary">DPI: ${dpi}</small>
-                                        </div>
-                                        <span class="badge bg-blue-lt">Exp: ${exp}</span>
-                                    `;
-                                    suggestionsBox.appendChild(item);
-                                }
-                            });
-                        }
-                        suggestionsBox.style.display = 'block';
-                    });
-            }, 200);
-        });
-
-        // Cerrar sugerencias al hacer clic fuera
-        document.addEventListener('click', function(e) {
-            if (!buscarInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
-                suggestionsBox.style.display = 'none';
-            }
+                performSearch();
+            }, 300);
         });
     }
 

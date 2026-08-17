@@ -109,13 +109,48 @@ body {
     transition: transform 0.1s ease;
 }
 
-.btn-primary {
-    background-color: var(--primary);
-    color: hsl(0, 0%, 100%);
+.btn-primary,
+.btn-success {
+    background-color: var(--info) !important;
+    color: #ffffff !important;
+    border: 1px solid var(--border) !important;
 }
 
-.btn-primary:hover {
-    background-color: var(--primary-hover);
+.btn-primary:hover,
+.btn-success:hover {
+    background-color: hsl(200, 40%, 25%) !important;
+}
+
+.btn-secondary,
+.btn-danger {
+    background-color: var(--danger) !important;
+    color: #ffffff !important;
+    border: 1px solid var(--border) !important;
+}
+
+.btn-secondary:hover,
+.btn-danger:hover {
+    background-color: hsl(0, 50%, 25%) !important;
+}
+
+.btn-warning {
+    background-color: var(--warning) !important;
+    color: #ffffff !important;
+    border: 1px solid var(--border) !important;
+}
+
+.btn-warning:hover {
+    background-color: hsl(35, 60%, 25%) !important;
+}
+
+.btn-info {
+    background-color: hsl(210, 15%, 20%) !important; /* Neutral dark corresponding to layout */
+    color: #ffffff !important;
+    border: 1px solid var(--border) !important;
+}
+
+.btn-info:hover {
+    background-color: hsl(210, 15%, 10%) !important;
 }
 
 .btn:active {
@@ -523,4 +558,40 @@ body {
     color: var(--text-muted);
     font-weight: 700;
     text-transform: uppercase;
+}
+
+/* Sticky top bar on mobile */
+@media (max-width: 991.98px) {
+    .navbar-vertical.navbar-expand-lg {
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 1030 !important;
+    }
+}
+
+/* High contrast mobile menu toggler */
+.navbar-dark .navbar-toggler,
+.navbar-dark .navbar-toggler.collapsed {
+    border-color: rgba(255, 255, 255, 0.75) !important;
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.navbar-dark .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'><path stroke='rgb(255, 255, 255)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2.8' d='M4 7h22M4 15h22M4 23h22'/></svg>") !important;
+}
+
+/* Stack modal footer buttons on mobile devices */
+@media (max-width: 575.98px) {
+    .modal-footer {
+        flex-direction: column-reverse !important;
+        align-items: stretch !important;
+        gap: 8px !important;
+        padding: 12px !important;
+    }
+    .modal-footer > * {
+        width: 100% !important;
+        margin: 0 !important;
+    }
 }

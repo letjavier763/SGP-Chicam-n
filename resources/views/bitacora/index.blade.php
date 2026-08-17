@@ -8,7 +8,7 @@
 {{-- Filtros --}}
 <div class="card mb-4">
     <div class="card-body">
-        <form method="GET" action="{{ route('bitacora.index') }}" class="row g-2 align-items-end">
+        <form method="GET" action="{{ route('bitacora.index') }}" class="row g-2 align-items-end" id="search-form">
             <div class="col-md-3">
                 <label class="form-label text-secondary small">Usuario</label>
                 <select name="usuario_id" class="form-select">
@@ -40,12 +40,9 @@
                 <label class="form-label text-secondary small">Fecha Hasta</label>
                 <input type="date" name="fecha_hasta" class="form-control" value="{{ request('fecha_hasta') }}">
             </div>
-            <div class="col-md-2 d-flex gap-2">
-                <button type="submit" class="btn btn-secondary w-100">
-                    <i class="ti ti-filter me-1"></i> Filtrar
-                </button>
-                <a href="{{ route('bitacora.index') }}" class="btn btn-outline-secondary">
-                    <i class="ti ti-x"></i>
+            <div class="col-md-2">
+                <a href="{{ route('bitacora.index') }}" class="btn btn-outline-secondary w-100">
+                    <i class="ti ti-rotate-clockwise me-1"></i> Limpiar Filtros
                 </a>
             </div>
         </form>
@@ -53,7 +50,7 @@
 </div>
 
 {{-- Tabla de bitácora --}}
-<div class="card">
+<div class="card" id="table-container">
     <div class="card-header">
         <h3 class="card-title">
             <i class="ti ti-shield-check me-2 text-primary"></i>
@@ -145,4 +142,54 @@
     </div>
     @endif
 </div>
+@endsection
+
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const searchForm = document.getElementById('search-form');
+    const tableContainer = document.getElementById('table-container');
+
+    function performSearch(url = null) {
+        if (!url && searchForm) {
+            const formData = new FormData(searchForm);
+            const query = new URLSearchParams(formData).toString();
+            url = `${searchForm.action}?${query}`;
+        }
+        if (!url) return;
+
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(res => res.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newTable = doc.getElementById('table-container');
+                if (newTable && tableContainer) {
+                    tableContainer.innerHTML = newTable.innerHTML;
+                }
+            });
+    }
+
+    const selects = document.querySelectorAll('#search-form select');
+    selects.forEach(select => {
+        select.addEventListener('change', () => performSearch());
+    });
+
+    const dates = document.querySelectorAll('#search-form input[type="date"]');
+    dates.forEach(date => {
+        date.addEventListener('change', () => performSearch());
+    });
+
+    // Intercept pagination clicks
+    if (tableContainer) {
+        tableContainer.addEventListener('click', function(e) {
+            const link = e.target.closest('.pagination a');
+            if (link) {
+                e.preventDefault();
+                performSearch(link.href);
+            }
+        });
+    }
+});
+</script>
 @endsection

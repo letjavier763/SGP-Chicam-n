@@ -51,12 +51,35 @@ class FamiliaController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'id_comunidad'     => 'required|exists:comunidades,id_comunidad',
+            'id_comunidad'     => 'required',
             'numero_familia'   => 'required|string|max:20',
             'apellido_cabeza'  => 'required|string|max:100',
             'dpi'              => 'nullable|string|digits:13',
             'fecha_nacimiento' => 'nullable|date',
         ]);
+
+        // Resolver la comunidad si es nueva
+        $comunidadId = $request->input('id_comunidad');
+        if ($comunidadId === 'OTRO') {
+            if (empty($request->input('nueva_comunidad'))) {
+                return back()->withInput()->withErrors(['id_comunidad' => 'El nombre de la nueva comunidad es obligatorio.']);
+            }
+            if (empty($request->input('id_municipio'))) {
+                return back()->withInput()->withErrors(['id_comunidad' => 'Debe seleccionar un municipio válido para la nueva comunidad.']);
+            }
+            $nombreCom = trim($request->input('nueva_comunidad'));
+            $comunidad = \App\Models\Comunidad::where('nombre', 'ilike', $nombreCom)
+                ->where('id_municipio', $request->input('id_municipio'))
+                ->first();
+            if (!$comunidad) {
+                $comunidad = \App\Models\Comunidad::create([
+                    'nombre' => $nombreCom,
+                    'id_municipio' => $request->input('id_municipio'),
+                    'activo' => true
+                ]);
+            }
+            $comunidadId = $comunidad->id_comunidad;
+        }
 
         // Verificación de duplicado numero_familia
         $famExistente = Familia::where('numero_familia', $validated['numero_familia'])->first();
@@ -93,7 +116,7 @@ class FamiliaController extends Controller
         }
 
         $familia = Familia::create([
-            'id_comunidad'     => $validated['id_comunidad'],
+            'id_comunidad'     => $comunidadId,
             'numero_familia'   => $validated['numero_familia'],
             'apellido_cabeza'  => $validated['apellido_cabeza'],
             'dpi'              => $validated['dpi'] ?? null,
@@ -137,12 +160,35 @@ class FamiliaController extends Controller
         $familia = Familia::findOrFail($id);
 
         $validated = $request->validate([
-            'id_comunidad'     => 'required|exists:comunidades,id_comunidad',
+            'id_comunidad'     => 'required',
             'numero_familia'   => 'required|string|max:20|unique:familias,numero_familia,' . $id . ',id_family',
             'apellido_cabeza'  => 'required|string|max:100',
             'dpi'              => 'nullable|string|digits:13',
             'fecha_nacimiento' => 'nullable|date',
         ]);
+
+        // Resolver la comunidad si es nueva
+        $comunidadId = $request->input('id_comunidad');
+        if ($comunidadId === 'OTRO') {
+            if (empty($request->input('nueva_comunidad'))) {
+                return back()->withInput()->withErrors(['id_comunidad' => 'El nombre de la nueva comunidad es obligatorio.']);
+            }
+            if (empty($request->input('id_municipio'))) {
+                return back()->withInput()->withErrors(['id_comunidad' => 'Debe seleccionar un municipio válido para la nueva comunidad.']);
+            }
+            $nombreCom = trim($request->input('nueva_comunidad'));
+            $comunidad = \App\Models\Comunidad::where('nombre', 'ilike', $nombreCom)
+                ->where('id_municipio', $request->input('id_municipio'))
+                ->first();
+            if (!$comunidad) {
+                $comunidad = \App\Models\Comunidad::create([
+                    'nombre' => $nombreCom,
+                    'id_municipio' => $request->input('id_municipio'),
+                    'activo' => true
+                ]);
+            }
+            $comunidadId = $comunidad->id_comunidad;
+        }
 
         if (!empty($validated['dpi']) && $validated['dpi'] !== $familia->dpi) {
             $dpiEnFamilia = Familia::where('dpi', $validated['dpi'])->where('id_family', '!=', $id)->exists();
@@ -163,7 +209,7 @@ class FamiliaController extends Controller
         }
 
         $familia->update([
-            'id_comunidad'     => $validated['id_comunidad'],
+            'id_comunidad'     => $comunidadId,
             'numero_familia'   => $validated['numero_familia'],
             'apellido_cabeza'  => $validated['apellido_cabeza'],
             'dpi'              => $validated['dpi'] ?? null,

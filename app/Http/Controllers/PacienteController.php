@@ -64,8 +64,31 @@ class PacienteController extends Controller
             'telefono'                  => 'nullable|string|digits:8',
             'id_family'                 => 'nullable|integer',
             'numero_familia'            => 'nullable|string|max:50',
-            'id_comunidad'              => 'nullable|exists:comunidades,id_comunidad',
+            'id_comunidad'              => 'nullable',
         ]);
+
+        // Resolver la comunidad si es nueva
+        $comunidadId = $request->input('id_comunidad');
+        if ($comunidadId === 'OTRO') {
+            if (empty($request->input('nueva_comunidad'))) {
+                return back()->withInput()->withErrors(['id_comunidad' => 'El nombre de la nueva comunidad es obligatorio.']);
+            }
+            if (empty($request->input('id_municipio'))) {
+                return back()->withInput()->withErrors(['id_comunidad' => 'Debe seleccionar un municipio válido para la nueva comunidad.']);
+            }
+            $nombreCom = trim($request->input('nueva_comunidad'));
+            $comunidad = \App\Models\Comunidad::where('nombre', 'ilike', $nombreCom)
+                ->where('id_municipio', $request->input('id_municipio'))
+                ->first();
+            if (!$comunidad) {
+                $comunidad = \App\Models\Comunidad::create([
+                    'nombre' => $nombreCom,
+                    'id_municipio' => $request->input('id_municipio'),
+                    'activo' => true
+                ]);
+            }
+            $comunidadId = $comunidad->id_comunidad;
+        }
 
         // Resolver la familia: usar id_family directo, o buscar/crear por numero_familia
         $familia = null;
@@ -75,7 +98,7 @@ class PacienteController extends Controller
             $familia = Familia::where('numero_familia', $validated['numero_familia'])->first();
             if (!$familia) {
                 // Si la familia no existe, la comunidad es obligatoria
-                if (empty($request->id_comunidad)) {
+                if (empty($comunidadId)) {
                     return back()->withInput()->withErrors([
                         'id_comunidad' => 'La comunidad es obligatoria para registrar un nuevo núcleo familiar.'
                     ]);
@@ -85,7 +108,7 @@ class PacienteController extends Controller
                 $familia = Familia::create([
                     'numero_familia'  => $validated['numero_familia'],
                     'apellido_cabeza' => $validated['apellidos'],
-                    'id_comunidad'    => $request->id_comunidad,
+                    'id_comunidad'    => $comunidadId,
                     'activo'          => true,
                     'fecha_registro'  => now(),
                 ]);

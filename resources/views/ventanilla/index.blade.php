@@ -28,13 +28,13 @@
 
         {{-- Selector de turno del día --}}
         <div class="card mb-3">
-            <div class="card-header">
+            <div class="card-header d-none d-md-block">
                 <h3 class="card-title mb-0">
                     <i class="ti ti-calendar-event me-2 text-primary"></i>
                     Turno Activo — {{ now()->locale('es')->isoFormat('D [de] MMMM, YYYY') }}
                 </h3>
             </div>
-            <div class="card-body">
+            <div class="card-body p-2 p-md-3">
                 @if($turnosHoy->isEmpty())
                     <div class="text-center text-secondary py-3">
                         <i class="ti ti-calendar-off fs-2 d-block mb-2"></i>
@@ -69,13 +69,13 @@
                             default      => 'secondary'
                         };
                     @endphp
-                    <span class="badge bg-{{ $colorTurno }}-lt text-{{ $colorTurno }} fs-6 px-3 py-2">
+                    <span class="badge bg-{{ $colorTurno }}-lt text-{{ $colorTurno }} px-2 py-1" style="font-size: 0.75rem;">
                         <i class="ti ti-clock me-1"></i>
                         {{ ucfirst($turnoActivo->tipo_turno) }}:
                         {{ \Carbon\Carbon::parse($turnoActivo->hora_inicio)->format('H:i') }}
                         – {{ \Carbon\Carbon::parse($turnoActivo->hora_fin)->format('H:i') }}
                     </span>
-                    <span class="badge bg-blue-lt text-blue fs-6 px-3 py-2">
+                    <span class="badge bg-blue-lt text-blue px-2 py-1" style="font-size: 0.75rem;">
                         <i class="ti ti-users me-1"></i>
                         {{ $llegadas->count() }} llegadas
                     </span>
@@ -87,12 +87,12 @@
         {{-- Formulario de búsqueda y registro de llegada --}}
         @if($turnoActivo)
         <div class="card">
-            <div class="card-header">
+            <div class="card-header d-none d-md-block">
                 <h3 class="card-title mb-0">
                     <i class="ti ti-user-search me-2 text-success"></i> Registrar Llegada de Paciente
                 </h3>
             </div>
-            <div class="card-body">
+            <div class="card-body p-2 p-md-3">
                 {{-- Barra de búsqueda rápida inteligente --}}
                 <div class="mb-3 position-relative">
                     <input type="text" id="buscar_paciente" class="form-control form-control-lg"
@@ -113,15 +113,17 @@
     ============================================================ --}}
     <div class="col-lg-7">
         <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h3 class="card-title mb-0">
                     <i class="ti ti-list-check me-2 text-primary"></i>
                     Llegadas de Este Turno
                 </h3>
                 @if($turnoActivo && $llegadas->isNotEmpty())
                 <a href="{{ route('reportes.diario', $turnoActivo->id_turno) }}"
-                   class="btn btn-sm btn-outline-success">
-                    <i class="ti ti-chart-bar me-1"></i> Ver Reporte
+                   class="btn btn-xs btn-outline-success py-1 px-2">
+                    <i class="ti ti-chart-bar me-1"></i>
+                    <span class="d-none d-sm-inline">Ver Reporte</span>
+                    <span class="d-inline d-sm-none">Reporte</span>
                 </a>
                 @endif
             </div>
@@ -138,7 +140,8 @@
                 <p class="small">Use el panel izquierdo para buscar y registrar pacientes.</p>
             </div>
             @else
-            <div class="table-responsive">
+            <!-- Vista de Tabla para Escritorio -->
+            <div class="table-responsive d-none d-md-block">
                 <table class="table table-vcenter table-sm card-table">
                     <thead>
                         <tr>
@@ -195,6 +198,53 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Vista de Tarjetas para Móviles -->
+            <div class="divide-y d-md-none">
+                @foreach($llegadas as $i => $reg)
+                    <div class="p-3">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="avatar avatar-sm bg-{{ $reg->paciente->sexo === 'F' ? 'pink' : 'blue' }}-lt
+                                      text-{{ $reg->paciente->sexo === 'F' ? 'pink' : 'blue' }} rounded-circle">
+                                    <i class="ti ti-user{{ $reg->paciente->sexo === 'F' ? '-female' : '' }}"></i>
+                                </span>
+                                <div>
+                                    <div class="fw-bold" style="font-size: 0.95rem;">
+                                        {{ $reg->paciente->nombres }} {{ $reg->paciente->apellidos }}
+                                    </div>
+                                    <div class="text-secondary small">
+                                        Exp: <strong class="text-primary">{{ $reg->paciente->numero_expediente_fisico }}</strong>
+                                        · Fam. #{{ $reg->paciente->familia->numero_familia }}
+                                    </div>
+                                    <div class="text-secondary small" style="font-size: 0.75rem; opacity: 0.8;">
+                                        Registro #{{ $i + 1 }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-end d-flex flex-column align-items-end gap-1">
+                                <div class="fw-bold text-dark" style="font-size: 0.9rem;">
+                                    <i class="ti ti-clock me-1 text-muted"></i>{{ \Carbon\Carbon::parse($reg->hora_llegada)->format('H:i') }}
+                                </div>
+                                <div>
+                                    @if($reg->es_nuevo)
+                                        <span class="badge bg-green-lt text-green py-0 px-1" style="font-size: 0.7rem;">Nuevo</span>
+                                    @else
+                                        <span class="badge bg-secondary-lt text-secondary py-0 px-1" style="font-size: 0.7rem;">Recurrente</span>
+                                    @endif
+                                </div>
+                                <button type="button" class="btn btn-xs btn-outline-danger btn-anular py-1 px-2 mt-1 d-flex align-items-center gap-1" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#modalAnularLlegada" 
+                                        data-action="{{ route('ventanilla.destroy', $reg->id_registro) }}"
+                                        style="font-size: 0.7rem;">
+                                    <i class="ti ti-trash"></i> Anular
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
             @endif
         </div>
     </div>
@@ -211,7 +261,7 @@
             <form action="{{ route('pacientes.store') }}" method="POST">
                 @csrf
                 <input type="hidden" name="desde_ventanilla" value="1">
-                <input type="hidden" name="turno_id" value="{{ $turnoActivo->id_turno }}">
+                <input type="hidden" name="turno_id" value="{{ $turnoActivo ? $turnoActivo->id_turno : '' }}">
                 <div class="modal-body">
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
@@ -280,18 +330,22 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label required small mb-1" for="nv_id_muni">Municipio</label>
-                                <select id="nv_id_muni" class="form-select form-select-sm" disabled>
-                                    <option value="">-- Depto Primero --</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label required small mb-1" for="nv_id_comunidad">Comunidad</label>
-                                <select id="nv_id_comunidad" name="id_comunidad" class="form-select form-select-sm" disabled>
-                                    <option value="">-- Muni Primero --</option>
-                                </select>
-                            </div>
+                             <div class="col-md-4">
+                                 <label class="form-label required small mb-1" for="nv_id_muni">Municipio</label>
+                                 <select id="nv_id_muni" name="id_municipio" class="form-select form-select-sm" disabled>
+                                     <option value="">-- Depto Primero --</option>
+                                 </select>
+                             </div>
+                             <div class="col-md-4">
+                                 <label class="form-label required small mb-1" for="nv_id_comunidad">Comunidad</label>
+                                 <select id="nv_id_comunidad" name="id_comunidad" class="form-select form-select-sm" disabled>
+                                     <option value="">-- Muni Primero --</option>
+                                 </select>
+                                 <div id="nv_new_comunidad_wrapper" style="display: none;" class="mt-2">
+                                     <label class="form-label required small mb-1" for="nv_nueva_comunidad">Nombre de Nueva Comunidad</label>
+                                     <input type="text" id="nv_nueva_comunidad" name="nueva_comunidad" class="form-control form-control-sm" placeholder="Nombre de nueva comunidad...">
+                                 </div>
+                             </div>
                         </div>
                     </div>
 
@@ -322,7 +376,7 @@
             <form action="" method="POST" id="formAnularLlegada">
                 @csrf
                 @method('DELETE')
-                <input type="hidden" name="turno_id" value="{{ $turnoActivo->id_turno }}">
+                <input type="hidden" name="turno_id" value="{{ $turnoActivo ? $turnoActivo->id_turno : '' }}">
                 <div class="modal-body py-4">
                     <p class="mb-0 text-dark">¿Está seguro de que desea anular este registro de llegada de paciente?</p>
                     <p class="small text-secondary mb-0 mt-1">Esta acción no se puede deshacer.</p>
@@ -342,7 +396,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     const buscarInput   = document.getElementById('buscar_paciente');
     const suggestions   = document.getElementById('search-suggestions');
-    const turnoId       = {{ $turnoActivo->id_turno }};
+    const turnoId       = {{ $turnoActivo ? $turnoActivo->id_turno : 'null' }};
     const storePath     = '{{ route('ventanilla.store') }}';
     const buscarPath    = '{{ route('ventanilla.buscar') }}';
     const csrfToken     = '{{ csrf_token() }}';
@@ -355,6 +409,14 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
     suggestions.addEventListener('click', e => e.stopPropagation());
+
+    // ── Ocultar sugerencias al abrir modal ──────────────────────────
+    const modalNuevoPaciente = document.getElementById('modalNuevoPaciente');
+    if (modalNuevoPaciente) {
+        modalNuevoPaciente.addEventListener('show.bs.modal', () => {
+            suggestions.style.display = 'none';
+        });
+    }
 
     // ── Buscador inteligente ───────────────────────────────────────
     buscarInput.addEventListener('input', function () {
@@ -463,10 +525,12 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // ── Modal Nuevo Paciente: ubicación cascada ─────────────────────────────
-    function setupCascadingUbicaciones(deptoId, muniId, comId) {
+    function setupCascadingUbicaciones(deptoId, muniId, comId, wrapperId, inputId) {
         const deptoSelect = document.getElementById(deptoId);
         const muniSelect = document.getElementById(muniId);
         const comSelect = document.getElementById(comId);
+        const wrapper = document.getElementById(wrapperId);
+        const input = document.getElementById(inputId);
 
         if (deptoSelect) {
             deptoSelect.addEventListener('change', function () {
@@ -475,6 +539,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 muniSelect.disabled = true;
                 comSelect.innerHTML = '<option value="">-- Depto Primero --</option>';
                 comSelect.disabled = true;
+                if (wrapper && input) {
+                    wrapper.style.display = 'none';
+                    input.required = false;
+                    input.value = '';
+                }
                 if (!val) return;
 
                 fetch(`/api/ubicaciones/municipios/${val}`)
@@ -494,6 +563,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 const val = this.value;
                 comSelect.innerHTML = '<option value="">-- Cargando... --</option>';
                 comSelect.disabled = true;
+                if (wrapper && input) {
+                    wrapper.style.display = 'none';
+                    input.required = false;
+                    input.value = '';
+                }
                 if (!val) return;
 
                 fetch(`/api/ubicaciones/comunidades/${val}`)
@@ -504,13 +578,30 @@ document.addEventListener('DOMContentLoaded', function () {
                             const zonaText = c.zona ? ` (${c.zona})` : '';
                             comSelect.innerHTML += `<option value="${c.id_comunidad}">${c.nombre}${zonaText}</option>`;
                         });
+                        comSelect.innerHTML += '<option value="OTRO" style="font-weight:bold; color:var(--primary);">+ Registrar Nueva Comunidad</option>';
                         comSelect.disabled = false;
                     });
             });
         }
+
+        if (comSelect) {
+            comSelect.addEventListener('change', function () {
+                if (wrapper && input) {
+                    if (this.value === 'OTRO') {
+                        wrapper.style.display = 'block';
+                        input.required = true;
+                        input.focus();
+                    } else {
+                        wrapper.style.display = 'none';
+                        input.required = false;
+                        input.value = '';
+                    }
+                }
+            });
+        }
     }
 
-    setupCascadingUbicaciones('nv_id_depto', 'nv_id_muni', 'nv_id_comunidad');
+    setupCascadingUbicaciones('nv_id_depto', 'nv_id_muni', 'nv_id_comunidad', 'nv_new_comunidad_wrapper', 'nv_nueva_comunidad');
 
     // ── Modal Nuevo Paciente: autocompletado de familia ──────────────────────
     const nvNumFamInput  = document.getElementById('nv_numero_familia');

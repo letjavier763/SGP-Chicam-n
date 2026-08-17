@@ -17,7 +17,7 @@
         @endif
     </div>
     <div class="card-body border-bottom py-3">
-        <form method="GET" action="{{ route('turnos.index') }}" class="row g-2 align-items-end">
+        <form method="GET" action="{{ route('turnos.index') }}" class="row g-2 align-items-end" id="search-form">
             <div class="col-md-4">
                 <label class="form-label text-secondary small">Filtrar por Fecha</label>
                 <input type="date" name="fecha" class="form-control" value="{{ request('fecha') }}">
@@ -31,12 +31,9 @@
                     <option value="nocturno"   {{ request('tipo_turno') === 'nocturno'   ? 'selected' : '' }}>Nocturno</option>
                 </select>
             </div>
-            <div class="col-md-4 d-flex gap-2">
-                <button type="submit" class="btn btn-secondary w-100">
-                    <i class="ti ti-filter me-1"></i> Filtrar
-                </button>
-                <a href="{{ route('turnos.index') }}" class="btn btn-outline-secondary">
-                    <i class="ti ti-x"></i>
+            <div class="col-md-4">
+                <a href="{{ route('turnos.index') }}" class="btn btn-outline-secondary w-100">
+                    <i class="ti ti-rotate-clockwise me-1"></i> Limpiar Filtros
                 </a>
             </div>
         </form>
@@ -68,7 +65,7 @@
 @endif
 
 {{-- Tabla de turnos --}}
-<div class="card">
+<div class="card" id="table-container">
     <div class="table-responsive">
         <table class="table table-vcenter table-hover card-table">
             <thead>
@@ -338,20 +335,69 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Llenar Modal de Editar Turno
-    document.querySelectorAll('.btn-editar-turno').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const id = this.getAttribute('data-id');
-            const form = document.getElementById('formEditarTurno');
-            form.action = `/turnos/${id}`;
-            document.getElementById('edit_turno_usuario').value = this.getAttribute('data-usuario');
-            document.getElementById('edit_turno_fecha').value = this.getAttribute('data-fecha');
-            document.getElementById('edit_tipo_turno').value = this.getAttribute('data-tipo');
-            document.getElementById('edit_hora_inicio').value = this.getAttribute('data-inicio');
-            document.getElementById('edit_hora_fin').value = this.getAttribute('data-fin');
-            document.getElementById('edit_turno_obs').value = this.getAttribute('data-obs') || '';
+    // Llenar Modal de Editar Turno y AJAX para Filtros
+    const searchForm = document.getElementById('search-form');
+    const tableContainer = document.getElementById('table-container');
+
+    function performSearch(url = null) {
+        if (!url && searchForm) {
+            const formData = new FormData(searchForm);
+            const query = new URLSearchParams(formData).toString();
+            url = `${searchForm.action}?${query}`;
+        }
+        if (!url) return;
+
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(res => res.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newTable = doc.getElementById('table-container');
+                if (newTable && tableContainer) {
+                    tableContainer.innerHTML = newTable.innerHTML;
+                    bindEditButtons();
+                }
+            });
+    }
+
+    const fechaInput = document.querySelector('input[name="fecha"]');
+    if (fechaInput) {
+        fechaInput.addEventListener('change', () => performSearch());
+    }
+
+    const tipoSelect = document.querySelector('select[name="tipo_turno"]');
+    if (tipoSelect) {
+        tipoSelect.addEventListener('change', () => performSearch());
+    }
+
+    // Intercept pagination clicks
+    if (tableContainer) {
+        tableContainer.addEventListener('click', function(e) {
+            const link = e.target.closest('.pagination a');
+            if (link) {
+                e.preventDefault();
+                performSearch(link.href);
+            }
         });
-    });
+    }
+
+    function bindEditButtons() {
+        document.querySelectorAll('.btn-editar-turno').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const id = this.getAttribute('data-id');
+                const form = document.getElementById('formEditarTurno');
+                form.action = `/turnos/${id}`;
+                document.getElementById('edit_turno_usuario').value = this.getAttribute('data-usuario');
+                document.getElementById('edit_turno_fecha').value = this.getAttribute('data-fecha');
+                document.getElementById('edit_tipo_turno').value = this.getAttribute('data-tipo');
+                document.getElementById('edit_hora_inicio').value = this.getAttribute('data-inicio');
+                document.getElementById('edit_hora_fin').value = this.getAttribute('data-fin');
+                document.getElementById('edit_turno_obs').value = this.getAttribute('data-obs') || '';
+            });
+        });
+    }
+
+    bindEditButtons();
 });
 </script>
 @endsection

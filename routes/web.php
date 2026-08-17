@@ -10,6 +10,7 @@ use App\Http\Controllers\TurnoController;
 use App\Http\Controllers\VentanillaController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\BitacoraController;
+use App\Http\Controllers\PersonalController;
 
 /*
 |--------------------------------------------------------------------------
@@ -92,4 +93,10 @@ Route::middleware(['auth', 'nocache'])->group(function () {
     // ---------------------------------------------------------------
 
     Route::get('/bitacora', [BitacoraController::class, 'index'])->name('bitacora.index');
+
+    // Gestión de Personal
+    Route::middleware(['role:Administrador'])->group(function () {
+        Route::resource('personal', PersonalController::class)->except(['show']);
+        Route::patch('/personal/{id}/toggle-status', [PersonalController::class, 'toggleStatus'])->name('personal.toggle-status');
+    });
 });

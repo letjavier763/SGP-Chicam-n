@@ -45,11 +45,12 @@ class VentanillaController extends Controller
             }
         }
 
-        // Llegadas del turno activo
+        // Llegadas del turno activo del día de hoy
         $llegadas = collect();
         if ($turnoActivo) {
             $llegadas = RegistroLlegada::with('paciente.familia')
                 ->where('id_turno', $turnoActivo->id_turno)
+                ->whereDate('fecha', $hoy)
                 ->orderBy('hora_llegada', 'desc')
                 ->get();
         }
@@ -92,19 +93,20 @@ class VentanillaController extends Controller
 
         $turno = TurnoPersonal::findOrFail($validated['id_turno']);
 
-        // Verificar que el paciente no esté ya registrado en este turno
+        // Verificar que el paciente no esté ya registrado en este turno el día de hoy
         $yaRegistrado = RegistroLlegada::where('id_turno', $turno->id_turno)
+            ->whereDate('fecha', today())
             ->where('id_paciente', $validated['id_paciente'])
             ->exists();
 
         if ($yaRegistrado) {
-            return back()->with('error', 'Este paciente ya fue registrado en el turno actual.');
+            return back()->with('error', 'Este paciente ya fue registrado hoy en el turno actual.');
         }
 
         $registro = RegistroLlegada::create([
             'id_paciente'   => $validated['id_paciente'],
             'id_turno'      => $turno->id_turno,
-            'fecha'         => $turno->fecha,
+            'fecha'         => today(),
             'hora_llegada'  => $validated['hora_llegada'],
             'es_nuevo'      => $request->boolean('es_nuevo'),
             'observaciones' => $validated['observaciones'] ?? null,
@@ -161,10 +163,11 @@ class VentanillaController extends Controller
             return response()->json([]);
         }
 
-        // Obtener IDs ya registrados en el turno
+        // Obtener IDs ya registrados en el turno el día de hoy
         $yaRegistrados = collect();
         if ($turnoId) {
             $yaRegistrados = RegistroLlegada::where('id_turno', $turnoId)
+                ->whereDate('fecha', today())
                 ->pluck('id_paciente');
         }
 

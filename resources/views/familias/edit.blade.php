@@ -67,7 +67,7 @@
                 </div>
                 <div>
                     <label class="form-label" for="id_municipio">Municipio <span style="color: #dc2626;">*</span></label>
-                    <select id="id_municipio" class="form-control" required>
+                    <select id="id_municipio" name="id_municipio" class="form-control" required>
                         <option value="">-- Seleccionar --</option>
                         @foreach($municipios as $muni)
                             <option value="{{ $muni->id_municipio }}" {{ optional($selectedMunicipio)->id_municipio == $muni->id_municipio ? 'selected' : '' }}>
@@ -77,7 +77,6 @@
                     </select>
                 </div>
                 <div>
-                    <label class="form-label" for="id_comunidad">Comunidad <span style="color: #dc2626;">*</span></label>
                     <select id="id_comunidad" name="id_comunidad" class="form-control" required>
                         <option value="">-- Seleccionar --</option>
                         @foreach($comunidades as $com)
@@ -86,6 +85,10 @@
                             </option>
                         @endforeach
                     </select>
+                    <div id="edit_new_comunidad_wrapper" style="display: none;" class="mt-2">
+                        <label class="form-label required small mb-1" for="edit_nueva_comunidad">Nombre de Nueva Comunidad</label>
+                        <input type="text" id="edit_nueva_comunidad" name="nueva_comunidad" class="form-control form-control-sm" placeholder="Nombre de nueva comunidad...">
+                    </div>
                 </div>
             </div>
 
@@ -104,6 +107,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const deptoSelect = document.getElementById('id_departamento');
     const muniSelect = document.getElementById('id_municipio');
     const comSelect = document.getElementById('id_comunidad');
+    const wrapper = document.getElementById('edit_new_comunidad_wrapper');
+    const input = document.getElementById('edit_nueva_comunidad');
 
     deptoSelect.addEventListener('change', function () {
         const deptoId = this.value;
@@ -111,6 +116,11 @@ document.addEventListener('DOMContentLoaded', function () {
         muniSelect.disabled = true;
         comSelect.innerHTML = '<option value="">-- Seleccionar Muni Primero --</option>';
         comSelect.disabled = true;
+        if (wrapper && input) {
+            wrapper.style.display = 'none';
+            input.required = false;
+            input.value = '';
+        }
 
         if (!deptoId) return;
 
@@ -129,6 +139,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const muniId = this.value;
         comSelect.innerHTML = '<option value="">-- Cargando... --</option>';
         comSelect.disabled = true;
+        if (wrapper && input) {
+            wrapper.style.display = 'none';
+            input.required = false;
+            input.value = '';
+        }
 
         if (!muniId) return;
 
@@ -140,8 +155,23 @@ document.addEventListener('DOMContentLoaded', function () {
                     const zonaText = com.zona ? ` (${com.zona})` : '';
                     comSelect.innerHTML += `<option value="${com.id_comunidad}">${com.nombre}${zonaText}</option>`;
                 });
+                comSelect.innerHTML += '<option value="OTRO" style="font-weight:bold; color:var(--primary);">+ Registrar Nueva Comunidad</option>';
                 comSelect.disabled = false;
             });
+    });
+
+    comSelect.addEventListener('change', function () {
+        if (wrapper && input) {
+            if (this.value === 'OTRO') {
+                wrapper.style.display = 'block';
+                input.required = true;
+                input.focus();
+            } else {
+                wrapper.style.display = 'none';
+                input.required = false;
+                input.value = '';
+            }
+        }
     });
 });
 </script>

@@ -36,7 +36,7 @@
     <!-- Detalles de la Familia -->
     <div class="col-lg-4">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <div>
                     <span class="text-secondary small fw-bold text-uppercase">No. Familia</span>
                     <h3 class="card-title text-primary fs-2 mb-0">{{ $familia->numero_familia }}</h3>
@@ -76,7 +76,7 @@
                     <div class="text-dark small">{{ optional($familia->fecha_registro)->format('d/m/Y H:i A') ?? 'N/A' }}</div>
                 </div>
             </div>
-            <div class="card-footer d-flex gap-2">
+            <div class="card-footer d-flex flex-column flex-sm-row gap-2">
                 <a href="{{ route('familias.edit', $familia->id_family) }}" class="btn btn-primary flex-fill">
                     <i class="ti ti-edit me-1"></i> Editar
                 </a>
@@ -94,16 +94,17 @@
     <!-- Integrantes de la Familia -->
     <div class="col-lg-8">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex justify-content-between align-items-start align-items-sm-center flex-wrap gap-2">
                 <div>
-                    <h3 class="card-title"><i class="ti ti-users me-2"></i> Integrantes Registrados</h3>
-                    <p class="card-subtitle text-secondary mb-0">Pacientes adscritos a este núcleo familiar.</p>
+                    <h3 class="card-title mb-0"><i class="ti ti-users me-2"></i> Integrantes Registrados</h3>
+                    <p class="card-subtitle text-secondary mb-0 d-none d-md-block">Pacientes adscritos a este núcleo familiar.</p>
                 </div>
-                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrearPacienteFamilia">
+                <button type="button" class="btn btn-sm btn-primary w-100 w-sm-auto" data-bs-toggle="modal" data-bs-target="#modalCrearPacienteFamilia">
                     <i class="ti ti-plus me-1"></i> Agregar Paciente
                 </button>
             </div>
-            <div class="table-responsive">
+            <!-- Vista de Tabla para Escritorio -->
+            <div class="table-responsive d-none d-md-block">
                 <table class="table table-vcenter card-table">
                     <thead>
                         <tr>
@@ -135,13 +136,42 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center text-secondary py-4">
+                                <td colspan="4" class="text-center text-secondary py-4">
                                     No hay pacientes registrados en este núcleo familiar aún.
                                 </td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Vista de Tarjetas para Móviles -->
+            <div class="divide-y d-md-none">
+                @forelse($familia->pacientes as $paciente)
+                    <div class="p-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div>
+                                <strong class="text-dark" style="font-size: 0.95rem;">{{ $paciente->nombres }} {{ $paciente->apellidos }}</strong>
+                                <div class="text-secondary small mt-1">
+                                    Exp: <span class="badge bg-blue-lt">{{ $paciente->numero_expediente_fisico }}</span>
+                                    @if($paciente->dpi) · DPI: {{ $paciente->dpi }} @endif
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <a href="{{ route('pacientes.show', $paciente->id_paciente) }}" class="btn btn-sm btn-outline-info py-1">
+                                    <i class="ti ti-eye me-1"></i> Ficha
+                                </a>
+                            </div>
+                        </div>
+                        <div class="small text-secondary" style="font-size: 0.8rem;">
+                            <strong>Edad / Sexo:</strong> {{ optional($paciente->fecha_nacimiento)->age ?? '?' }} años ({{ $paciente->sexo === 'M' ? 'M' : 'F' }})
+                        </div>
+                    </div>
+                @empty
+                    <div class="text-center text-secondary py-4">
+                        No hay pacientes registrados en este núcleo familiar aún.
+                    </div>
+                @endforelse
             </div>
         </div>
     </div>
