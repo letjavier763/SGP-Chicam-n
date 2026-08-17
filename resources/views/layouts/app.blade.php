@@ -47,104 +47,74 @@
                         {{-- Dashboard --}}
                         <li class="nav-item {{ Request::routeIs('dashboard') ? 'active' : '' }}">
                             <a class="nav-link" href="{{ route('dashboard') }}">
-                                <span class="nav-link-icon d-md-none d-lg-inline-block">
-                                    <i class="ti ti-dashboard"></i>
-                                </span>
                                 <span class="nav-link-title">Dashboard</span>
                             </a>
                         </li>
 
                         @auth
 
-                            {{-- ── Ventanilla y Turnos ─────────────────── --}}
+                            {{-- ── Desplegable: Ventanilla ─────────────────── --}}
                             @if(Auth::user()->esAdministrador() || Auth::user()->esRecepcionista())
-                                <li class="nav-item mt-2">
-                                    <span class="nav-link text-uppercase text-secondary" style="font-size:.65rem; letter-spacing:.08em; pointer-events:none; padding-bottom:2px;">
-                                        Ventanilla
-                                    </span>
-                                </li>
-                                <li class="nav-item {{ Request::routeIs('ventanilla.*') ? 'active' : '' }}">
-                                    <a class="nav-link" href="{{ route('ventanilla.index') }}">
-                                        <span class="nav-link-icon d-md-none d-lg-inline-block">
-                                            <i class="ti ti-door-enter"></i>
-                                        </span>
+                                <li class="nav-item dropdown {{ Request::routeIs('ventanilla.*', 'turnos.*') ? 'active' : '' }}">
+                                    <a class="nav-link dropdown-toggle" href="#sidebar-ventanilla" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="{{ Request::routeIs('ventanilla.*', 'turnos.*') ? 'true' : 'false' }}">
                                         <span class="nav-link-title">Ventanilla</span>
                                     </a>
-                                </li>
-                                <li class="nav-item {{ Request::routeIs('turnos.*') ? 'active' : '' }}">
-                                    <a class="nav-link" href="{{ route('turnos.index') }}">
-                                        <span class="nav-link-icon d-md-none d-lg-inline-block">
-                                            <i class="ti ti-clock"></i>
-                                        </span>
-                                        <span class="nav-link-title">Turnos del Personal</span>
-                                    </a>
+                                    <div class="dropdown-menu {{ Request::routeIs('ventanilla.*', 'turnos.*') ? 'show' : '' }}">
+                                        <a class="dropdown-item {{ Request::routeIs('ventanilla.*') ? 'active' : '' }}" href="{{ route('ventanilla.index') }}">
+                                            Ventanilla
+                                        </a>
+                                        <a class="dropdown-item {{ Request::routeIs('turnos.*') ? 'active' : '' }}" href="{{ route('turnos.index') }}">
+                                            Turnos del Personal
+                                        </a>
+                                    </div>
                                 </li>
                             @endif
 
-                            {{-- ── Pacientes / Familias ─────────────────── --}}
+                            {{-- ── Desplegable: Registros ─────────────────── --}}
                             @if(Auth::user()->esAdministrador() || Auth::user()->esRecepcionista())
-                                <li class="nav-item mt-2">
-                                    <span class="nav-link text-uppercase text-secondary" style="font-size:.65rem; letter-spacing:.08em; pointer-events:none; padding-bottom:2px;">
-                                        Registros
-                                    </span>
-                                </li>
-                                <li class="nav-item {{ Request::routeIs('pacientes.*') ? 'active' : '' }}">
-                                    <a class="nav-link" href="{{ route('pacientes.index') }}">
-                                        <span class="nav-link-icon d-md-none d-lg-inline-block">
-                                            <i class="ti ti-users"></i>
-                                        </span>
-                                        <span class="nav-link-title">Pacientes</span>
+                                <li class="nav-item dropdown {{ Request::routeIs('pacientes.*', 'familias.*') ? 'active' : '' }}">
+                                    <a class="nav-link dropdown-toggle" href="#sidebar-registros" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="{{ Request::routeIs('pacientes.*', 'familias.*') ? 'true' : 'false' }}">
+                                        <span class="nav-link-title">Registros</span>
                                     </a>
-                                </li>
-                                <li class="nav-item {{ Request::routeIs('familias.*') ? 'active' : '' }}">
-                                    <a class="nav-link" href="{{ route('familias.index') }}">
-                                        <span class="nav-link-icon d-md-none d-lg-inline-block">
-                                            <i class="ti ti-home-heart"></i>
-                                        </span>
-                                        <span class="nav-link-title">Núcleos Familiares</span>
-                                    </a>
+                                    <div class="dropdown-menu {{ Request::routeIs('pacientes.*', 'familias.*') ? 'show' : '' }}">
+                                        <a class="dropdown-item {{ Request::routeIs('pacientes.*') ? 'active' : '' }}" href="{{ route('pacientes.index') }}">
+                                            Pacientes
+                                        </a>
+                                        <a class="dropdown-item {{ Request::routeIs('familias.*') ? 'active' : '' }}" href="{{ route('familias.index') }}">
+                                            Núcleos Familiares
+                                        </a>
+                                    </div>
                                 </li>
                             @endif
 
-                            {{-- ── Reportería (Admin + Director) ─────────── --}}
+                            {{-- ── Desplegable: Reportería ─────────── --}}
                             @if(Auth::user()->esAdministrador() || Auth::user()->esDirector())
-                                <li class="nav-item mt-2">
-                                    <span class="nav-link text-uppercase text-secondary" style="font-size:.65rem; letter-spacing:.08em; pointer-events:none; padding-bottom:2px;">
-                                        Reportería
-                                    </span>
-                                </li>
-                                <li class="nav-item {{ Request::routeIs('reportes.*') ? 'active' : '' }}">
-                                    <a class="nav-link" href="{{ route('reportes.index') }}">
-                                        <span class="nav-link-icon d-md-none d-lg-inline-block">
-                                            <i class="ti ti-chart-bar"></i>
-                                        </span>
-                                        <span class="nav-link-title">Estadísticas y Reportes</span>
+                                <li class="nav-item dropdown {{ Request::routeIs('reportes.*') ? 'active' : '' }}">
+                                    <a class="nav-link dropdown-toggle" href="#sidebar-reporteria" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="{{ Request::routeIs('reportes.*') ? 'true' : 'false' }}">
+                                        <span class="nav-link-title">Reportería</span>
                                     </a>
+                                    <div class="dropdown-menu {{ Request::routeIs('reportes.*') ? 'show' : '' }}">
+                                        <a class="dropdown-item {{ Request::routeIs('reportes.*') ? 'active' : '' }}" href="{{ route('reportes.index') }}">
+                                            Estadísticas y Reportes
+                                        </a>
+                                    </div>
                                 </li>
                             @endif
 
-                            {{-- ── Solo Administrador ──────────────────── --}}
+                            {{-- ── Desplegable: Administración ──────────────────── --}}
                             @if(Auth::user()->esAdministrador())
-                                <li class="nav-item mt-2">
-                                    <span class="nav-link text-uppercase text-secondary" style="font-size:.65rem; letter-spacing:.08em; pointer-events:none; padding-bottom:2px;">
-                                        Administración
-                                    </span>
-                                </li>
-                                <li class="nav-item {{ Request::routeIs('alertas.*') ? 'active' : '' }}">
-                                    <a class="nav-link" href="{{ route('alertas.index') }}">
-                                        <span class="nav-link-icon d-md-none d-lg-inline-block">
-                                            <i class="ti ti-alert-triangle"></i>
-                                        </span>
-                                        <span class="nav-link-title">Alertas Duplicidad</span>
+                                <li class="nav-item dropdown {{ Request::routeIs('alertas.*', 'bitacora.*') ? 'active' : '' }}">
+                                    <a class="nav-link dropdown-toggle" href="#sidebar-admin" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="{{ Request::routeIs('alertas.*', 'bitacora.*') ? 'true' : 'false' }}">
+                                        <span class="nav-link-title">Administración</span>
                                     </a>
-                                </li>
-                                <li class="nav-item {{ Request::routeIs('bitacora.*') ? 'active' : '' }}">
-                                    <a class="nav-link" href="{{ route('bitacora.index') }}">
-                                        <span class="nav-link-icon d-md-none d-lg-inline-block">
-                                            <i class="ti ti-shield-check"></i>
-                                        </span>
-                                        <span class="nav-link-title">Bitácora</span>
-                                    </a>
+                                    <div class="dropdown-menu {{ Request::routeIs('alertas.*', 'bitacora.*') ? 'show' : '' }}">
+                                        <a class="dropdown-item {{ Request::routeIs('alertas.*') ? 'active' : '' }}" href="{{ route('alertas.index') }}">
+                                            Alertas Duplicidad
+                                        </a>
+                                        <a class="dropdown-item {{ Request::routeIs('bitacora.*') ? 'active' : '' }}" href="{{ route('bitacora.index') }}">
+                                            Bitácora
+                                        </a>
+                                    </div>
                                 </li>
                             @endif
 

@@ -37,8 +37,9 @@ class FamiliaController extends Controller
 
         $familias = $query->orderBy('id_family', 'desc')->paginate(15)->withQueryString();
         $comunidades = Comunidad::orderBy('nombre')->get();
+        $departamentos = Departamento::orderBy('nombre')->get();
 
-        return view('familias.index', compact('familias', 'comunidades'));
+        return view('familias.index', compact('familias', 'comunidades', 'departamentos'));
     }
 
     public function create()
@@ -187,5 +188,39 @@ class FamiliaController extends Controller
             "Familia #{$familia->numero_familia} {$estadoStr}.", request()->ip());
 
         return back()->with('success', "La familia fue {$estadoStr} correctamente.");
+    }
+
+    /**
+     * Búsqueda AJAX de familias por número (para autocompletado en modales).
+     * Devuelve JSON con coincidencias y si el número existe o no.
+     */
+    public function buscarAjax(Request $request)
+    {
+        $q = trim($request->get('q', ''));
+
+        if (strlen($q) < 1) {
+            return response()->json(['existe' => false, 'coincidencias' => []]);
+        }
+
+        $familias = Familia::with('comunidad')
+            ->where('numero_familia', 'ilike', "%{$q}%")
+            ->orWhere('apellido_cabeza', 'ilike', "%{$q}%")
+            ->limit(8)
+            ->get();
+
+        // Verificar si hay una coincidencia exacta
+        $exacta = Familia::where('numero_familia', $q)->first();
+
+        return response()->json([
+            'existe'        => (bool) $exacta,
+            'id_family'     => $exacta?->id_family,
+            'coincidencias' => $familias->map(fn($f) => [
+                'id_family'      => $f->id_family,
+                'numero_familia' => $f->numero_familia,
+                'apellido_cabeza'=> $f->apellido_cabeza,
+                'comunidad'      => optional($f->comunidad)->nombre,
+                'exacta'         => $f->numero_familia === $q,
+            ]),
+        ]);
     }
 }

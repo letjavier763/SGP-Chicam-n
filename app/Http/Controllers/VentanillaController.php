@@ -6,6 +6,7 @@ use App\Models\TurnoPersonal;
 use App\Models\Paciente;
 use App\Models\RegistroLlegada;
 use App\Models\Bitacora;
+use App\Models\Departamento;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -69,8 +70,10 @@ class VentanillaController extends Controller
                 ->get();
         }
 
+        $departamentos = Departamento::orderBy('nombre')->get();
+
         return view('ventanilla.index', compact(
-            'turnosHoy', 'turnoActivo', 'llegadas', 'pacientes', 'buscarPaciente'
+            'turnosHoy', 'turnoActivo', 'llegadas', 'pacientes', 'buscarPaciente', 'departamentos'
         ));
     }
 
@@ -142,5 +145,61 @@ class VentanillaController extends Controller
 
         return redirect()->route('ventanilla.index', ['turno_id' => $turnoId])
             ->with('success', 'Registro de llegada anulado.');
+    }
+
+    /**
+     * Búsqueda AJAX de pacientes para ventanilla.
+     * Retorna JSON con la lista de pacientes que coinciden y si ya están
+     * registrados en el turno activo, para permitir registro rápido de un solo clic.
+     */
+    public function buscar(Request $request)
+    {
+        $termino = $request->get('q', '');
+        $turnoId = $request->get('turno_id');
+
+        if (strlen($termino) < 2) {
+            return response()->json([]);
+        }
+
+        // Obtener IDs ya registrados en el turno
+        $yaRegistrados = collect();
+        if ($turnoId) {
+            $yaRegistrados = RegistroLlegada::where('id_turno', $turnoId)
+                ->pluck('id_paciente');
+        }
+
+        // Buscar pacientes activos que coincidan
+        $pacientes = Paciente::with('familia.comunidad')
+            ->where('activo', true)
+            ->where(function ($q) use ($termino) {
+                $q->where('nombres', 'ilike', "%{$termino}%")
+                  ->orWhere('apellidos', 'ilike', "%{$termino}%")
+                  ->orWhere('dpi', 'like', "%{$termino}%")
+                  ->orWhere('numero_expediente_fisico', 'like', "%{$termino}%")
+                  ->orWhereHas('familia', fn($fq) =>
+                      $fq->where('numero_familia', 'ilike', "%{$termino}%")
+                         ->orWhere('apellido_cabeza', 'ilike', "%{$termino}%")
+                  );
+            })
+            ->limit(12)
+            ->get();
+
+        $resultado = $pacientes->map(function ($p) use ($yaRegistrados) {
+            return [
+                'id_paciente'            => $p->id_paciente,
+                'nombres'                => $p->nombres,
+                'apellidos'              => $p->apellidos,
+                'dpi'                    => $p->dpi,
+                'sexo'                   => $p->sexo,
+                'numero_expediente_fisico' => $p->numero_expediente_fisico,
+                'edad'                   => optional($p->fecha_nacimiento)->age,
+                'familia_numero'         => optional($p->familia)->numero_familia,
+                'familia_cabeza'         => optional($p->familia)->apellido_cabeza,
+                'comunidad'              => optional(optional($p->familia)->comunidad)->nombre,
+                'ya_registrado'          => $yaRegistrados->contains($p->id_paciente),
+            ];
+        });
+
+        return response()->json($resultado);
     }
 }

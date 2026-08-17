@@ -20,6 +20,23 @@
     </div>
 @endif
 
+@if($errors->any())
+    <div class="alert alert-danger alert-dismissible" role="alert">
+        <div class="d-flex">
+            <div><i class="ti ti-alert-triangle me-2 fs-2"></i></div>
+            <div>
+                <strong>Atención: Revise los errores en el formulario:</strong>
+                <ul class="mb-0 ps-3">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+        <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+    </div>
+@endif
+
 <div class="row g-3">
     <!-- Ficha Personal del Paciente -->
     <div class="col-lg-4">
@@ -70,9 +87,9 @@
                 </div>
             </div>
             <div class="card-footer d-flex gap-2">
-                <a href="{{ route('pacientes.edit', $paciente->id_paciente) }}" class="btn btn-primary flex-fill">
+                <button type="button" class="btn btn-primary flex-fill" data-bs-toggle="modal" data-bs-target="#modalEditarPacienteShow">
                     <i class="ti ti-edit me-1"></i> Editar Ficha
-                </a>
+                </button>
                 <form action="{{ route('pacientes.toggle-status', $paciente->id_paciente) }}" method="POST" class="flex-fill">
                     @csrf
                     @method('PATCH')
@@ -152,6 +169,82 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+</div>
+
+{{-- MODAL EDITAR PACIENTE DESDE SHOW --}}
+<div class="modal fade" id="modalEditarPacienteShow" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title fw-bold"><i class="ti ti-edit me-2"></i> Editar Ficha de Paciente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('pacientes.update', $paciente->id_paciente) }}" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="modal-body">
+                    <h6 class="text-secondary border-bottom pb-2 mb-3">1. Adscripción al Núcleo Familiar</h6>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label required" for="show_id_family">Núcleo Familiar</label>
+                            <select id="show_id_family" name="id_family" class="form-select" required>
+                                @foreach($familias as $fam)
+                                    <option value="{{ $fam->id_family }}" {{ $paciente->id_family == $fam->id_family ? 'selected' : '' }}>
+                                        No. Familia: {{ $fam->numero_familia }} — Cabeza: {{ $fam->apellido_cabeza }} ({{ $fam->comunidad->nombre ?? 'Sin comunidad' }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="show_numero_expediente_fisico">No. Expediente Físico</label>
+                            <input type="text" id="show_numero_expediente_fisico" name="numero_expediente_fisico" class="form-control bg-light" value="{{ $paciente->numero_expediente_fisico }}">
+                        </div>
+                    </div>
+
+                    <h6 class="text-secondary border-bottom pb-2 mb-3">2. Información Personal del Paciente</h6>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label required" for="show_nombres">Nombres</label>
+                            <input type="text" id="show_nombres" name="nombres" class="form-control" value="{{ $paciente->nombres }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label required" for="show_apellidos">Apellidos</label>
+                            <input type="text" id="show_apellidos" name="apellidos" class="form-control" value="{{ $paciente->apellidos }}" required>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label required" for="show_fecha_nacimiento">Fecha Nacimiento</label>
+                            <input type="date" id="show_fecha_nacimiento" name="fecha_nacimiento" class="form-control" value="{{ optional($paciente->fecha_nacimiento)->format('Y-m-d') }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label required" for="show_sexo">Sexo</label>
+                            <select id="show_sexo" name="sexo" class="form-select" required>
+                                <option value="M" {{ $paciente->sexo === 'M' ? 'selected' : '' }}>Masculino (M)</option>
+                                <option value="F" {{ $paciente->sexo === 'F' ? 'selected' : '' }}>Femenino (F)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="show_dpi">DPI (13 dígitos)</label>
+                            <input type="text" id="show_dpi" name="dpi" class="form-control" value="{{ $paciente->dpi }}" maxlength="13">
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="show_telefono">Teléfono de Contacto (8 dígitos)</label>
+                            <input type="text" id="show_telefono" name="telefono" class="form-control" value="{{ $paciente->telefono }}" maxlength="8">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning"><i class="ti ti-device-floppy me-1"></i> Guardar Cambios</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

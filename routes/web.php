@@ -39,13 +39,16 @@ Route::middleware(['auth', 'nocache'])->group(function () {
         $alertasDuplicado = \App\Models\AlertaDuplicado::count();
         $turnoHoy         = \App\Models\TurnoPersonal::where('id_usuario', auth()->id())
                                 ->whereDate('fecha', today())->first();
+        $usuarios         = \App\Models\Usuario::where('activo', true)->orderBy('nombre_completo')->get();
+        $familias         = \App\Models\Familia::where('activo', true)->orderBy('numero_familia')->get();
         
-        return view('dashboard', compact('totalPacientes', 'llegadasHoy', 'alertasDuplicado', 'turnoHoy'));
+        return view('dashboard', compact('totalPacientes', 'llegadasHoy', 'alertasDuplicado', 'turnoHoy', 'usuarios', 'familias'));
     })->name('dashboard');
 
     // Rutas para cascada de ubicaciones (AJAX)
     Route::get('/api/ubicaciones/municipios/{departamentoId}', [LocationController::class, 'getMunicipios'])->name('api.ubicaciones.municipios');
     Route::get('/api/ubicaciones/comunidades/{municipioId}', [LocationController::class, 'getComunidades'])->name('api.ubicaciones.comunidades');
+    Route::get('/api/familias/buscar', [FamiliaController::class, 'buscarAjax'])->name('api.familias.buscar');
 
     // Módulo de Núcleos Familiares
     Route::resource('familias', FamiliaController::class);
@@ -69,6 +72,7 @@ Route::middleware(['auth', 'nocache'])->group(function () {
 
     // Ventanilla (registro de llegadas del día)
     Route::get('/ventanilla', [VentanillaController::class, 'index'])->name('ventanilla.index');
+    Route::get('/ventanilla/buscar', [VentanillaController::class, 'buscar'])->name('ventanilla.buscar');
     Route::post('/ventanilla', [VentanillaController::class, 'store'])->name('ventanilla.store');
     Route::delete('/ventanilla/{id}', [VentanillaController::class, 'destroy'])->name('ventanilla.destroy');
 

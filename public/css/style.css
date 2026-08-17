@@ -364,6 +364,80 @@ body {
     border-top: 1px solid var(--border);
 }
 
+/* Fix Legibilidad y Alto Contraste en Barra Lateral Tabler UI */
+.navbar-dark .navbar-nav .nav-link {
+    color: #94a3b8 !important;
+    font-weight: 400 !important;
+    font-size: 0.95rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.navbar-dark .navbar-nav .nav-link .nav-link-icon {
+    color: #94a3b8 !important;
+    font-size: 1.25rem;
+}
+
+.navbar-dark .navbar-nav .nav-link:hover {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.navbar-dark .navbar-nav .nav-link:hover .nav-link-icon {
+    color: #ffffff !important;
+}
+
+.navbar-dark .navbar-nav .nav-item.active > .nav-link,
+.navbar-dark .navbar-nav .nav-link.active {
+    color: #ffffff !important;
+    background-color: transparent !important;
+    border-left: none !important;
+    font-weight: 700 !important;
+}
+
+.navbar-dark .navbar-nav .nav-item.active > .nav-link .nav-link-icon,
+.navbar-dark .navbar-nav .nav-link.active .nav-link-icon {
+    color: #ffffff !important;
+}
+
+.navbar-dark .nav-link.text-uppercase.text-secondary {
+    color: #64748b !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.1em !important;
+    margin-top: 0.5rem;
+}
+
+/* Estilos de Submenús Desplegables en Barra Lateral */
+.navbar-dark .dropdown-menu {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding-left: 0.75rem !important;
+    margin: 0 !important;
+}
+
+.navbar-dark .dropdown-item {
+    color: #94a3b8 !important;
+    font-weight: 400 !important;
+    font-size: 0.9rem !important;
+    padding: 0.45rem 0.8rem !important;
+    border-radius: 4px !important;
+    transition: all 0.2s ease !important;
+}
+
+.navbar-dark .dropdown-item:hover {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.navbar-dark .dropdown-item.active,
+.navbar-dark .dropdown-item:active {
+    color: #ffffff !important;
+    background-color: transparent !important;
+    font-weight: 700 !important;
+}
+
 .main-content {
     flex: 1;
     display: flex;

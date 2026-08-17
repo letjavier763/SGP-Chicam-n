@@ -11,9 +11,9 @@
             <i class="ti ti-clock me-2 text-primary"></i> Turnos Registrados
         </h3>
         @if(Auth::user()->esAdministrador())
-        <a href="{{ route('turnos.create') }}" class="btn btn-primary btn-sm">
+        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalCrearTurno">
             <i class="ti ti-plus me-1"></i> Nuevo Turno
-        </a>
+        </button>
         @endif
     </div>
     <div class="card-body border-bottom py-3">
@@ -52,6 +52,17 @@
 @if(session('error'))
 <div class="alert alert-danger alert-dismissible fade show" role="alert">
     <i class="ti ti-alert-circle me-2"></i> {{ session('error') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+@endif
+@if($errors->any())
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <strong>Atención: Revise los siguientes errores:</strong>
+    <ul class="mb-0 ps-3">
+        @foreach($errors->all() as $e)
+            <li>{{ $e }}</li>
+        @endforeach
+    </ul>
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
 @endif
@@ -124,10 +135,19 @@
                                 <i class="ti ti-chart-bar me-1"></i>Reporte
                             </a>
                             @if(Auth::user()->esAdministrador())
-                            <a href="{{ route('turnos.edit', $turno->id_turno) }}"
-                               class="btn btn-sm btn-outline-secondary" title="Editar">
+                            <button type="button" class="btn btn-sm btn-outline-secondary btn-editar-turno"
+                                    title="Editar"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#modalEditarTurno"
+                                    data-id="{{ $turno->id_turno }}"
+                                    data-usuario="{{ $turno->id_usuario }}"
+                                    data-fecha="{{ $turno->fecha->format('Y-m-d') }}"
+                                    data-tipo="{{ $turno->tipo_turno }}"
+                                    data-inicio="{{ \Carbon\Carbon::parse($turno->hora_inicio)->format('H:i') }}"
+                                    data-fin="{{ \Carbon\Carbon::parse($turno->hora_fin)->format('H:i') }}"
+                                    data-obs="{{ $turno->observaciones }}">
                                 <i class="ti ti-edit"></i>
-                            </a>
+                            </button>
                             <form action="{{ route('turnos.destroy', $turno->id_turno) }}" method="POST"
                                   onsubmit="return confirm('¿Eliminar este turno?')">
                                 @csrf @method('DELETE')
@@ -162,4 +182,176 @@
     </div>
     @endif
 </div>
+
+{{-- MODAL CREAR TURNO --}}
+@if(Auth::user()->esAdministrador())
+<div class="modal fade" id="modalCrearTurno" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="ti ti-clock-plus me-2"></i> Crear Nuevo Turno</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('turnos.store') }}" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label for="create_turno_usuario" class="form-label required">Personal Asignado</label>
+                            <select id="create_turno_usuario" name="id_usuario" class="form-select" required>
+                                <option value="">— Seleccione un usuario —</option>
+                                @foreach($usuarios as $u)
+                                    <option value="{{ $u->id_usuario }}">
+                                        {{ $u->nombre_completo }} ({{ $u->rol->nombre_rol }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="create_turno_fecha" class="form-label required">Fecha del Turno</label>
+                            <input type="date" id="create_turno_fecha" name="fecha" class="form-control" value="{{ today()->toDateString() }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="create_tipo_turno" class="form-label required">Tipo de Turno</label>
+                            <select id="create_tipo_turno" name="tipo_turno" class="form-select" required>
+                                <option value="">— Seleccione —</option>
+                                <option value="matutino">Matutino (6:00 – 14:00)</option>
+                                <option value="vespertino">Vespertino (14:00 – 22:00)</option>
+                                <option value="nocturno">Nocturno (22:00 – 6:00)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="create_hora_inicio" class="form-label required">Hora de Inicio</label>
+                            <input type="time" id="create_hora_inicio" name="hora_inicio" class="form-control" value="06:00" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="create_hora_fin" class="form-label required">Hora de Fin</label>
+                            <input type="time" id="create_hora_fin" name="hora_fin" class="form-control" value="14:00" required>
+                        </div>
+                        <div class="col-12">
+                            <label for="create_turno_obs" class="form-label">Observaciones</label>
+                            <textarea id="create_turno_obs" name="observaciones" class="form-control" rows="3" placeholder="Notas adicionales sobre el turno…"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy me-1"></i> Guardar Turno</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- MODAL EDITAR TURNO --}}
+<div class="modal fade" id="modalEditarTurno" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title fw-bold"><i class="ti ti-edit me-2"></i> Editar Turno de Personal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="" method="POST" id="formEditarTurno">
+                @csrf
+                @method('PUT')
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label for="edit_turno_usuario" class="form-label required">Personal Asignado</label>
+                            <select id="edit_turno_usuario" name="id_usuario" class="form-select" required>
+                                <option value="">— Seleccione un usuario —</option>
+                                @foreach($usuarios as $u)
+                                    <option value="{{ $u->id_usuario }}">
+                                        {{ $u->nombre_completo }} ({{ $u->rol->nombre_rol }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_turno_fecha" class="form-label required">Fecha del Turno</label>
+                            <input type="date" id="edit_turno_fecha" name="fecha" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_tipo_turno" class="form-label required">Tipo de Turno</label>
+                            <select id="edit_tipo_turno" name="tipo_turno" class="form-select" required>
+                                <option value="">— Seleccione —</option>
+                                <option value="matutino">Matutino (6:00 – 14:00)</option>
+                                <option value="vespertino">Vespertino (14:00 – 22:00)</option>
+                                <option value="nocturno">Nocturno (22:00 – 6:00)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_hora_inicio" class="form-label required">Hora de Inicio</label>
+                            <input type="time" id="edit_hora_inicio" name="hora_inicio" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="edit_hora_fin" class="form-label required">Hora de Fin</label>
+                            <input type="time" id="edit_hora_fin" name="hora_fin" class="form-control" required>
+                        </div>
+                        <div class="col-12">
+                            <label for="edit_turno_obs" class="form-label">Observaciones</label>
+                            <textarea id="edit_turno_obs" name="observaciones" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning"><i class="ti ti-device-floppy me-1"></i> Actualizar Turno</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endif
+@endsection
+
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const horarios = {
+        matutino:   { inicio: '06:00', fin: '14:00' },
+        vespertino: { inicio: '14:00', fin: '22:00' },
+        nocturno:   { inicio: '22:00', fin: '06:00' },
+    };
+
+    // Auto-rellenar horas en Crear Turno
+    const createTipoSelect = document.getElementById('create_tipo_turno');
+    if (createTipoSelect) {
+        createTipoSelect.addEventListener('change', function () {
+            const sel = horarios[this.value];
+            if (sel) {
+                document.getElementById('create_hora_inicio').value = sel.inicio;
+                document.getElementById('create_hora_fin').value    = sel.fin;
+            }
+        });
+    }
+
+    // Auto-rellenar horas en Editar Turno
+    const editTipoSelect = document.getElementById('edit_tipo_turno');
+    if (editTipoSelect) {
+        editTipoSelect.addEventListener('change', function () {
+            const sel = horarios[this.value];
+            if (sel) {
+                document.getElementById('edit_hora_inicio').value = sel.inicio;
+                document.getElementById('edit_hora_fin').value    = sel.fin;
+            }
+        });
+    }
+
+    // Llenar Modal de Editar Turno
+    document.querySelectorAll('.btn-editar-turno').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const id = this.getAttribute('data-id');
+            const form = document.getElementById('formEditarTurno');
+            form.action = `/turnos/${id}`;
+            document.getElementById('edit_turno_usuario').value = this.getAttribute('data-usuario');
+            document.getElementById('edit_turno_fecha').value = this.getAttribute('data-fecha');
+            document.getElementById('edit_tipo_turno').value = this.getAttribute('data-tipo');
+            document.getElementById('edit_hora_inicio').value = this.getAttribute('data-inicio');
+            document.getElementById('edit_hora_fin').value = this.getAttribute('data-fin');
+            document.getElementById('edit_turno_obs').value = this.getAttribute('data-obs') || '';
+        });
+    });
+});
+</script>
 @endsection

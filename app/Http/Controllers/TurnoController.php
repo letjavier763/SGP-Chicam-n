@@ -31,8 +31,9 @@ class TurnoController extends Controller
         }
 
         $turnos = $query->paginate(20)->withQueryString();
+        $usuarios = Usuario::where('activo', true)->orderBy('nombre_completo')->get();
 
-        return view('turnos.index', compact('turnos'));
+        return view('turnos.index', compact('turnos', 'usuarios'));
     }
 
     /**

@@ -20,6 +20,18 @@
     </div>
 @endif
 
+@if($errors->any())
+    <div class="alert alert-danger alert-dismissible" role="alert">
+        <strong>Atención: Revise los siguientes errores:</strong>
+        <ul class="mb-0 ps-3">
+            @foreach($errors->all() as $e)
+                <li>{{ $e }}</li>
+            @endforeach
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+@endif
+
 <div class="row g-3">
     <!-- Detalles de la Familia -->
     <div class="col-lg-4">
@@ -87,9 +99,9 @@
                     <h3 class="card-title"><i class="ti ti-users me-2"></i> Integrantes Registrados</h3>
                     <p class="card-subtitle text-secondary mb-0">Pacientes adscritos a este núcleo familiar.</p>
                 </div>
-                <a href="{{ route('pacientes.create', ['id_family' => $familia->id_family]) }}" class="btn btn-sm btn-primary">
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrearPacienteFamilia">
                     <i class="ti ti-plus me-1"></i> Agregar Paciente
-                </a>
+                </button>
             </div>
             <div class="table-responsive">
                 <table class="table table-vcenter card-table">
@@ -134,4 +146,104 @@
         </div>
     </div>
 </div>
+
+{{-- MODAL CREAR PACIENTE PARA ESTA FAMILIA --}}
+<div class="modal fade" id="modalCrearPacienteFamilia" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="ti ti-user-plus me-2"></i> Agregar Paciente a la Familia #{{ $familia->numero_familia }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('pacientes.store') }}" method="POST">
+                @csrf
+                <input type="hidden" name="id_family" value="{{ $familia->id_family }}">
+                <input type="hidden" name="numero_expediente_fisico" value="{{ $familia->numero_familia }}">
+                
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small fw-bold">Núcleo Familiar Asignado:</label>
+                        <div class="form-control bg-light fw-bold text-dark">
+                            Familia: {{ $familia->numero_familia }} — Cabeza: {{ $familia->apellido_cabeza }} ({{ $familia->comunidad->nombre ?? 'Sin comunidad' }})
+                        </div>
+                    </div>
+
+                    <h6 class="text-secondary border-bottom pb-2 mb-3">Información Personal del Paciente</h6>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label required" for="create_nombres">Nombres</label>
+                            <input type="text" id="create_nombres" name="nombres" class="form-control" required placeholder="Ej: María Mercedes">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label required" for="create_apellidos">Apellidos</label>
+                            <input type="text" id="create_apellidos" name="apellidos" class="form-control" required placeholder="Ej: Gómez Pérez">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label required" for="create_fecha_nacimiento">Fecha Nacimiento</label>
+                            <input type="date" id="create_fecha_nacimiento" name="fecha_nacimiento" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label required" for="create_sexo">Sexo</label>
+                            <select id="create_sexo" name="sexo" class="form-select" required>
+                                <option value="">-- Seleccionar --</option>
+                                <option value="M">Masculino (M)</option>
+                                <option value="F">Femenino (F)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="create_dpi">DPI (13 dígitos)</label>
+                            <input type="text" id="create_dpi" name="dpi" class="form-control" maxlength="13" placeholder="Ej: 1987654320101">
+                            <span id="msg-dup-dpi" class="form-hint fw-bold"></span>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="create_telefono">Teléfono de Contacto (8 dígitos)</label>
+                            <input type="text" id="create_telefono" name="telefono" class="form-control" maxlength="8" placeholder="Ej: 55551234">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy me-1"></i> Guardar Paciente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endsection
+
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const dpiInput = document.getElementById('create_dpi');
+    const msgEl = document.getElementById('msg-dup-dpi');
+
+    if (dpiInput) {
+        dpiInput.addEventListener('blur', function () {
+            const val = this.value.trim();
+            if (!val) {
+                msgEl.textContent = '';
+                return;
+            }
+
+            fetch(`/pacientes/verificar-duplicado?tipo=dpi&valor=${encodeURIComponent(val)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.duplicate) {
+                        msgEl.className = 'form-hint text-danger fw-bold';
+                        msgEl.textContent = '⚠ ' + data.message;
+                    } else {
+                        msgEl.className = 'form-hint text-success fw-bold';
+                        msgEl.textContent = '✓ Disponible';
+                    }
+                });
+        });
+    }
+});
+</script>
 @endsection

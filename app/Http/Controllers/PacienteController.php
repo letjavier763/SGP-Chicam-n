@@ -39,8 +39,9 @@ class PacienteController extends Controller
         }
 
         $pacientes = $query->orderBy('id_paciente', 'desc')->paginate(15)->withQueryString();
+        $familias = Familia::where('activo', true)->orderBy('numero_familia')->get();
 
-        return view('pacientes.index', compact('pacientes'));
+        return view('pacientes.index', compact('pacientes', 'familias'));
     }
 
     public function create(Request $request)
@@ -54,7 +55,6 @@ class PacienteController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'id_family'                 => 'required|exists:familias,id_family',
             'nombres'                   => 'required|string|max:100',
             'apellidos'                 => 'required|string|max:100',
             'dpi'                       => 'nullable|string|digits:13',
@@ -62,9 +62,45 @@ class PacienteController extends Controller
             'fecha_nacimiento'          => 'required|date|before_or_equal:today',
             'sexo'                      => 'required|in:M,F',
             'telefono'                  => 'nullable|string|digits:8',
+            'id_family'                 => 'nullable|integer',
+            'numero_familia'            => 'nullable|string|max:50',
+            'id_comunidad'              => 'nullable|exists:comunidades,id_comunidad',
         ]);
 
-        $familia = Familia::findOrFail($validated['id_family']);
+        // Resolver la familia: usar id_family directo, o buscar/crear por numero_familia
+        $familia = null;
+        if (!empty($validated['id_family'])) {
+            $familia = Familia::findOrFail($validated['id_family']);
+        } elseif (!empty($validated['numero_familia'])) {
+            $familia = Familia::where('numero_familia', $validated['numero_familia'])->first();
+            if (!$familia) {
+                // Si la familia no existe, la comunidad es obligatoria
+                if (empty($request->id_comunidad)) {
+                    return back()->withInput()->withErrors([
+                        'id_comunidad' => 'La comunidad es obligatoria para registrar un nuevo núcleo familiar.'
+                    ]);
+                }
+
+                // Crear familia nueva con el número proporcionado
+                $familia = Familia::create([
+                    'numero_familia'  => $validated['numero_familia'],
+                    'apellido_cabeza' => $validated['apellidos'],
+                    'id_comunidad'    => $request->id_comunidad,
+                    'activo'          => true,
+                    'fecha_registro'  => now(),
+                ]);
+                Bitacora::registrar(
+                    Auth::id(), 'crear', 'familias', $familia->id_family,
+                    "Familia #{$familia->numero_familia} creada automáticamente al registrar paciente.",
+                    $request->ip()
+                );
+            }
+        }
+
+        if (!$familia) {
+            return back()->withInput()->withErrors(['numero_familia' => 'Debe indicar un número de familia válido.']);
+        }
+
         $expInput = $request->input('numero_expediente_fisico');
         $expedienteNumero = !empty($expInput) ? $expInput : $familia->numero_familia;
 
@@ -102,6 +138,32 @@ class PacienteController extends Controller
         Bitacora::registrar(Auth::id(), 'crear', 'pacientes', $paciente->id_paciente,
             "{$paciente->nombres} {$paciente->apellidos} registrado.", $request->ip());
 
+        // Lógica especial si proviene del modal de Ventanilla
+        if ($request->has('desde_ventanilla') && $request->filled('turno_id')) {
+            $turnoId = $request->input('turno_id');
+            
+            $registro = \App\Models\RegistroLlegada::create([
+                'id_paciente'   => $paciente->id_paciente,
+                'id_turno'      => $turnoId,
+                'fecha'         => today(),
+                'hora_llegada'  => now()->format('H:i'),
+                'es_nuevo'      => true,
+                'observaciones' => 'Primer ingreso registrado automáticamente al crear paciente.',
+            ]);
+
+            Bitacora::registrar(
+                Auth::id(),
+                'crear',
+                'registros_llegada',
+                $registro->id_registro,
+                "Llegada de primer ingreso registrada automáticamente: Paciente #{$paciente->id_paciente} en turno #{$turnoId}",
+                $request->ip()
+            );
+
+            return redirect()->route('ventanilla.index', ['turno_id' => $turnoId])
+                ->with('success', 'Paciente guardado y primera llegada registrada correctamente.');
+        }
+
         return redirect()->route('pacientes.show', $paciente->id_paciente)
             ->with('success', 'Paciente registrado exitosamente en la familia #' . $familia->numero_familia);
     }
@@ -109,7 +171,8 @@ class PacienteController extends Controller
     public function show($id)
     {
         $paciente = Paciente::with(['familia.comunidad.municipio.departamento', 'registrosLlegada'])->findOrFail($id);
-        return view('pacientes.show', compact('paciente'));
+        $familias = Familia::where('activo', true)->orderBy('numero_familia')->get();
+        return view('pacientes.show', compact('paciente', 'familias'));
     }
 
     public function edit($id)
