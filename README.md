@@ -17,45 +17,6 @@ Sistema web para el registro y gestión de pacientes del **Centro de Atención P
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) 
 - Git
 
-## Inicio Rápido
-
-### 1. Clonar y preparar
-```bash
-cd PG2/sgp
-```
-
-### 2. Levantar el entorno completo
-```bash
-docker-compose up -d --build
-```
-> La primera vez tarda ~5 minutos mientras descarga las imágenes.
-
-### 3. Correr migraciones y datos iniciales
-```bash
-docker-compose exec app php artisan migrate:fresh --seed
-```
-
-### 4. Generar clave de aplicación (si es necesario)
-```bash
-docker-compose exec app php artisan key:generate
-```
-
-### 5. Ajustar permisos de storage
-```bash
-docker-compose exec app chmod -R 775 storage bootstrap/cache
-```
-
-## Accesos
-
-| Servicio | URL | Credenciales |
-|---------|-----|-------------|
-| Aplicación web | http://localhost:8080 | - |
-| pgAdmin | http://localhost:5050 | admin@sgp.gt / pgadmin2026 |
-
-### Usuario administrador por defecto
-- **Username:** `admin`
-- **Contraseña:** `Admin@2026!`
-
 ## Estructura del Proyecto
 
 ```
@@ -91,12 +52,3 @@ docker-compose down
 docker-compose down -v
 ```
 
-## Conexión a pgAdmin
-
-Al entrar a pgAdmin por primera vez:
-1. Add New Server
-2. **Host:** `db`
-3. **Port:** `5432`
-4. **Database:** `sgp_chicaman`
-5. **Username:** `sgp_user`
-6. **Password:** `sgp_secure_pass_2026`
