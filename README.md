@@ -6,7 +6,7 @@ Sistema web para el registro y gestión de pacientes del **Centro de Atención P
 
 | Capa | Tecnología |
 |------|-----------|
-| Backend | Laravel 10 (PHP 8.1) |
+| Backend | Laravel 10 (PHP 8.3) |
 | Base de datos | PostgreSQL 15 |
 | Servidor web | Nginx (alpine) |
 | Admin BD | pgAdmin 4 |
