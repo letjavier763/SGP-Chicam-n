@@ -4,8 +4,115 @@
 @section('page_title', 'Panel de Control General')
 
 @section('content')
-{{-- ── Tarjetas de estadísticas ─────────────────────────── --}}
-<div class="row row-cards mb-4">
+
+{{-- ══════════════════════════════════════════════════════
+     HERO MÓVIL — Solo visible en teléfonos (< 768px)
+     ══════════════════════════════════════════════════════ --}}
+<div class="d-md-none mb-3">
+
+    {{-- Tarjeta de turno actual --}}
+    <div class="mob-turno-card mb-3">
+        <div class="mob-turno-top">
+            <div class="mob-turno-icon">
+                <i class="ti ti-clock"></i>
+            </div>
+            <div class="mob-turno-info">
+                <div class="mob-turno-label">
+                    TURNO ACTUAL
+                    @if($turnoHoy)
+                        <span class="mob-badge-activo">Activo</span>
+                    @else
+                        <span class="mob-badge-inactivo">Sin turno</span>
+                    @endif
+                </div>
+                <div class="mob-turno-nombre">
+                    @if($turnoHoy)
+                        {{ ucfirst($turnoHoy->tipo_turno) }}
+                        ({{ \Carbon\Carbon::parse($turnoHoy->hora_inicio)->format('H:i') }}
+                        – {{ \Carbon\Carbon::parse($turnoHoy->hora_fin)->format('H:i') }})
+                    @else
+                        No asignado hoy
+                    @endif
+                </div>
+            </div>
+        </div>
+        <div class="mob-turno-bottom">
+            <span class="mob-turno-fecha">
+                <i class="ti ti-calendar me-1"></i>
+                {{ now()->locale('es')->isoFormat('dddd, D [de] MMMM YYYY') }}
+            </span>
+            <span class="mob-turno-modo">Modo&nbsp; CAP-Ventanilla</span>
+        </div>
+    </div>
+
+    {{-- Encabezado de sección --}}
+    <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+        <h2 class="mob-panel-title">Panel de Control General</h2>
+        <span class="mob-panel-updated">
+            Actualizado {{ now()->format('H:i') }}
+        </span>
+    </div>
+
+    {{-- Tarjetas de métricas 2×2 --}}
+    <div class="mob-metrics-grid">
+
+        {{-- Pacientes --}}
+        <div class="mob-metric-card">
+            <div class="mob-metric-header">
+                <span class="mob-metric-label">Pacientes Reg.</span>
+                <span class="mob-metric-icon mob-icon-primary">
+                    <i class="ti ti-users"></i>
+                </span>
+            </div>
+            <div class="mob-metric-value">{{ $totalPacientes }}</div>
+        </div>
+
+        {{-- Llegadas hoy --}}
+        <div class="mob-metric-card">
+            <div class="mob-metric-header">
+                <span class="mob-metric-label">Llegadas Hoy</span>
+                <span class="mob-metric-icon mob-icon-success">
+                    <i class="ti ti-calendar-event"></i>
+                </span>
+            </div>
+            <div class="mob-metric-value">{{ $llegadasHoy }}</div>
+        </div>
+
+        {{-- Alertas --}}
+        <div class="mob-metric-card">
+            <div class="mob-metric-header">
+                <span class="mob-metric-label">Alertas Duplic.</span>
+                <span class="mob-metric-icon mob-icon-danger">
+                    <i class="ti ti-alert-triangle"></i>
+                </span>
+            </div>
+            <div class="mob-metric-value">{{ $alertasDuplicado }}</div>
+        </div>
+
+        {{-- Turno --}}
+        <div class="mob-metric-card">
+            <div class="mob-metric-header">
+                <span class="mob-metric-label">Turno de Hoy</span>
+                <span class="mob-metric-icon mob-icon-warning">
+                    <i class="ti ti-clock"></i>
+                </span>
+            </div>
+            @if($turnoHoy)
+                <div class="mob-metric-value" style="font-size:1.125rem;">
+                    {{ ucfirst($turnoHoy->tipo_turno) }}
+                </div>
+            @else
+                <div class="mob-metric-value" style="font-size:1rem;color:var(--on-surface-variant);">
+                    Sin turno
+                </div>
+            @endif
+        </div>
+
+    </div>
+</div>
+
+{{-- ── Tarjetas de estadísticas (Desktop) ─────────────────── --}}
+<div class="row row-cards mb-4 d-none d-md-flex">
     {{-- Total Pacientes --}}
     <div class="col-sm-6 col-lg-3">
         <div class="card card-sm">

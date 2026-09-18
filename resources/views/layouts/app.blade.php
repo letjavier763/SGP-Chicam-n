@@ -2,16 +2,19 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>@yield('title', 'SGP') | CAP Chicamán</title>
     
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- Tabler UI Core CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css">
     <!-- Tabler Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
     
-    <!-- Estilos Adicionales Personalizados -->
-    <link rel="stylesheet" href="{{ asset('css/style.css') }}?v=11">
+    <!-- Estilos del Design System SGP Chicamán -->
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}?v=16">
     @yield('styles')
 </head>
 <body>
@@ -23,7 +26,7 @@
                 <button class="navbar-toggler text-white border-0" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="Toggle navigation" style="padding: 4px 8px;">
                     <i class="ti ti-menu" style="font-size: 1.65rem; color: #ffffff !important;"></i>
                 </button>
-                
+
                 <h1 class="navbar-brand navbar-brand-autodark">
                     <a href="{{ route('dashboard') }}" class="d-flex align-items-center gap-2 text-decoration-none text-white">
                         <span>SGP Chicamán</span>
@@ -43,6 +46,27 @@
                 @endauth
 
                 <div class="collapse navbar-collapse" id="sidebar-menu">
+
+                    {{-- Info de usuario visible en móvil dentro del menú --}}
+                    @auth
+                    <div class="d-flex d-lg-none align-items-center gap-2 px-2 py-3 mb-1" style="border-bottom:1px solid rgba(255,255,255,0.08);">
+                        <span class="avatar avatar-sm bg-primary rounded-circle text-white fw-bold" style="flex-shrink:0;">
+                            {{ strtoupper(substr(Auth::user()->nombre_completo, 0, 2)) }}
+                        </span>
+                        <div style="overflow:hidden;">
+                            <div class="text-white fw-semibold" style="font-size:0.875rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                {{ Auth::user()->nombre_completo }}
+                            </div>
+                            <div style="font-size:0.6875rem;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;">
+                                {{ Auth::user()->rol->nombre_rol }}
+                            </div>
+                        </div>
+                        <div class="ms-auto" style="font-size:0.75rem;color:#94a3b8;white-space:nowrap;">
+                            <i class="ti ti-calendar me-1"></i>{{ now()->locale('es')->isoFormat('D MMM') }}
+                        </div>
+                    </div>
+                    @endauth
+
                     <ul class="navbar-nav pt-lg-3">
                         {{-- Dashboard --}}
                         <li class="nav-item {{ Request::routeIs('dashboard') ? 'active' : '' }}">
@@ -60,12 +84,8 @@
                                         <span class="nav-link-title">Ventanilla</span>
                                     </a>
                                     <div class="dropdown-menu {{ Request::routeIs('ventanilla.*', 'turnos.*') ? 'show' : '' }}">
-                                        <a class="dropdown-item {{ Request::routeIs('ventanilla.*') ? 'active' : '' }}" href="{{ route('ventanilla.index') }}">
-                                            Ventanilla
-                                        </a>
-                                        <a class="dropdown-item {{ Request::routeIs('turnos.*') ? 'active' : '' }}" href="{{ route('turnos.index') }}">
-                                            Turnos del Personal
-                                        </a>
+                                        <a class="dropdown-item {{ Request::routeIs('ventanilla.*') ? 'active' : '' }}" href="{{ route('ventanilla.index') }}">Ventanilla</a>
+                                        <a class="dropdown-item {{ Request::routeIs('turnos.*') ? 'active' : '' }}" href="{{ route('turnos.index') }}">Turnos del Personal</a>
                                     </div>
                                 </li>
                             @endif
@@ -77,12 +97,8 @@
                                         <span class="nav-link-title">Registros</span>
                                     </a>
                                     <div class="dropdown-menu {{ Request::routeIs('pacientes.*', 'familias.*') ? 'show' : '' }}">
-                                        <a class="dropdown-item {{ Request::routeIs('pacientes.*') ? 'active' : '' }}" href="{{ route('pacientes.index') }}">
-                                            Pacientes
-                                        </a>
-                                        <a class="dropdown-item {{ Request::routeIs('familias.*') ? 'active' : '' }}" href="{{ route('familias.index') }}">
-                                            Núcleos Familiares
-                                        </a>
+                                        <a class="dropdown-item {{ Request::routeIs('pacientes.*') ? 'active' : '' }}" href="{{ route('pacientes.index') }}">Pacientes</a>
+                                        <a class="dropdown-item {{ Request::routeIs('familias.*') ? 'active' : '' }}" href="{{ route('familias.index') }}">Núcleos Familiares</a>
                                     </div>
                                 </li>
                             @endif
@@ -94,9 +110,7 @@
                                         <span class="nav-link-title">Reportería</span>
                                     </a>
                                     <div class="dropdown-menu {{ Request::routeIs('reportes.*') ? 'show' : '' }}">
-                                        <a class="dropdown-item {{ Request::routeIs('reportes.*') ? 'active' : '' }}" href="{{ route('reportes.index') }}">
-                                            Estadísticas y Reportes
-                                        </a>
+                                        <a class="dropdown-item {{ Request::routeIs('reportes.*') ? 'active' : '' }}" href="{{ route('reportes.index') }}">Estadísticas y Reportes</a>
                                     </div>
                                 </li>
                             @endif
@@ -108,19 +122,25 @@
                                         <span class="nav-link-title">Administración</span>
                                     </a>
                                     <div class="dropdown-menu {{ Request::routeIs('alertas.*', 'bitacora.*', 'personal.*') ? 'show' : '' }}">
-                                        <a class="dropdown-item {{ Request::routeIs('personal.*') ? 'active' : '' }}" href="{{ route('personal.index') }}">
-                                            Gestión de Personal
-                                        </a>
-                                        <a class="dropdown-item {{ Request::routeIs('alertas.*') ? 'active' : '' }}" href="{{ route('alertas.index') }}">
-                                            Alertas Duplicidad
-                                        </a>
-                                        <a class="dropdown-item {{ Request::routeIs('bitacora.*') ? 'active' : '' }}" href="{{ route('bitacora.index') }}">
-                                            Bitácora
-                                        </a>
+                                        <a class="dropdown-item {{ Request::routeIs('personal.*') ? 'active' : '' }}" href="{{ route('personal.index') }}">Gestión de Personal</a>
+                                        <a class="dropdown-item {{ Request::routeIs('alertas.*') ? 'active' : '' }}" href="{{ route('alertas.index') }}">Alertas Duplicidad</a>
+                                        <a class="dropdown-item {{ Request::routeIs('bitacora.*') ? 'active' : '' }}" href="{{ route('bitacora.index') }}">Bitácora</a>
                                     </div>
                                 </li>
                             @endif
 
+                        @endauth
+
+                        {{-- Logout accesible en móvil --}}
+                        @auth
+                        <li class="nav-item d-lg-none mt-2" style="border-top:1px solid rgba(255,255,255,0.08);padding-top:0.5rem;">
+                            <form action="{{ route('logout') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="nav-link w-100 text-start" style="background:none;border:none;color:#f87171;font-weight:600;">
+                                    <i class="ti ti-logout me-2"></i> Cerrar Sesión
+                                </button>
+                            </form>
+                        </li>
                         @endauth
                     </ul>
                 </div>

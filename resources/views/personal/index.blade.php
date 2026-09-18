@@ -4,12 +4,12 @@
 @section('page_title', 'Administración de Personal y Accesos')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex justify-content-between align-items-start align-items-md-center flex-wrap gap-2 mb-3">
     <div>
-        <h3 class="mb-1 text-dark">Personal y Usuarios del Sistema</h3>
-        <p class="text-secondary mb-0 small">Consulte, registre y gestione los usuarios que acceden al sistema, sus roles y estados de cuenta.</p>
+        <h3 class="mb-0 mb-md-1 text-dark">Personal y Usuarios del Sistema</h3>
+        <p class="text-secondary mb-0 small d-none d-md-block">Consulte, registre y gestione los usuarios que acceden al sistema, sus roles y estados de cuenta.</p>
     </div>
-    <a href="{{ route('personal.create') }}" class="btn btn-primary">
+    <a href="{{ route('personal.create') }}" class="btn btn-primary w-100 w-md-auto">
         <i class="ti ti-plus me-1"></i> Registrar Nuevo Personal
     </a>
 </div>
@@ -36,13 +36,13 @@
 
 <!-- Filtros de búsqueda -->
 <div class="card mb-3">
-    <div class="card-body">
+    <div class="card-body p-2 p-md-3">
         <form method="GET" action="{{ route('personal.index') }}" class="row g-2 align-items-end" id="filter-form">
-            <div class="col-md-4">
+            <div class="col-12 col-md-4">
                 <label class="form-label" for="buscar">Buscar Nombre o Usuario</label>
                 <input type="text" id="buscar" name="buscar" class="form-control" value="{{ request('buscar') }}" placeholder="Ej: María Mercedes o admin..." autocomplete="off">
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
                 <label class="form-label" for="id_rol">Rol</label>
                 <select id="id_rol" name="id_rol" class="form-select">
                     <option value="">-- Todos los roles --</option>
@@ -53,7 +53,7 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
                 <label class="form-label" for="estado">Estado</label>
                 <select id="estado" name="estado" class="form-select">
                     <option value="">-- Todos los estados --</option>
@@ -61,7 +61,7 @@
                     <option value="inactivo" {{ request('estado') === 'inactivo' ? 'selected' : '' }}>Inactivos</option>
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-12 col-md-2">
                 <a href="{{ route('personal.index') }}" class="btn btn-outline-secondary w-100">
                     <i class="ti ti-rotate-clockwise me-1"></i> Limpiar Filtros
                 </a>
@@ -72,8 +72,8 @@
 
 <!-- Listado de Personal -->
 <div class="card" id="list-container">
-    <div class="card-header">
-        <h3 class="card-title">
+    <div class="card-header d-flex justify-content-between align-items-center py-2 px-3">
+        <h3 class="card-title mb-0">
             <i class="ti ti-users me-2 text-primary"></i>
             Personal Registrado
         </h3>
@@ -183,13 +183,13 @@
     <div class="divide-y d-md-none">
         @forelse($personal as $p)
             <div class="p-3">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="avatar avatar-sm bg-blue-lt text-blue rounded-circle fw-bold">
+                <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                    <div class="d-flex align-items-center gap-2 min-w-0">
+                        <span class="avatar avatar-sm bg-blue-lt text-blue rounded-circle fw-bold flex-shrink-0">
                             {{ strtoupper(substr($p->nombre_completo, 0, 2)) }}
                         </span>
-                        <div>
-                            <div class="fw-bold" style="font-size: 0.95rem;">
+                        <div class="min-w-0">
+                            <div class="fw-bold text-truncate" style="font-size: 0.925rem;">
                                 {{ $p->nombre_completo }}
                                 @if(Auth::id() == $p->id_usuario)
                                     <span class="badge bg-purple-lt text-purple ms-1">Tú</span>
@@ -198,7 +198,7 @@
                             <div class="text-secondary small font-monospace">{{ $p->username }}</div>
                         </div>
                     </div>
-                    <div>
+                    <div class="d-flex flex-column align-items-end gap-1 flex-shrink-0">
                         @php
                             $roleColors = [
                                 'Administrador' => 'danger',
@@ -210,19 +210,6 @@
                         <span class="badge bg-{{ $color }}-lt text-{{ $color }}">
                             {{ $p->rol->nombre_rol }}
                         </span>
-                    </div>
-                </div>
-                
-                <div class="d-flex justify-content-between align-items-center small text-secondary mb-2" style="font-size: 0.8rem;">
-                    <div>
-                        <i class="ti ti-clock me-1"></i>
-                        @if($p->ultimo_acceso)
-                            {{ \Carbon\Carbon::parse($p->ultimo_acceso)->format('d/m/Y H:i') }}
-                        @else
-                            <span class="text-muted">Nunca ingresó</span>
-                        @endif
-                    </div>
-                    <div>
                         @if($p->activo)
                             <span class="badge bg-success-lt text-success">Activo</span>
                         @else
@@ -231,8 +218,8 @@
                     </div>
                 </div>
                 
-                <div class="d-flex gap-2 justify-content-end pt-1">
-                    <a href="{{ route('personal.edit', $p->id_usuario) }}" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size: 0.75rem;">
+                <div class="d-flex gap-2 justify-content-end pt-2 border-top border-light">
+                    <a href="{{ route('personal.edit', $p->id_usuario) }}" class="btn btn-sm btn-outline-primary py-1 px-2.5" style="font-size: 0.775rem;">
                         <i class="ti ti-edit me-1"></i> Editar
                     </a>
 
@@ -241,11 +228,11 @@
                             @csrf
                             @method('PATCH')
                             @if($p->activo)
-                                <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2" style="font-size: 0.75rem;" onclick="return confirm('¿Está seguro de que desea desactivar a este usuario? Perderá el acceso inmediatamente.')">
+                                <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2.5" style="font-size: 0.775rem;" onclick="return confirm('¿Está seguro de que desea desactivar a este usuario? Perderá el acceso inmediatamente.')">
                                     <i class="ti ti-circle-x me-1"></i> Desactivar
                                 </button>
                             @else
-                                <button type="submit" class="btn btn-sm btn-outline-success py-1 px-2" style="font-size: 0.75rem;">
+                                <button type="submit" class="btn btn-sm btn-outline-success py-1 px-2.5" style="font-size: 0.775rem;">
                                     <i class="ti ti-circle-check me-1"></i> Activar
                                 </button>
                             @endif

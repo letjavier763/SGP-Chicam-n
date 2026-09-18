@@ -30,9 +30,8 @@ class Paciente extends Model
         'activo'           => 'boolean',
     ];
 
-    // -------------------------
+
     // Relaciones
-    // -------------------------
 
     public function familia()
     {
@@ -44,17 +43,16 @@ class Paciente extends Model
         return $this->hasMany(RegistroLlegada::class, 'id_paciente', 'id_paciente');
     }
 
-    // -------------------------
-    // Scopes útiles
-    // -------------------------
 
-    /** Sólo pacientes activos */
+    // Scopes 
+
+    /* pacientes activos */
     public function scopeActivos($query)
     {
         return $query->where('activo', true);
     }
 
-    /** Búsqueda rápida por nombre, DPI o número de expediente */
+    /* Búsqueda rápida por nombre, DPI o número de expediente */
     public function scopeBuscar($query, string $termino)
     {
         return $query->where(function ($q) use ($termino) {

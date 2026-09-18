@@ -22,7 +22,7 @@
 <div class="row g-3">
 
     {{-- ============================================================
-         COLUMNA IZQUIERDA: Selección de turno + Registro
+        Selección de turno y Registro
     ============================================================ --}}
     <div class="col-lg-5">
 
@@ -517,14 +517,14 @@ document.addEventListener('DOMContentLoaded', function () {
         suggestions.style.display = 'block';
     }
 
-    // ── Modal de Confirmación de Anulación ─────────────────────────
+    // ── Modal de Confirmación de Anulación 
     document.querySelectorAll('.btn-anular').forEach(btn => {
         btn.addEventListener('click', function () {
             document.getElementById('formAnularLlegada').action = this.getAttribute('data-action');
         });
     });
 
-    // ── Modal Nuevo Paciente: ubicación cascada ─────────────────────────────
+    //  Modal Nuevo Paciente: ubicación cascada
     function setupCascadingUbicaciones(deptoId, muniId, comId, wrapperId, inputId) {
         const deptoSelect = document.getElementById(deptoId);
         const muniSelect = document.getElementById(muniId);
@@ -603,7 +603,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     setupCascadingUbicaciones('nv_id_depto', 'nv_id_muni', 'nv_id_comunidad', 'nv_new_comunidad_wrapper', 'nv_nueva_comunidad');
 
-    // ── Modal Nuevo Paciente: autocompletado de familia ──────────────────────
+    // ── Modal Nuevo Paciente: autocompletado de familia 
     const nvNumFamInput  = document.getElementById('nv_numero_familia');
     const nvIdFamInput   = document.getElementById('nv_id_family');
     const nvFamSug       = document.getElementById('nv_familia_suggestions');
@@ -735,7 +735,7 @@ document.addEventListener('DOMContentLoaded', function () {
         nvFamSug.style.display = 'block';
     }
 
-    // ── Modal Nuevo Paciente: verificar DPI duplicado ───────────────
+    // ── Modal Nuevo Paciente: verificar DPI duplicado 
     const nvDpi = document.getElementById('nv_dpi');
     const nvDpiMsg = document.getElementById('msg-nv-dpi');
     if (nvDpi && nvDpiMsg) {
