@@ -10,9 +10,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css">
     <!-- Tabler Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
-    <link rel="stylesheet" href="{{ asset('css/style.css') }}?v=3">
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}?v=25">
 </head>
 <body class="d-flex flex-column bg-body-tertiary min-vh-100 justify-content-center">
+    <!-- Barra de Transición de Módulos Superior -->
+    <div id="module-loading-bar" style="position: fixed; top: 0; left: 0; height: 3px; width: 0%; background: linear-gradient(90deg, #38bdf8, #0057cd); z-index: 9999; transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease; opacity: 0; pointer-events: none;"></div>
 
     <div class="page page-center">
         <div class="container container-tight py-4">
@@ -101,5 +103,36 @@
 
     <!-- Tabler UI JS -->
     <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var loaderBar = document.getElementById('module-loading-bar');
+            var loginForm = document.querySelector('form');
+            var cardEl = document.querySelector('.card-md');
+
+            if (loginForm) {
+                loginForm.addEventListener('submit', function() {
+                    if (loaderBar) {
+                        loaderBar.style.opacity = '1';
+                        loaderBar.style.width = '75%';
+                    }
+                    if (cardEl) {
+                        cardEl.style.transition = 'opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1), transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)';
+                        cardEl.style.opacity = '0.3';
+                        cardEl.style.transform = 'scale(0.98) translateY(-4px)';
+                    }
+                });
+            }
+
+            window.addEventListener('pageshow', function (event) {
+                if (loaderBar) {
+                    loaderBar.style.width = '100%';
+                    setTimeout(function() {
+                        loaderBar.style.opacity = '0';
+                        setTimeout(function() { loaderBar.style.width = '0%'; }, 400);
+                    }, 200);
+                }
+            });
+        });
+    </script>
 </body>
 </html>

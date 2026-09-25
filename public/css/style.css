@@ -150,6 +150,8 @@
 
 html {
     font-size: 15px;
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
 }
 
 @media (max-width: 767.98px) {
@@ -603,7 +605,7 @@ label {
 }
 
 /* Dropdown submenú en sidebar */
-.navbar-dark .dropdown-menu {
+.navbar-dark #sidebar-menu .dropdown-menu {
     background-color: transparent !important;
     border: none !important;
     box-shadow: none !important;
@@ -611,7 +613,7 @@ label {
     margin: 0 !important;
 }
 
-.navbar-dark .dropdown-item {
+.navbar-dark #sidebar-menu .dropdown-item {
     color: var(--sidebar-text-muted) !important;
     font-weight: 400 !important;
     font-size: 0.875rem !important;
@@ -620,16 +622,213 @@ label {
     transition: all 0.15s ease !important;
 }
 
-.navbar-dark .dropdown-item:hover {
+.navbar-dark #sidebar-menu .dropdown-item:hover {
     color: var(--sidebar-text-active) !important;
     background-color: rgba(255, 255, 255, 0.08) !important;
 }
 
-.navbar-dark .dropdown-item.active,
-.navbar-dark .dropdown-item:active {
+.navbar-dark #sidebar-menu .dropdown-item.active,
+.navbar-dark #sidebar-menu .dropdown-item:active {
     color: var(--sidebar-text-active) !important;
     background-color: rgba(0, 87, 205, 0.2) !important;
     font-weight: 600 !important;
+}
+
+
+
+/* ── Barra de Navegación Inferior (Móvil) ───────────────── */
+.mobile-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background-color: #0f172a !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    z-index: 1040;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 0.25rem;
+    box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.25);
+}
+
+@media (max-width: 991.98px) {
+    body,
+    .page-wrapper,
+    .page-body {
+        padding-bottom: 75px !important;
+    }
+}
+
+.mobile-bottom-nav .nav-item {
+    flex: 1;
+    text-align: center;
+    position: relative;
+}
+
+.mobile-bottom-nav .nav-link,
+.mobile-bottom-nav .dropup-toggle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8 !important;
+    text-decoration: none !important;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    padding: 0.4rem 0;
+    gap: 3px;
+    background: transparent !important;
+    border: none !important;
+    width: 100%;
+    transition: color 0.15s ease;
+}
+
+.mobile-bottom-nav .nav-link i,
+.mobile-bottom-nav .dropup-toggle i {
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.mobile-bottom-nav .nav-link.active,
+.mobile-bottom-nav .dropup.active .dropup-toggle,
+.mobile-bottom-nav .nav-link:hover,
+.mobile-bottom-nav .dropup-toggle:hover {
+    color: #38bdf8 !important;
+    font-weight: 600;
+}
+
+/* ── Unified Nav Dropdown & Dropup Design System ────────────────── */
+.dropdown-menu.dropdown-menu-nav-custom,
+.dropdown-menu-nav-custom,
+.mobile-bottom-nav .dropdown-menu,
+.dropdown-menu.mobile-user-dropdown,
+.mobile-user-dropdown {
+    background-color: #1e293b !important;
+    background: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.4) !important;
+    border-radius: 0.75rem !important;
+    padding: 0.375rem !important;
+    min-width: 210px !important;
+    z-index: 1060 !important;
+}
+
+.dropdown-header-custom {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.6875rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.07em !important;
+    color: #94a3b8 !important;
+    background-color: rgba(15, 23, 42, 0.6) !important;
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+    margin: -0.375rem -0.375rem 0.375rem -0.375rem !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.mobile-user-dropdown .mobile-user-name,
+.mobile-user-dropdown .mobile-user-name *,
+.mobile-user-dropdown .text-white {
+    color: #ffffff !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    padding: 0.45rem 0.75rem !important;
+}
+
+.dropdown-menu-nav-custom .dropdown-item,
+.mobile-bottom-nav .dropdown-item,
+.mobile-user-dropdown .dropdown-item {
+    color: #e2e8f0 !important;
+    font-size: 0.84375rem !important;
+    font-weight: 500 !important;
+    padding: 0.55rem 0.75rem !important;
+    border-radius: 0.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    transition: all 0.15s ease !important;
+    background: transparent !important;
+}
+
+.dropdown-menu-nav-custom .dropdown-item i,
+.mobile-bottom-nav .dropdown-item i,
+.mobile-user-dropdown .dropdown-item i {
+    font-size: 1.15rem !important;
+    color: #38bdf8;
+    flex-shrink: 0;
+}
+
+.dropdown-menu-nav-custom .dropdown-item:hover,
+.mobile-bottom-nav .dropdown-item:hover,
+.mobile-user-dropdown .dropdown-item:hover {
+    background-color: rgba(56, 189, 248, 0.12) !important;
+    color: #ffffff !important;
+    transform: translateX(2px);
+}
+
+.dropdown-menu-nav-custom .dropdown-item.active,
+.mobile-bottom-nav .dropdown-item.active {
+    background-color: rgba(56, 189, 248, 0.20) !important;
+    color: #38bdf8 !important;
+    font-weight: 600 !important;
+}
+
+.dropdown-menu-nav-custom .dropdown-item.text-danger,
+.mobile-bottom-nav .dropdown-item.text-danger,
+.mobile-user-dropdown .dropdown-item.text-danger {
+    color: #f87171 !important;
+}
+
+.dropdown-menu-nav-custom .dropdown-item.text-danger i,
+.mobile-bottom-nav .dropdown-item.text-danger i,
+.mobile-user-dropdown .dropdown-item.text-danger i {
+    color: #f87171 !important;
+}
+
+.dropdown-menu-nav-custom .dropdown-item.text-danger:hover,
+.mobile-bottom-nav .dropdown-item.text-danger:hover,
+.mobile-user-dropdown .dropdown-item.text-danger:hover {
+    background-color: rgba(248, 113, 113, 0.15) !important;
+    color: #ef4444 !important;
+}
+
+/* ── Transición Suave de Módulos (Estable sin Desplazamiento Horizontal) ──────── */
+@keyframes moduleFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    100% {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.page-wrapper {
+    animation: moduleFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* GESTIÓN DE MODALES: Garantiza que cualquier modal se muestre sobre el backdrop */
+.modal {
+    z-index: 1060 !important;
+}
+
+.modal-backdrop {
+    z-index: 1050 !important;
+}
+
+.modal.fade .modal-dialog {
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+.card-md,
+.auth-card {
+    animation: moduleFadeIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* ── Top Header (Tabler) ────────────────────────────────── */
@@ -866,7 +1065,7 @@ label {
 .badge-turno, .pill-turno         { background-color: var(--info-bg);    color: var(--info-text);    border-color: var(--info-border); }
 
 /* ── Dropdowns (Level 2 elevation) ──────────────────────── */
-.dropdown-menu {
+.dropdown-menu:not(.dropdown-menu-nav-custom):not(.mobile-user-dropdown):not(.dropup .dropdown-menu) {
     background-color: var(--card-bg) !important;
     border: 1px solid var(--card-border-hover) !important;
     border-radius: var(--radius-md) !important;
@@ -919,14 +1118,9 @@ label {
     letter-spacing: -0.01em !important;
 }
 
-/* Botón de cierre (X) en blanco sobre fondo azul */
+/* Botón de cierre (X) oculto en encabezados de modales */
 .modal-header .btn-close {
-    filter: invert(1) grayscale(100%) brightness(200%) !important;
-    opacity: 0.85 !important;
-}
-
-.modal-header .btn-close:hover {
-    opacity: 1 !important;
+    display: none !important;
 }
 
 .modal-body { padding: 1.25rem !important; }
@@ -971,10 +1165,20 @@ label {
 
 /* ── Inputs select Tabler overrides ─────────────────────── */
 .form-select {
+    padding-right: 2rem !important;
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23727787' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
     background-repeat: no-repeat !important;
-    background-position: right 0.75rem center !important;
-    background-size: 16px 12px !important;
+    background-position: right 0.6rem center !important;
+    background-size: 14px 10px !important;
+}
+
+@media (max-width: 575.98px) {
+    .form-select,
+    .form-control {
+        font-size: 0.8125rem !important;
+        padding-left: 0.55rem !important;
+        padding-right: 1.6rem !important;
+    }
 }
 
 /* ── Text color utilities ───────────────────────────────── */
@@ -1231,6 +1435,7 @@ label {
     /* Ajuste del brand en móvil */
     .navbar-brand {
         font-size: 1rem !important;
+        padding-left: 8px !important;
     }
 
     /* Ajuste del toggler */
@@ -1238,14 +1443,15 @@ label {
         padding: 6px 10px !important;
     }
 
-    /* Page wrapper: quitar padding lateral excesivo */
+    /* Page wrapper: quitar padding lateral excesivo conservando holgura inferior */
     .page-wrapper {
-        padding: 0 !important;
+        padding: 0 0 75px 0 !important;
     }
 
-    /* Page body padding reducido */
+    /* Page body padding reducido con holgura inferior */
     .page-body {
         padding-top: 0.75rem !important;
+        padding-bottom: 75px !important;
     }
 
     /* Container-xl sin márgenes laterales en xs */
@@ -1254,13 +1460,21 @@ label {
         padding-right: 0.75rem !important;
     }
 
-    /* Page header */
+    /* Page header en móvil */
     .page-header {
-        padding: 0.75rem 0 0.5rem !important;
+        padding: 0.5rem 0 0.25rem !important;
     }
 
     .page-title {
-        font-size: 1.125rem !important;
+        font-size: 1.05rem !important;
+        font-weight: 700 !important;
+        line-height: 1.25 !important;
+        letter-spacing: -0.015em !important;
+    }
+
+    .mob-panel-title {
+        font-size: 0.9375rem !important;
+        font-weight: 600 !important;
     }
 }
 
@@ -1277,18 +1491,28 @@ label {
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'><path stroke='rgb(255,255,255)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2.8' d='M4 7h22M4 15h22M4 23h22'/></svg>") !important;
 }
 
-/* ── Cards: padding reducido en móvil ───────────────────── */
+/* ── Cards y Módulos: Tipografía y padding optimizado en móvil ───────────────────── */
 @media (max-width: 767.98px) {
     .card-body {
-        padding: 0.875rem !important;
+        padding: 0.75rem 0.875rem !important;
     }
 
     .card-header {
-        padding: 0.75rem 0.875rem !important;
+        padding: 0.625rem 0.875rem !important;
+    }
+
+    .card-title,
+    .card-header h3,
+    .card-header h4,
+    .card-header .h3,
+    .card-header .h4 {
+        font-size: 0.9375rem !important;
+        font-weight: 600 !important;
+        line-height: 1.3 !important;
     }
 
     .card-footer {
-        padding: 0.75rem 0.875rem !important;
+        padding: 0.625rem 0.875rem !important;
     }
 
     /* Stat cards en columna de 2 */
@@ -1304,20 +1528,18 @@ label {
     }
 
     .stat-number {
-        font-size: 1.5rem;
+        font-size: 1.35rem;
     }
 
     .stat-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 1.125rem;
+        width: 38px;
+        height: 38px;
+        font-size: 1.1rem;
     }
 }
 
 /* ── Tablas responsivas ─────────────────────────────────── */
 @media (max-width: 767.98px) {
-    /* La tabla de escritorio se oculta con d-none d-md-block
-       ya en los Blades, pero forzamos table-responsive también */
     .table-responsive {
         border-radius: var(--radius-lg);
         -webkit-overflow-scrolling: touch;
@@ -1333,12 +1555,10 @@ label {
 
 /* ── Vista de tarjetas móvil (listas de pacientes, etc.) ── */
 @media (max-width: 767.98px) {
-    /* Cards de lista móvil */
     .divide-y > * + * {
         border-top: 1px solid var(--card-border);
     }
 
-    /* Asegurar que el contenedor móvil tenga borde y radio correcto */
     .divide-y.bg-white.border.rounded {
         background-color: var(--card-bg) !important;
         border-color: var(--card-border) !important;
@@ -1347,13 +1567,32 @@ label {
     }
 }
 
-/* ── Formularios móvil ──────────────────────────────────── */
+/* ── Formularios y Filtros de Módulos en Móvil ──────────────────── */
 @media (max-width: 767.98px) {
-    /* Todos los inputs a ancho completo */
+    /* Etiquetas de campo compactas y legibles */
+    .form-label,
+    label {
+        font-size: 0.72rem !important;
+        font-weight: 600 !important;
+        margin-bottom: 0.2rem !important;
+        letter-spacing: 0.02em !important;
+        text-transform: uppercase !important;
+        color: var(--on-surface-variant) !important;
+    }
+
+    /* Inputs y selects afinados */
     .form-control,
     .form-select {
-        font-size: 16px !important; /* evita zoom en iOS al focus */
-        height: 42px !important;
+        font-size: 0.84rem !important;
+        height: 38px !important;
+        min-height: 38px !important;
+        padding: 0.35rem 0.625rem !important;
+        border-radius: var(--radius-md) !important;
+    }
+
+    textarea.form-control {
+        height: auto !important;
+        min-height: 56px !important;
     }
 
     /* Botón de búsqueda/limpiar a ancho completo */
@@ -1386,7 +1625,7 @@ label {
 
 /* ── Modales responsivos ────────────────────────────────── */
 @media (max-width: 767.98px) {
-    /* Modal a pantalla casi completa */
+    /* Modal a pantalla adaptada en móvil */
     .modal-dialog {
         margin: 0.5rem !important;
         max-width: calc(100vw - 1rem) !important;
@@ -1397,37 +1636,81 @@ label {
     }
 
     .modal-header {
-        padding: 0.875rem 1rem !important;
+        padding: 0.65rem 0.875rem !important;
+    }
+
+    .modal-title {
+        font-size: 0.95rem !important;
+        font-weight: 600 !important;
     }
 
     .modal-body {
-        padding: 1rem !important;
-        max-height: calc(100vh - 200px);
+        padding: 0.875rem 1rem !important;
+        max-height: calc(100vh - 210px);
         overflow-y: auto;
     }
 
+    /* Reducir espacio vertical entre grupos de campos */
+    .modal .mb-3,
+    .modal .mb-2,
+    .modal .form-group {
+        margin-bottom: 0.625rem !important;
+    }
+
+    /* Títulos de sección dentro del modal (ej: "1. Adscripción...") */
+    .modal .modal-body h6,
+    .modal .modal-body .form-section-title {
+        font-size: 0.78rem !important;
+        margin-top: 0.4rem !important;
+        margin-bottom: 0.4rem !important;
+    }
+
+    /* Inputs y selects delgados y ajustados */
+    .modal .form-control,
+    .modal .form-select {
+        font-size: 0.875rem !important;
+        height: 38px !important;
+        min-height: 38px !important;
+        padding: 0.375rem 0.65rem !important;
+        border-radius: var(--radius-md) !important;
+    }
+
+    .modal textarea.form-control {
+        height: auto !important;
+        min-height: 56px !important;
+    }
+
+    /* Etiquetas de campo compactas */
+    .modal .form-label,
+    .modal label {
+        font-size: 0.72rem !important;
+        font-weight: 600 !important;
+        margin-bottom: 0.2rem !important;
+        letter-spacing: 0.02em !important;
+        text-transform: uppercase !important;
+    }
+
+    /* Footer con botones compactos al lado derecho */
     .modal-footer {
-        flex-direction: column-reverse !important;
-        align-items: stretch !important;
+        flex-direction: row !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
         gap: 0.5rem !important;
-        padding: 0.75rem 1rem !important;
+        padding: 0.625rem 0.875rem 0.875rem 0.875rem !important;
     }
 
     .modal-footer > * {
-        width: 100% !important;
+        flex: 0 0 auto !important;
+        width: auto !important;
         margin: 0 !important;
-    }
-
-    /* Inputs en modales: tamaño seguro en iOS */
-    .modal .form-control,
-    .modal .form-select {
-        font-size: 16px !important;
-        height: 44px !important;
-    }
-
-    .modal .form-label,
-    .modal label {
-        font-size: 0.6875rem !important;
+        height: 36px !important;
+        font-size: 0.8125rem !important;
+        font-weight: 600 !important;
+        padding: 0.35rem 0.875rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: var(--radius-md) !important;
     }
 }
 

@@ -37,7 +37,13 @@ class PersonalController extends Controller
         $personal = $query->orderBy('nombre_completo', 'asc')->paginate(15)->withQueryString();
         $roles = Rol::orderBy('nombre_rol', 'asc')->get();
 
-        return view('personal.index', compact('personal', 'roles'));
+        $stats = [
+            'total' => Usuario::count(),
+            'activos' => Usuario::where('activo', true)->count(),
+            'inactivos' => Usuario::where('activo', false)->count(),
+        ];
+
+        return view('personal.index', compact('personal', 'roles', 'stats'));
     }
 
     /**

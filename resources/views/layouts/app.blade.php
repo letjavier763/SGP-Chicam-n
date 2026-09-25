@@ -14,18 +14,18 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
     
     <!-- Estilos del Design System SGP Chicamán -->
-    <link rel="stylesheet" href="{{ asset('css/style.css') }}?v=16">
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}?v=40">
     @yield('styles')
 </head>
 <body>
+    <!-- Barra de Transición de Módulos Superior -->
+    <div id="module-loading-bar" style="position: fixed; top: 0; left: 0; height: 3px; width: 0%; background: linear-gradient(90deg, #38bdf8, #0057cd); z-index: 9999; transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease; opacity: 0; pointer-events: none;"></div>
+
     <div class="page">
         
         <!-- Sidebar Navigation (Menú Lateral Tabler) -->
         <aside class="navbar navbar-vertical navbar-expand-lg navbar-dark bg-dark">
             <div class="container-fluid">
-                <button class="navbar-toggler text-white border-0" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="Toggle navigation" style="padding: 4px 8px;">
-                    <i class="ti ti-menu" style="font-size: 1.65rem; color: #ffffff !important;"></i>
-                </button>
 
                 <h1 class="navbar-brand navbar-brand-autodark">
                     <a href="{{ route('dashboard') }}" class="d-flex align-items-center gap-2 text-decoration-none text-white">
@@ -36,42 +36,27 @@
                 @auth
                 <div class="navbar-nav flex-row d-lg-none">
                     <div class="nav-item dropdown">
-                        <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown">
-                            <span class="avatar avatar-sm bg-blue text-white rounded-circle">
+                        <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Abrir menú de usuario">
+                            <span class="avatar avatar-sm bg-blue text-white rounded-circle fw-bold">
                                 {{ strtoupper(substr(Auth::user()->nombre_completo, 0, 2)) }}
                             </span>
                         </a>
+                        <div class="dropdown-menu dropdown-menu-end mobile-user-dropdown shadow-lg">
+                            <button type="button" class="dropdown-item text-danger fw-bold" data-bs-toggle="modal" data-bs-target="#modalConfirmarLogout">
+                                <i class="ti ti-logout me-2"></i> Cerrar Sesión
+                            </button>
+                        </div>
                     </div>
                 </div>
                 @endauth
 
-                <div class="collapse navbar-collapse" id="sidebar-menu">
-
-                    {{-- Info de usuario visible en móvil dentro del menú --}}
-                    @auth
-                    <div class="d-flex d-lg-none align-items-center gap-2 px-2 py-3 mb-1" style="border-bottom:1px solid rgba(255,255,255,0.08);">
-                        <span class="avatar avatar-sm bg-primary rounded-circle text-white fw-bold" style="flex-shrink:0;">
-                            {{ strtoupper(substr(Auth::user()->nombre_completo, 0, 2)) }}
-                        </span>
-                        <div style="overflow:hidden;">
-                            <div class="text-white fw-semibold" style="font-size:0.875rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                                {{ Auth::user()->nombre_completo }}
-                            </div>
-                            <div style="font-size:0.6875rem;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;">
-                                {{ Auth::user()->rol->nombre_rol }}
-                            </div>
-                        </div>
-                        <div class="ms-auto" style="font-size:0.75rem;color:#94a3b8;white-space:nowrap;">
-                            <i class="ti ti-calendar me-1"></i>{{ now()->locale('es')->isoFormat('D MMM') }}
-                        </div>
-                    </div>
-                    @endauth
+                <div class="collapse navbar-collapse d-none d-lg-block" id="sidebar-menu">
 
                     <ul class="navbar-nav pt-lg-3">
-                        {{-- Dashboard --}}
+                        {{-- Dashboard / Inicio --}}
                         <li class="nav-item {{ Request::routeIs('dashboard') ? 'active' : '' }}">
                             <a class="nav-link" href="{{ route('dashboard') }}">
-                                <span class="nav-link-title">Dashboard</span>
+                                <i class="ti ti-home me-2"></i> <span class="nav-link-title">Inicio</span>
                             </a>
                         </li>
 
@@ -129,18 +114,13 @@
                                 </li>
                             @endif
 
-                        @endauth
-
-                        {{-- Logout accesible en móvil --}}
-                        @auth
-                        <li class="nav-item d-lg-none mt-2" style="border-top:1px solid rgba(255,255,255,0.08);padding-top:0.5rem;">
-                            <form action="{{ route('logout') }}" method="POST">
-                                @csrf
-                                <button type="submit" class="nav-link w-100 text-start" style="background:none;border:none;color:#f87171;font-weight:600;">
+                            {{-- Logout accesible en escritorio en el menú lateral --}}
+                            <li class="nav-item d-none d-lg-block mt-3" style="border-top:1px solid rgba(255,255,255,0.08);padding-top:0.5rem;">
+                                <button type="button" class="nav-link w-100 text-start" style="background:none;border:none;color:#f87171;font-weight:600;" data-bs-toggle="modal" data-bs-target="#modalConfirmarLogout">
                                     <i class="ti ti-logout me-2"></i> Cerrar Sesión
                                 </button>
-                            </form>
-                        </li>
+                            </li>
+
                         @endauth
                     </ul>
                 </div>
@@ -165,13 +145,10 @@
                                 <div class="mt-1 small text-secondary">{{ Auth::user()->rol->nombre_rol }}</div>
                             </div>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                            <form action="{{ route('logout') }}" method="POST">
-                                @csrf
-                                <button type="submit" class="dropdown-item text-danger fw-bold">
-                                    <i class="ti ti-logout me-2"></i> Cerrar Sesión
-                                </button>
-                            </form>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-nav-custom shadow-lg">
+                            <button type="button" class="dropdown-item text-danger fw-bold" data-bs-toggle="modal" data-bs-target="#modalConfirmarLogout">
+                                <i class="ti ti-logout me-2"></i> Cerrar Sesión
+                            </button>
                         </div>
                     </div>
                     @endauth
@@ -191,10 +168,22 @@
                 <div class="container-xl">
                     <div class="row g-2 align-items-center">
                         <div class="col">
-                            <h2 class="page-title text-primary-emphasis">
+                            <h2 class="page-title text-primary-emphasis mb-0">
                                 @yield('page_title', 'Inicio')
                             </h2>
+                            @hasSection('page_subtitle')
+                                <div class="text-secondary small mt-1">
+                                    @yield('page_subtitle')
+                                </div>
+                            @endif
                         </div>
+                        @hasSection('page_actions')
+                        <div class="col-auto ms-auto d-print-none">
+                            <div class="btn-list">
+                                @yield('page_actions')
+                            </div>
+                        </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -213,16 +202,184 @@
                 </div>
             </footer>
         </div>
+    @auth
+    <!-- Barra de Navegación Inferior (Móvil) -->
+    <nav class="mobile-bottom-nav d-lg-none d-print-none">
+        {{-- Inicio / Dashboard --}}
+        <div class="nav-item">
+            <a href="{{ route('dashboard') }}" class="nav-link {{ Request::routeIs('dashboard') ? 'active' : '' }}">
+                <i class="ti ti-home"></i>
+                <span>Inicio</span>
+            </a>
+        </div>
+
+        {{-- Ventanilla --}}
+        @if(Auth::user()->esAdministrador() || Auth::user()->esRecepcionista())
+            <div class="nav-item dropup {{ Request::routeIs('ventanilla.*', 'turnos.*') ? 'active' : '' }}">
+                <a href="#" class="dropup-toggle nav-link {{ Request::routeIs('ventanilla.*', 'turnos.*') ? 'active' : '' }}" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="ti ti-building-hospital"></i>
+                    <span>Ventanilla</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end dropdown-menu-nav-custom shadow-lg">
+                    <div class="dropdown-header-custom">
+                        <i class="ti ti-building-hospital"></i> Ventanilla
+                    </div>
+                    <a class="dropdown-item {{ Request::routeIs('ventanilla.*') ? 'active' : '' }}" href="{{ route('ventanilla.index') }}">
+                        <i class="ti ti-app-window me-2"></i> Ventanilla
+                    </a>
+                    <a class="dropdown-item {{ Request::routeIs('turnos.*') ? 'active' : '' }}" href="{{ route('turnos.index') }}">
+                        <i class="ti ti-clock-play me-2"></i> Turnos del Personal
+                    </a>
+                </div>
+            </div>
+        @endif
+
+        {{-- Registros --}}
+        @if(Auth::user()->esAdministrador() || Auth::user()->esRecepcionista())
+            <div class="nav-item dropup {{ Request::routeIs('pacientes.*', 'familias.*') ? 'active' : '' }}">
+                <a href="#" class="dropup-toggle nav-link {{ Request::routeIs('pacientes.*', 'familias.*') ? 'active' : '' }}" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="ti ti-folder"></i>
+                    <span>Registros</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end dropdown-menu-nav-custom shadow-lg">
+                    <div class="dropdown-header-custom">
+                        <i class="ti ti-folder"></i> Registros
+                    </div>
+                    <a class="dropdown-item {{ Request::routeIs('pacientes.*') ? 'active' : '' }}" href="{{ route('pacientes.index') }}">
+                        <i class="ti ti-user-heart me-2"></i> Pacientes
+                    </a>
+                    <a class="dropdown-item {{ Request::routeIs('familias.*') ? 'active' : '' }}" href="{{ route('familias.index') }}">
+                        <i class="ti ti-users-group me-2"></i> Núcleos Familiares
+                    </a>
+                </div>
+            </div>
+        @endif
+
+        {{-- Reportería --}}
+        @if(Auth::user()->esAdministrador() || Auth::user()->esDirector())
+            <div class="nav-item">
+                <a href="{{ route('reportes.index') }}" class="nav-link {{ Request::routeIs('reportes.*') ? 'active' : '' }}">
+                    <i class="ti ti-chart-bar"></i>
+                    <span>Reportes</span>
+                </a>
+            </div>
+        @endif
+
+        {{-- Administración --}}
+        @if(Auth::user()->esAdministrador())
+            <div class="nav-item dropup {{ Request::routeIs('alertas.*', 'bitacora.*', 'personal.*') ? 'active' : '' }}">
+                <a href="#" class="dropup-toggle nav-link {{ Request::routeIs('alertas.*', 'bitacora.*', 'personal.*') ? 'active' : '' }}" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="ti ti-settings"></i>
+                    <span>Admin</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end dropdown-menu-nav-custom shadow-lg">
+                    <div class="dropdown-header-custom">
+                        <i class="ti ti-settings"></i> Administración
+                    </div>
+                    <a class="dropdown-item {{ Request::routeIs('personal.*') ? 'active' : '' }}" href="{{ route('personal.index') }}">
+                        <i class="ti ti-user-cog me-2"></i> Gestión de Personal
+                    </a>
+                    <a class="dropdown-item {{ Request::routeIs('alertas.*') ? 'active' : '' }}" href="{{ route('alertas.index') }}">
+                        <i class="ti ti-bell-alert me-2"></i> Alertas Duplicidad
+                    </a>
+                    <a class="dropdown-item {{ Request::routeIs('bitacora.*') ? 'active' : '' }}" href="{{ route('bitacora.index') }}">
+                        <i class="ti ti-history me-2"></i> Bitácora
+                    </a>
+                </div>
+            </div>
+        @endif
+    </nav>
+    @endauth
+
+    @auth
+    <!-- Modal Confirmación de Cerrar Sesión (Integrado en el Design System SGP) -->
+    <div class="modal modal-blur fade" id="modalConfirmarLogout" tabindex="-1" aria-labelledby="modalConfirmarLogoutLabel" aria-hidden="true">
+        <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-body text-center py-4 px-4">
+                    <h3 class="fw-bold text-dark mb-2" id="modalConfirmarLogoutLabel" style="font-size: 1.15rem;">¿Cerrar Sesión?</h3>
+                    <p class="text-secondary small mb-0" style="line-height: 1.45;">
+                        ¿Está seguro de que desea salir del sistema SGP Chicamán? Deberá volver a ingresar sus credenciales para acceder.
+                    </p>
+                </div>
+                <div class="modal-footer bg-light border-top-0 d-flex gap-2 justify-content-center p-3">
+                    <button type="button" class="btn btn-secondary flex-fill fw-medium" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <form action="{{ route('logout') }}" method="POST" class="flex-fill m-0">
+                        @csrf
+                        <button type="submit" class="btn btn-danger w-100 fw-semibold">
+                            <i class="ti ti-logout me-1"></i> Sí, Cerrar Sesión
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
+    @endauth
 
     <!-- Tabler UI JS -->
     <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
     @yield('scripts')
     <script>
-        window.addEventListener('pageshow', function (event) {
-            if (event.persisted || (typeof window.performance != "undefined" && window.performance.navigation.type === 2)) {
-                window.location.reload();
+        document.addEventListener('DOMContentLoaded', function() {
+            var loaderBar = document.getElementById('module-loading-bar');
+            
+            // Indicador de carga fluido al navegar entre módulos
+            document.querySelectorAll('a[href]:not([target="_blank"]):not([href^="#"]):not([href^="javascript"]):not([data-bs-toggle])').forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    if (e.ctrlKey || e.shiftKey || e.metaKey || e.defaultPrevented) return;
+                    
+                    var href = this.getAttribute('href');
+                    if (href && href !== window.location.href && !href.startsWith('#')) {
+                        if (loaderBar) {
+                            loaderBar.style.transition = 'width 0.4s ease-out, opacity 0.2s ease';
+                            loaderBar.style.opacity = '1';
+                            loaderBar.style.width = '75%';
+                        }
+                    }
+                });
+            });
+
+            // Reposicionar automáticamente cualquier modal al <body> para prevenir bloqueos de capa (Stacking Context)
+            document.addEventListener('show.bs.modal', function (e) {
+                if (e.target && e.target.parentNode !== document.body) {
+                    document.body.appendChild(e.target);
+                }
+            });
+
+            // Transición al confirmar el Cierre de Sesión (Modal Logout)
+            var logoutModalEl = document.getElementById('modalConfirmarLogout');
+            if (logoutModalEl) {
+                var wrapperEl = document.querySelector('.page-wrapper');
+                var logoutForm = logoutModalEl.querySelector('form');
+                if (logoutForm) {
+                    logoutForm.addEventListener('submit', function () {
+                        if (loaderBar) {
+                            loaderBar.style.opacity = '1';
+                            loaderBar.style.width = '80%';
+                        }
+                        if (wrapperEl) {
+                            wrapperEl.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
+                            wrapperEl.style.opacity = '0.2';
+                            wrapperEl.style.transform = 'translateY(-6px)';
+                        }
+                    });
+                }
             }
+
+            window.addEventListener('pageshow', function (event) {
+                if (loaderBar) {
+                    loaderBar.style.width = '100%';
+                    setTimeout(function() {
+                        loaderBar.style.opacity = '0';
+                        setTimeout(function() { loaderBar.style.width = '0%'; }, 400);
+                    }, 200);
+                }
+                if (event.persisted || (typeof window.performance != "undefined" && window.performance.navigation.type === 2)) {
+                    window.location.reload();
+                }
+            });
         });
     </script>
 </body>

@@ -84,5 +84,11 @@ class DatabaseSeeder extends Seeder
                 'activo'                   => true,
             ]
         ]);
+
+        // Sincronizar secuencias para evitar errores de llave duplicada en PostgreSQL
+        if (config('database.default') === 'pgsql') {
+            DB::statement("SELECT setval('familias_id_family_seq', COALESCE((SELECT MAX(id_family) FROM familias), 1))");
+            DB::statement("SELECT setval('pacientes_id_paciente_seq', COALESCE((SELECT MAX(id_paciente) FROM pacientes), 1))");
+        }
     }
 }

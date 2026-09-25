@@ -86,6 +86,18 @@ Route::middleware(['auth', 'nocache'])->group(function () {
         Route::get('/turno/{turnoId}', [ReporteController::class, 'diario'])->name('diario');
         Route::get('/turno/{turnoId}/pdf', [ReporteController::class, 'exportarPdf'])->name('pdf');
         Route::get('/estadisticas/pdf', [ReporteController::class, 'exportarEstadisticasPdf'])->name('estadisticas.pdf');
+
+        // ── 10 tipos de reportes exportables ────────────────────────────
+        Route::get('/exportar/llegadas-rango',        [ReporteController::class, 'exportLlegadasRango'])->name('exportar.llegadas-rango');
+        Route::get('/exportar/pacientes-nuevos',      [ReporteController::class, 'exportPacientesNuevos'])->name('exportar.pacientes-nuevos');
+        Route::get('/exportar/pacientes-recurrentes', [ReporteController::class, 'exportPacientesRecurrentes'])->name('exportar.pacientes-recurrentes');
+        Route::get('/exportar/por-sexo',              [ReporteController::class, 'exportPorSexo'])->name('exportar.por-sexo');
+        Route::get('/exportar/por-turno',             [ReporteController::class, 'exportPorTurno'])->name('exportar.por-turno');
+        Route::get('/exportar/padron-pacientes',      [ReporteController::class, 'exportPadronPacientes'])->name('exportar.padron-pacientes');
+        Route::get('/exportar/padron-familias',       [ReporteController::class, 'exportPadronFamilias'])->name('exportar.padron-familias');
+        Route::get('/exportar/alertas-duplicidad',    [ReporteController::class, 'exportAlertasDuplicidad'])->name('exportar.alertas-duplicidad');
+        Route::get('/exportar/actividad-personal',    [ReporteController::class, 'exportActividadPersonal'])->name('exportar.actividad-personal');
+        Route::get('/exportar/resumen-mensual',       [ReporteController::class, 'exportResumenMensual'])->name('exportar.resumen-mensual');
     });
 
     // ---------------------------------------------------------------

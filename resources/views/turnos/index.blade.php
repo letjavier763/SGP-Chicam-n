@@ -65,10 +65,10 @@
 @endif
 
 {{-- Tabla de turnos --}}
-<div class="card" id="table-container">
-    <div class="table-responsive">
+<div class="card shadow-sm border-0" id="table-container">
+    <div class="table-responsive d-none d-md-block">
         <table class="table table-vcenter table-hover card-table">
-            <thead>
+            <thead class="bg-light">
                 <tr>
                     <th>#</th>
                     <th>Personal</th>
@@ -89,13 +89,13 @@
                                 {{ strtoupper(substr($turno->usuario->nombre_completo, 0, 2)) }}
                             </span>
                             <div>
-                                <div class="fw-medium">{{ $turno->usuario->nombre_completo }}</div>
+                                <div class="fw-medium text-dark">{{ $turno->usuario->nombre_completo }}</div>
                                 <div class="text-secondary small">{{ $turno->usuario->rol->nombre_rol }}</div>
                             </div>
                         </div>
                     </td>
                     <td>
-                        <span class="fw-medium">{{ $turno->fecha->format('d/m/Y') }}</span>
+                        <span class="fw-medium text-dark">{{ $turno->fecha->format('d/m/Y') }}</span>
                         @if($turno->fecha->isToday())
                             <span class="badge bg-green-lt text-green ms-1">Hoy</span>
                         @endif
@@ -145,7 +145,7 @@
                                     data-obs="{{ $turno->observaciones }}">
                                 <i class="ti ti-edit"></i>
                             </button>
-                            <form action="{{ route('turnos.destroy', $turno->id_turno) }}" method="POST"
+                            <form action="{{ route('turnos.destroy', $turno->id_turno) }}" method="POST" class="d-inline"
                                   onsubmit="return confirm('¿Eliminar este turno?')">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
@@ -159,13 +159,103 @@
             @empty
                 <tr>
                     <td colspan="7" class="text-center text-secondary py-5">
-                        <i class="ti ti-calendar-off fs-2 d-block mb-2"></i>
+                        <i class="ti ti-calendar-off fs-1 d-block mb-2 text-muted opacity-50"></i>
                         No se encontraron turnos con los filtros aplicados.
                     </td>
                 </tr>
             @endforelse
             </tbody>
         </table>
+    </div>
+
+    <!-- Vista de Tarjetas Adaptada para Móviles -->
+    <div class="divide-y d-md-none">
+        @forelse($turnos as $turno)
+            @php
+                $badgeColor = match($turno->tipo_turno) {
+                    'matutino'   => 'warning',
+                    'vespertino' => 'primary',
+                    'nocturno'   => 'dark',
+                    default      => 'secondary'
+                };
+            @endphp
+            <div class="p-3 bg-white">
+                <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                    <div class="d-flex align-items-center gap-2 min-w-0">
+                        <span class="avatar avatar-sm bg-blue-lt text-blue rounded-circle fw-bold flex-shrink-0">
+                            {{ strtoupper(substr($turno->usuario->nombre_completo, 0, 2)) }}
+                        </span>
+                        <div class="min-w-0">
+                            <div class="fw-bold text-dark text-truncate" style="font-size: 0.925rem;">
+                                {{ $turno->usuario->nombre_completo }}
+                            </div>
+                            <div class="text-secondary small">{{ $turno->usuario->rol->nombre_rol }}</div>
+                        </div>
+                    </div>
+                    <span class="badge bg-{{ $badgeColor }}-lt text-{{ $badgeColor }} text-capitalize flex-shrink-0">
+                        {{ $turno->tipo_turno }}
+                    </span>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between py-1.5 px-2 bg-light rounded-2 my-2" style="font-size: 0.8rem;">
+                    <div class="fw-bold text-dark">
+                        <i class="ti ti-calendar me-1 text-muted"></i>{{ $turno->fecha->format('d/m/Y') }}
+                        @if($turno->fecha->isToday())
+                            <span class="badge bg-green-lt text-green ms-1 py-0 px-1" style="font-size: 0.7rem;">Hoy</span>
+                        @endif
+                    </div>
+                    <div class="text-secondary font-monospace">
+                        <i class="ti ti-clock me-1 text-muted"></i>
+                        {{ \Carbon\Carbon::parse($turno->hora_inicio)->format('H:i') }} — {{ \Carbon\Carbon::parse($turno->hora_fin)->format('H:i') }}
+                    </div>
+                </div>
+
+                @if($turno->observaciones)
+                    <div class="text-secondary small mb-2 fst-italic" style="font-size: 0.78rem;">
+                        "{{ $turno->observaciones }}"
+                    </div>
+                @endif
+
+                <div class="d-flex gap-1.5 pt-1 flex-wrap">
+                    <a href="{{ route('ventanilla.index', ['turno_id' => $turno->id_turno]) }}"
+                       class="btn btn-outline-primary btn-sm flex-fill py-1">
+                        <i class="ti ti-door-enter me-1"></i> Ventanilla
+                    </a>
+                    <a href="{{ route('reportes.diario', $turno->id_turno) }}"
+                       class="btn btn-outline-success btn-sm flex-fill py-1">
+                        <i class="ti ti-chart-bar me-1"></i> Reporte
+                    </a>
+                    @if(Auth::user()->esAdministrador())
+                    <button type="button" class="btn btn-outline-secondary btn-sm btn-editar-turno px-2.5 py-1"
+                            title="Editar"
+                            data-bs-toggle="modal"
+                            data-bs-target="#modalEditarTurno"
+                            data-id="{{ $turno->id_turno }}"
+                            data-usuario="{{ $turno->id_usuario }}"
+                            data-fecha="{{ $turno->fecha->format('Y-m-d') }}"
+                            data-tipo="{{ $turno->tipo_turno }}"
+                            data-inicio="{{ \Carbon\Carbon::parse($turno->hora_inicio)->format('H:i') }}"
+                            data-fin="{{ \Carbon\Carbon::parse($turno->hora_fin)->format('H:i') }}"
+                            data-obs="{{ $turno->observaciones }}">
+                        <i class="ti ti-edit"></i>
+                    </button>
+                    <form action="{{ route('turnos.destroy', $turno->id_turno) }}" method="POST" class="d-inline"
+                          onsubmit="return confirm('¿Eliminar este turno?')">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="btn btn-outline-danger btn-sm px-2.5 py-1" title="Eliminar">
+                            <i class="ti ti-trash"></i>
+                        </button>
+                    </form>
+                    @endif
+                </div>
+            </div>
+        @empty
+            <div class="text-center text-secondary py-5 px-3">
+                <i class="ti ti-clock-off fs-1 d-block mb-2 text-muted opacity-50"></i>
+                <div class="fw-bold text-dark mb-1">No se encontraron turnos</div>
+                <div class="small text-secondary">No hay turnos registrados con los criterios seleccionados.</div>
+            </div>
+        @endforelse
     </div>
 
     @if($turnos->hasPages())

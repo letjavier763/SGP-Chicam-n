@@ -27,22 +27,24 @@
     <div class="col-lg-5">
 
         {{-- Selector de turno del día --}}
-        <div class="card mb-3">
-            <div class="card-header d-none d-md-block">
-                <h3 class="card-title mb-0">
+        <div class="card mb-3 shadow-sm border-0">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h3 class="card-title mb-0 fw-bold">
                     <i class="ti ti-calendar-event me-2 text-primary"></i>
                     Turno Activo — {{ now()->locale('es')->isoFormat('D [de] MMMM, YYYY') }}
                 </h3>
+
             </div>
             <div class="card-body p-2 p-md-3">
                 @if($turnosHoy->isEmpty())
-                    <div class="text-center text-secondary py-3">
-                        <i class="ti ti-calendar-off fs-2 d-block mb-2"></i>
-                        No hay turnos registrados para hoy.
+                    <div class="text-center text-secondary py-4">
+                        <i class="ti ti-calendar-off fs-1 d-block mb-2 text-muted opacity-50"></i>
+                        <div class="fw-bold text-dark mb-1">No hay turnos registrados para hoy</div>
+                        <div class="small text-secondary mb-3">Abra o registre un turno de trabajo para comenzar el control de llegadas.</div>
                         @if(Auth::user()->esAdministrador())
-                        <a href="{{ route('turnos.create') }}" class="btn btn-sm btn-primary mt-2">
-                            <i class="ti ti-plus me-1"></i> Crear Turno
-                        </a>
+                            <a href="{{ route('turnos.create') }}" class="btn btn-primary btn-sm shadow-sm">
+                                <i class="ti ti-plus me-1"></i> Crear Turno de Hoy
+                            </a>
                         @endif
                     </div>
                 @else
@@ -402,36 +404,37 @@ document.addEventListener('DOMContentLoaded', function () {
     const csrfToken     = '{{ csrf_token() }}';
     let timer;
 
-    // ── Ocultar al clic fuera ──────────────────────────────────────
-    document.addEventListener('click', e => {
-        if (!buscarInput.contains(e.target) && !suggestions.contains(e.target)) {
-            suggestions.style.display = 'none';
-        }
-    });
-    suggestions.addEventListener('click', e => e.stopPropagation());
+    // ── Buscador inteligente ───────────────────────────────────────
+    if (buscarInput && suggestions) {
+        document.addEventListener('click', e => {
+            if (buscarInput && suggestions && !buscarInput.contains(e.target) && !suggestions.contains(e.target)) {
+                suggestions.style.display = 'none';
+            }
+        });
+        suggestions.addEventListener('click', e => e.stopPropagation());
+
+        buscarInput.addEventListener('input', function () {
+            const q = this.value.trim();
+            if (q.length < 2) { suggestions.style.display = 'none'; return; }
+
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                fetch(`${buscarPath}?q=${encodeURIComponent(q)}&turno_id=${turnoId}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                })
+                .then(r => r.json())
+                .then(data => renderSuggestions(data, q));
+            }, 180);
+        });
+    }
 
     // ── Ocultar sugerencias al abrir modal ──────────────────────────
     const modalNuevoPaciente = document.getElementById('modalNuevoPaciente');
-    if (modalNuevoPaciente) {
+    if (modalNuevoPaciente && suggestions) {
         modalNuevoPaciente.addEventListener('show.bs.modal', () => {
             suggestions.style.display = 'none';
         });
     }
-
-    // ── Buscador inteligente ───────────────────────────────────────
-    buscarInput.addEventListener('input', function () {
-        const q = this.value.trim();
-        if (q.length < 2) { suggestions.style.display = 'none'; return; }
-
-        clearTimeout(timer);
-        timer = setTimeout(() => {
-            fetch(`${buscarPath}?q=${encodeURIComponent(q)}&turno_id=${turnoId}`, {
-                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-            })
-            .then(r => r.json())
-            .then(data => renderSuggestions(data, q));
-        }, 180);
-    });
 
     function renderSuggestions(data, q) {
         suggestions.innerHTML = '';
@@ -520,7 +523,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Modal de Confirmación de Anulación 
     document.querySelectorAll('.btn-anular').forEach(btn => {
         btn.addEventListener('click', function () {
-            document.getElementById('formAnularLlegada').action = this.getAttribute('data-action');
+            const form = document.getElementById('formAnularLlegada');
+            if (form) form.action = this.getAttribute('data-action');
         });
     });
 
@@ -532,7 +536,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const wrapper = document.getElementById(wrapperId);
         const input = document.getElementById(inputId);
 
-        if (deptoSelect) {
+        if (deptoSelect && muniSelect && comSelect) {
             deptoSelect.addEventListener('change', function () {
                 const val = this.value;
                 muniSelect.innerHTML = '<option value="">-- Cargando... --</option>';
