@@ -38,8 +38,11 @@ Route::middleware(['auth', 'nocache'])->group(function () {
         $totalPacientes   = \App\Models\Paciente::count();
         $llegadasHoy      = \App\Models\RegistroLlegada::whereDate('fecha', today())->count();
         $alertasDuplicado = \App\Models\AlertaDuplicado::count();
-        $turnoHoy         = \App\Models\TurnoPersonal::where('id_usuario', auth()->id())
-                                ->whereDate('fecha', today())->first();
+        $turnoHoy         = \App\Models\TurnoPersonal::with(['usuario', 'recepcionista'])
+                                ->whereDate('fecha', today())
+                                ->orderByRaw('id_usuario = ? DESC', [auth()->id()])
+                                ->orderBy('id_turno')
+                                ->first();
         $usuarios         = \App\Models\Usuario::where('activo', true)->orderBy('nombre_completo')->get();
         $familias         = \App\Models\Familia::where('activo', true)->orderBy('numero_familia')->get();
         

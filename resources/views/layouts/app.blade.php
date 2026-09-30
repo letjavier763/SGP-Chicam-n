@@ -145,7 +145,7 @@
                                 <div class="mt-1 small text-secondary">{{ Auth::user()->rol->nombre_rol }}</div>
                             </div>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-nav-custom shadow-lg">
+                        <div class="dropdown-menu dropdown-menu-end mobile-user-dropdown shadow-lg">
                             <button type="button" class="dropdown-item text-danger fw-bold" data-bs-toggle="modal" data-bs-target="#modalConfirmarLogout">
                                 <i class="ti ti-logout me-2"></i> Cerrar Sesión
                             </button>
@@ -203,6 +203,9 @@
             </footer>
         </div>
     @auth
+    <!-- Backdrop difuminado para ventanas emergentes de la barra móvil -->
+    <div class="mobile-nav-backdrop d-lg-none d-print-none" id="mobileNavBackdrop"></div>
+
     <!-- Barra de Navegación Inferior (Móvil) -->
     <nav class="mobile-bottom-nav d-lg-none d-print-none">
         {{-- Inicio / Dashboard --}}
@@ -214,43 +217,120 @@
         </div>
 
         {{-- Ventanilla --}}
+        {{-- Ventanilla --}}
         @if(Auth::user()->esAdministrador() || Auth::user()->esRecepcionista())
-            <div class="nav-item dropup {{ Request::routeIs('ventanilla.*', 'turnos.*') ? 'active' : '' }}">
-                <a href="#" class="dropup-toggle nav-link {{ Request::routeIs('ventanilla.*', 'turnos.*') ? 'active' : '' }}" data-bs-toggle="dropdown" aria-expanded="false">
+            <div class="nav-item dropup nav-item-ventanilla {{ Request::routeIs('ventanilla.*', 'turnos.*') ? 'active' : '' }}">
+                <a href="#" class="dropup-toggle nav-link {{ Request::routeIs('ventanilla.*', 'turnos.*') ? 'active' : '' }}"
+                   data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
                     <i class="ti ti-building-hospital"></i>
                     <span>Ventanilla</span>
                 </a>
-                <div class="dropdown-menu dropdown-menu-end dropdown-menu-nav-custom shadow-lg">
-                    <div class="dropdown-header-custom">
-                        <i class="ti ti-building-hospital"></i> Ventanilla
+                <div class="dropdown-menu dropdown-menu-nav-custom">
+                    <div class="nav-popover-header">
+                        <span class="nav-popover-title">
+                            <i class="ti ti-building-hospital"></i> Ventanilla
+                        </span>
+                        <button type="button" class="nav-popover-close" onclick="const d = bootstrap.Dropdown.getInstance(this.closest('.dropup').querySelector('[data-bs-toggle=dropdown]')); if(d) d.hide();" aria-label="Cerrar">
+                            <i class="ti ti-x"></i>
+                        </button>
                     </div>
-                    <a class="dropdown-item {{ Request::routeIs('ventanilla.*') ? 'active' : '' }}" href="{{ route('ventanilla.index') }}">
-                        <i class="ti ti-app-window me-2"></i> Ventanilla
+
+                    <a class="nav-popover-item {{ Request::routeIs('ventanilla.*') ? 'active' : '' }}" href="{{ route('ventanilla.index') }}">
+                        <div class="nav-popover-icon bg-blue-subtle">
+                            <i class="ti ti-app-window"></i>
+                        </div>
+                        <div class="nav-popover-text">
+                            <span class="nav-popover-item-title">Ventanilla Única</span>
+                            <span class="nav-popover-item-desc">Recepción y control de llegadas</span>
+                        </div>
+                        <div class="nav-popover-badge">
+                            @if(Request::routeIs('ventanilla.*'))
+                                <span class="nav-badge-pill">Activo</span>
+                            @else
+                                <i class="ti ti-chevron-right nav-popover-arrow"></i>
+                            @endif
+                        </div>
                     </a>
-                    <a class="dropdown-item {{ Request::routeIs('turnos.*') ? 'active' : '' }}" href="{{ route('turnos.index') }}">
-                        <i class="ti ti-clock-play me-2"></i> Turnos del Personal
+
+                    <a class="nav-popover-item {{ Request::routeIs('turnos.*') ? 'active' : '' }}" href="{{ route('turnos.index') }}">
+                        <div class="nav-popover-icon bg-amber-subtle">
+                            <i class="ti ti-calendar-event"></i>
+                        </div>
+                        <div class="nav-popover-text">
+                            <span class="nav-popover-item-title">Turnos del Personal</span>
+                            <span class="nav-popover-item-desc">Calendario y asignaciones</span>
+                        </div>
+                        <div class="nav-popover-badge">
+                            @if(Request::routeIs('turnos.*'))
+                                <span class="nav-badge-pill">Activo</span>
+                            @else
+                                <i class="ti ti-chevron-right nav-popover-arrow"></i>
+                            @endif
+                        </div>
                     </a>
+
+                    <div class="nav-popover-footer">
+                        <span class="nav-popover-module">Módulo activo: Ventanilla</span>
+                    </div>
                 </div>
             </div>
         @endif
 
         {{-- Registros --}}
         @if(Auth::user()->esAdministrador() || Auth::user()->esRecepcionista())
-            <div class="nav-item dropup {{ Request::routeIs('pacientes.*', 'familias.*') ? 'active' : '' }}">
-                <a href="#" class="dropup-toggle nav-link {{ Request::routeIs('pacientes.*', 'familias.*') ? 'active' : '' }}" data-bs-toggle="dropdown" aria-expanded="false">
+            <div class="nav-item dropup nav-item-registros {{ Request::routeIs('pacientes.*', 'familias.*') ? 'active' : '' }}">
+                <a href="#" class="dropup-toggle nav-link {{ Request::routeIs('pacientes.*', 'familias.*') ? 'active' : '' }}"
+                   data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
                     <i class="ti ti-folder"></i>
                     <span>Registros</span>
                 </a>
-                <div class="dropdown-menu dropdown-menu-end dropdown-menu-nav-custom shadow-lg">
-                    <div class="dropdown-header-custom">
-                        <i class="ti ti-folder"></i> Registros
+                <div class="dropdown-menu dropdown-menu-nav-custom">
+                    <div class="nav-popover-header">
+                        <span class="nav-popover-title">
+                            <i class="ti ti-folder"></i> Registros
+                        </span>
+                        <button type="button" class="nav-popover-close" onclick="const d = bootstrap.Dropdown.getInstance(this.closest('.dropup').querySelector('[data-bs-toggle=dropdown]')); if(d) d.hide();" aria-label="Cerrar">
+                            <i class="ti ti-x"></i>
+                        </button>
                     </div>
-                    <a class="dropdown-item {{ Request::routeIs('pacientes.*') ? 'active' : '' }}" href="{{ route('pacientes.index') }}">
-                        <i class="ti ti-user-heart me-2"></i> Pacientes
+
+                    <a class="nav-popover-item {{ Request::routeIs('pacientes.*') ? 'active' : '' }}" href="{{ route('pacientes.index') }}">
+                        <div class="nav-popover-icon bg-purple-subtle">
+                            <i class="ti ti-user-heart"></i>
+                        </div>
+                        <div class="nav-popover-text">
+                            <span class="nav-popover-item-title">Pacientes</span>
+                            <span class="nav-popover-item-desc">Expedientes y datos clínicos</span>
+                        </div>
+                        <div class="nav-popover-badge">
+                            @if(Request::routeIs('pacientes.*'))
+                                <span class="nav-badge-pill">Activo</span>
+                            @else
+                                <i class="ti ti-chevron-right nav-popover-arrow"></i>
+                            @endif
+                        </div>
                     </a>
-                    <a class="dropdown-item {{ Request::routeIs('familias.*') ? 'active' : '' }}" href="{{ route('familias.index') }}">
-                        <i class="ti ti-users-group me-2"></i> Núcleos Familiares
+
+                    <a class="nav-popover-item {{ Request::routeIs('familias.*') ? 'active' : '' }}" href="{{ route('familias.index') }}">
+                        <div class="nav-popover-icon bg-teal-subtle">
+                            <i class="ti ti-users-group"></i>
+                        </div>
+                        <div class="nav-popover-text">
+                            <span class="nav-popover-item-title">Núcleos Familiares</span>
+                            <span class="nav-popover-item-desc">Familias y comunidades</span>
+                        </div>
+                        <div class="nav-popover-badge">
+                            @if(Request::routeIs('familias.*'))
+                                <span class="nav-badge-pill">Activo</span>
+                            @else
+                                <i class="ti ti-chevron-right nav-popover-arrow"></i>
+                            @endif
+                        </div>
                     </a>
+
+                    <div class="nav-popover-footer">
+                        <span class="nav-popover-module">Módulo activo: Registros</span>
+                    </div>
                 </div>
             </div>
         @endif
@@ -267,24 +347,83 @@
 
         {{-- Administración --}}
         @if(Auth::user()->esAdministrador())
-            <div class="nav-item dropup {{ Request::routeIs('alertas.*', 'bitacora.*', 'personal.*') ? 'active' : '' }}">
-                <a href="#" class="dropup-toggle nav-link {{ Request::routeIs('alertas.*', 'bitacora.*', 'personal.*') ? 'active' : '' }}" data-bs-toggle="dropdown" aria-expanded="false">
+            @php
+                $totalAlertasDuplicidad = \App\Models\AlertaDuplicado::count();
+            @endphp
+            <div class="nav-item dropup nav-item-admin {{ Request::routeIs('alertas.*', 'bitacora.*', 'personal.*') ? 'active' : '' }}">
+                <a href="#" class="dropup-toggle nav-link {{ Request::routeIs('alertas.*', 'bitacora.*', 'personal.*') ? 'active' : '' }}"
+                   data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
                     <i class="ti ti-settings"></i>
                     <span>Admin</span>
                 </a>
-                <div class="dropdown-menu dropdown-menu-end dropdown-menu-nav-custom shadow-lg">
-                    <div class="dropdown-header-custom">
-                        <i class="ti ti-settings"></i> Administración
+                <div class="dropdown-menu dropdown-menu-nav-custom">
+                    <div class="nav-popover-header">
+                        <span class="nav-popover-title">
+                            <i class="ti ti-settings"></i> Administración
+                        </span>
+                        <button type="button" class="nav-popover-close" onclick="const d = bootstrap.Dropdown.getInstance(this.closest('.dropup').querySelector('[data-bs-toggle=dropdown]')); if(d) d.hide();" aria-label="Cerrar">
+                            <i class="ti ti-x"></i>
+                        </button>
                     </div>
-                    <a class="dropdown-item {{ Request::routeIs('personal.*') ? 'active' : '' }}" href="{{ route('personal.index') }}">
-                        <i class="ti ti-user-cog me-2"></i> Gestión de Personal
+
+                    <a class="nav-popover-item {{ Request::routeIs('personal.*') ? 'active' : '' }}" href="{{ route('personal.index') }}">
+                        <div class="nav-popover-icon bg-blue-subtle">
+                            <i class="ti ti-user-cog"></i>
+                        </div>
+                        <div class="nav-popover-text">
+                            <span class="nav-popover-item-title">Gestión de Personal</span>
+                            <span class="nav-popover-item-desc">Roles, médicos y turnos</span>
+                        </div>
+                        <div class="nav-popover-badge">
+                            @if(Request::routeIs('personal.*'))
+                                <span class="nav-badge-pill">Activo</span>
+                            @else
+                                <i class="ti ti-chevron-right nav-popover-arrow"></i>
+                            @endif
+                        </div>
                     </a>
-                    <a class="dropdown-item {{ Request::routeIs('alertas.*') ? 'active' : '' }}" href="{{ route('alertas.index') }}">
-                        <i class="ti ti-bell-alert me-2"></i> Alertas Duplicidad
+
+                    <a class="nav-popover-item {{ Request::routeIs('alertas.*') ? 'active' : '' }} {{ $totalAlertasDuplicidad > 0 ? 'highlight-danger' : '' }}" href="{{ route('alertas.index') }}">
+                        <div class="nav-popover-icon bg-danger-subtle">
+                            <i class="ti ti-bell-alert"></i>
+                        </div>
+                        <div class="nav-popover-text">
+                            <span class="nav-popover-item-title">Alertas Duplicidad</span>
+                            <span class="nav-popover-item-desc">Registros duplicados</span>
+                        </div>
+                        <div class="nav-popover-badge">
+                            @if($totalAlertasDuplicidad > 0)
+                                <span class="nav-badge-danger">
+                                    <span class="dot"></span> {{ $totalAlertasDuplicidad }} nuevas
+                                </span>
+                            @elseif(Request::routeIs('alertas.*'))
+                                <span class="nav-badge-pill">Activo</span>
+                            @else
+                                <i class="ti ti-chevron-right nav-popover-arrow"></i>
+                            @endif
+                        </div>
                     </a>
-                    <a class="dropdown-item {{ Request::routeIs('bitacora.*') ? 'active' : '' }}" href="{{ route('bitacora.index') }}">
-                        <i class="ti ti-history me-2"></i> Bitácora
+
+                    <a class="nav-popover-item {{ Request::routeIs('bitacora.*') ? 'active' : '' }}" href="{{ route('bitacora.index') }}">
+                        <div class="nav-popover-icon bg-teal-subtle">
+                            <i class="ti ti-history"></i>
+                        </div>
+                        <div class="nav-popover-text">
+                            <span class="nav-popover-item-title">Bitácora de Eventos</span>
+                            <span class="nav-popover-item-desc">Auditoría de admisiones</span>
+                        </div>
+                        <div class="nav-popover-badge">
+                            @if(Request::routeIs('bitacora.*'))
+                                <span class="nav-badge-pill">Activo</span>
+                            @else
+                                <i class="ti ti-chevron-right nav-popover-arrow"></i>
+                            @endif
+                        </div>
                     </a>
+
+                    <div class="nav-popover-footer">
+                        <span class="nav-popover-module">Módulo activo: Admin</span>
+                    </div>
                 </div>
             </div>
         @endif
@@ -380,6 +519,61 @@
                     window.location.reload();
                 }
             });
+
+            // Alineación dinámica y control de Backdrop difuminado en popovers móviles
+            var mobileBottomNav = document.querySelector('.mobile-bottom-nav');
+            var mobileNavBackdrop = document.getElementById('mobileNavBackdrop');
+            if (mobileBottomNav) {
+                var dropups = mobileBottomNav.querySelectorAll('.dropup');
+
+                dropups.forEach(function (dropup) {
+                    dropup.addEventListener('show.bs.dropdown', function () {
+                        if (mobileNavBackdrop) {
+                            mobileNavBackdrop.classList.add('active');
+                        }
+
+                        var toggle = dropup.querySelector('[data-bs-toggle="dropdown"]');
+                        var menu = dropup.querySelector('.dropdown-menu-nav-custom');
+                        if (!toggle || !menu) return;
+
+                        requestAnimationFrame(function () {
+                            var toggleRect = toggle.getBoundingClientRect();
+                            var menuRect = menu.getBoundingClientRect();
+                            var toggleCenter = toggleRect.left + (toggleRect.width / 2);
+                            var arrowLeft = toggleCenter - menuRect.left;
+                            var arrowRight = menuRect.right - toggleCenter;
+
+                            var clampedLeft = Math.max(22, Math.min(menuRect.width - 22, arrowLeft));
+                            var clampedRight = Math.max(22, Math.min(menuRect.width - 22, arrowRight));
+
+                            menu.style.setProperty('--arrow-left', clampedLeft + 'px');
+                            menu.style.setProperty('--arrow-right', clampedRight + 'px');
+                        });
+                    });
+
+                    dropup.addEventListener('hide.bs.dropdown', function () {
+                        setTimeout(function () {
+                            var anyOpen = mobileBottomNav.querySelector('.dropup.show, .dropdown-menu.show');
+                            if (!anyOpen && mobileNavBackdrop) {
+                                mobileNavBackdrop.classList.remove('active');
+                            }
+                        }, 20);
+                    });
+                });
+
+                if (mobileNavBackdrop) {
+                    mobileNavBackdrop.addEventListener('click', function () {
+                        dropups.forEach(function (dropup) {
+                            var toggle = dropup.querySelector('[data-bs-toggle="dropdown"]');
+                            if (toggle) {
+                                var instance = bootstrap.Dropdown.getInstance(toggle);
+                                if (instance) instance.hide();
+                            }
+                        });
+                        mobileNavBackdrop.classList.remove('active');
+                    });
+                }
+            }
         });
     </script>
 </body>

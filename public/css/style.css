@@ -768,51 +768,21 @@ label {
 }
 
 /* ── Unified Nav Dropdown & Dropup Design System ────────────────── */
-.dropdown-menu.dropdown-menu-nav-custom,
-.dropdown-menu-nav-custom,
-.mobile-bottom-nav .dropdown-menu,
 .dropdown-menu.mobile-user-dropdown,
 .mobile-user-dropdown {
-    background-color: #1e293b !important;
-    background: #1e293b !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.4) !important;
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08) !important;
     border-radius: 0.75rem !important;
     padding: 0.375rem !important;
-    min-width: 210px !important;
+    min-width: 190px !important;
     z-index: 1060 !important;
 }
 
-.dropdown-header-custom {
-    padding: 0.5rem 0.75rem !important;
-    font-size: 0.6875rem !important;
-    font-weight: 700 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.07em !important;
-    color: #94a3b8 !important;
-    background-color: rgba(15, 23, 42, 0.6) !important;
-    border-radius: 0.5rem 0.5rem 0 0 !important;
-    margin: -0.375rem -0.375rem 0.375rem -0.375rem !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-}
-
-.mobile-user-dropdown .mobile-user-name,
-.mobile-user-dropdown .mobile-user-name *,
-.mobile-user-dropdown .text-white {
-    color: #ffffff !important;
-    font-size: 0.875rem !important;
-    font-weight: 600 !important;
-    padding: 0.45rem 0.75rem !important;
-}
-
-.dropdown-menu-nav-custom .dropdown-item,
-.mobile-bottom-nav .dropdown-item,
 .mobile-user-dropdown .dropdown-item {
-    color: #e2e8f0 !important;
-    font-size: 0.84375rem !important;
+    color: #1e293b !important;
+    font-size: 0.875rem !important;
     font-weight: 500 !important;
     padding: 0.55rem 0.75rem !important;
     border-radius: 0.5rem !important;
@@ -820,49 +790,494 @@ label {
     align-items: center !important;
     gap: 8px !important;
     transition: all 0.15s ease !important;
-    background: transparent !important;
+    background: #ffffff !important;
 }
 
-.dropdown-menu-nav-custom .dropdown-item i,
-.mobile-bottom-nav .dropdown-item i,
-.mobile-user-dropdown .dropdown-item i {
-    font-size: 1.15rem !important;
-    color: #38bdf8;
-    flex-shrink: 0;
-}
-
-.dropdown-menu-nav-custom .dropdown-item:hover,
-.mobile-bottom-nav .dropdown-item:hover,
-.mobile-user-dropdown .dropdown-item:hover {
-    background-color: rgba(56, 189, 248, 0.12) !important;
-    color: #ffffff !important;
-    transform: translateX(2px);
-}
-
-.dropdown-menu-nav-custom .dropdown-item.active,
-.mobile-bottom-nav .dropdown-item.active {
-    background-color: rgba(56, 189, 248, 0.20) !important;
-    color: #38bdf8 !important;
+.mobile-user-dropdown .dropdown-item.text-danger {
+    color: #dc2626 !important;
     font-weight: 600 !important;
 }
 
-.dropdown-menu-nav-custom .dropdown-item.text-danger,
-.mobile-bottom-nav .dropdown-item.text-danger,
-.mobile-user-dropdown .dropdown-item.text-danger {
-    color: #f87171 !important;
-}
-
-.dropdown-menu-nav-custom .dropdown-item.text-danger i,
-.mobile-bottom-nav .dropdown-item.text-danger i,
 .mobile-user-dropdown .dropdown-item.text-danger i {
-    color: #f87171 !important;
+    color: #dc2626 !important;
+    font-size: 1.1rem !important;
 }
 
-.dropdown-menu-nav-custom .dropdown-item.text-danger:hover,
-.mobile-bottom-nav .dropdown-item.text-danger:hover,
-.mobile-user-dropdown .dropdown-item.text-danger:hover {
-    background-color: rgba(248, 113, 113, 0.15) !important;
-    color: #ef4444 !important;
+.mobile-user-dropdown .dropdown-item.text-danger:hover,
+.mobile-user-dropdown .dropdown-item.text-danger:active {
+    background-color: #fef2f2 !important;
+    color: #b91c1c !important;
+}
+
+/* ── Backdrop difuminado para Popovers de Barra Inferior Móvil ── */
+.mobile-nav-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 1038;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.22s ease;
+}
+
+.mobile-nav-backdrop.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/* ── Estilo Popover Tabler UI para Barra Inferior Móvil (Dropups) ── */
+.mobile-bottom-nav .nav-item.dropup {
+    position: static !important;
+}
+
+.mobile-bottom-nav .dropdown-menu.dropdown-menu-nav-custom,
+.mobile-bottom-nav .dropdown-menu-nav-custom {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    border: 1px solid var(--card-border) !important;
+    box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.2), 0 0 0 1px rgba(15, 23, 42, 0.05) !important;
+    border-radius: 14px !important;
+    padding: 12px 12px 10px 12px !important;
+    width: 310px !important;
+    max-width: calc(100vw - 16px) !important;
+    position: absolute !important;
+    bottom: calc(100% + 14px) !important;
+    top: auto !important;
+    margin: 0 !important;
+    z-index: 1060 !important;
+    animation: navPopoverFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes navPopoverFadeIn {
+    from {
+        opacity: 0;
+        margin-bottom: -6px;
+    }
+    to {
+        opacity: 1;
+        margin-bottom: 0;
+    }
+}
+
+/* Flecha triangular apuntando hacia abajo */
+.mobile-bottom-nav .dropdown-menu-nav-custom::after {
+    content: '';
+    position: absolute;
+    bottom: -7px;
+    width: 14px;
+    height: 14px;
+    background-color: #ffffff;
+    border-right: 1px solid var(--card-border);
+    border-bottom: 1px solid var(--card-border);
+    transform: rotate(45deg);
+    z-index: 1061;
+}
+
+/* Posiciones de cada dropup en la barra inferior (ancladas a la barra completa) */
+.mobile-bottom-nav .nav-item-admin .dropdown-menu-nav-custom {
+    right: 8px !important;
+    left: auto !important;
+    transform: none !important;
+}
+
+.mobile-bottom-nav .nav-item-admin .dropdown-menu-nav-custom::after {
+    right: var(--arrow-right, calc(10vw - 15px)) !important;
+    left: auto !important;
+}
+
+.mobile-bottom-nav .nav-item-registros .dropdown-menu-nav-custom {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+}
+
+.mobile-bottom-nav .nav-item-registros .dropdown-menu-nav-custom::after {
+    left: var(--arrow-left, 50%) !important;
+    margin-left: -7px !important;
+    right: auto !important;
+}
+
+.mobile-bottom-nav .nav-item-ventanilla .dropdown-menu-nav-custom {
+    left: 8px !important;
+    right: auto !important;
+    transform: none !important;
+}
+
+.mobile-bottom-nav .nav-item-ventanilla .dropdown-menu-nav-custom::after {
+    left: var(--arrow-left, calc(30vw - 15px)) !important;
+    right: auto !important;
+}
+
+/* Cabecera del Popover */
+.nav-popover-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.nav-popover-title {
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.nav-popover-close {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    border: none;
+    color: #64748b;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+}
+
+.nav-popover-close:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+/* Ítems / Tarjetas dentro del Popover */
+.nav-popover-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    text-decoration: none !important;
+    background: transparent;
+    border: 1px solid transparent;
+    transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+    margin-bottom: 4px;
+}
+
+.nav-popover-item:last-child {
+    margin-bottom: 0;
+}
+
+.nav-popover-item:hover {
+    background-color: #f8fafc;
+    border-color: #f1f5f9;
+    transform: translateX(2px);
+}
+
+.nav-popover-item.active {
+    background-color: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+.nav-popover-item.highlight-danger {
+    background-color: #fef2f2;
+    border-color: #fee2e2;
+}
+
+.nav-popover-item.highlight-danger:hover {
+    background-color: #fee2e2;
+}
+
+/* Cuadrados de Iconos (Estilo Tabler UI -lt) */
+.nav-popover-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+
+.bg-blue-subtle,
+.bg-blue-subtle-dark {
+    background: #eff6ff !important;
+    color: #0057cd !important;
+    border: 1px solid #dbeafe !important;
+}
+
+.bg-danger-subtle,
+.bg-danger-subtle-dark {
+    background: #fef2f2 !important;
+    color: #dc2626 !important;
+    border: 1px solid #fee2e2 !important;
+}
+
+.bg-teal-subtle,
+.bg-teal-subtle-dark {
+    background: #ecfdf5 !important;
+    color: #059669 !important;
+    border: 1px solid #d1fae5 !important;
+}
+
+.bg-amber-subtle,
+.bg-amber-subtle-dark {
+    background: #fffbeb !important;
+    color: #d97706 !important;
+    border: 1px solid #fef3c7 !important;
+}
+
+.bg-purple-subtle,
+.bg-purple-subtle-dark {
+    background: #f5f3ff !important;
+    color: #7c3aed !important;
+    border: 1px solid #ede9fe !important;
+}
+
+/* Texto del ítem */
+.nav-popover-text {
+    flex-grow: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.nav-popover-item-title {
+    color: #0b1c30;
+    font-weight: 600;
+    font-size: 0.875rem;
+    line-height: 1.25;
+}
+
+.nav-popover-item-desc {
+    color: #64748b;
+    font-size: 0.74rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Badges e indicadores */
+.nav-popover-badge {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.nav-badge-pill {
+    background: #eff6ff;
+    color: #0057cd;
+    border: 1px solid #bfdbfe;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 9999px;
+}
+
+.nav-badge-danger {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.nav-badge-danger .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: #dc2626;
+    display: inline-block;
+}
+
+.nav-popover-arrow {
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+/* Pie del Popover */
+.nav-popover-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.nav-popover-module {
+    color: #64748b;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.nav-popover-help {
+    color: var(--primary);
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-decoration: none !important;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.15s ease;
+}
+
+.nav-popover-help:hover {
+    color: var(--primary-hover);
+    text-decoration: underline !important;
+}
+
+/* ── Tiles de Acciones Rápidas (Design System SGP) ─────────────── */
+.quick-action-tile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    text-decoration: none !important;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04);
+    cursor: pointer;
+    width: 100%;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+}
+
+.quick-action-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px -2px rgba(15, 23, 42, 0.08);
+}
+
+.quick-action-tile:active {
+    transform: translateY(0);
+}
+
+/* Variante Azul (Ventanilla / Recepción) */
+.quick-action-tile.quick-action-blue {
+    background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+    border: 1.5px solid #bfdbfe;
+}
+.quick-action-tile.quick-action-blue:hover {
+    background: #eff6ff;
+    border-color: #93c5fd;
+}
+
+/* Variante Púrpura (Pacientes / Expedientes) */
+.quick-action-tile.quick-action-purple {
+    background: linear-gradient(135deg, #f5f3ff 0%, #ffffff 100%);
+    border: 1.5px solid #ddd6fe;
+}
+.quick-action-tile.quick-action-purple:hover {
+    background: #f5f3ff;
+    border-color: #c4b5fd;
+}
+
+/* Variante Ámbar (Turnos del Personal) */
+.quick-action-tile.quick-action-amber {
+    background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
+    border: 1.5px solid #fde68a;
+}
+.quick-action-tile.quick-action-amber:hover {
+    background: #fffbeb;
+    border-color: #fcd34d;
+}
+
+/* Variante Teal (Reportes y Estadísticas) */
+.quick-action-tile.quick-action-teal {
+    background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%);
+    border: 1.5px solid #a7f3d0;
+}
+.quick-action-tile.quick-action-teal:hover {
+    background: #ecfdf5;
+    border-color: #6ee7b7;
+}
+
+/* Iconos de las acciones rápidas */
+.quick-action-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+    color: #0b1c30 !important;
+}
+
+.quick-action-icon i {
+    color: #0b1c30 !important;
+}
+
+/* Texto de la acción */
+.quick-action-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.quick-action-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0b1c30 !important;
+    line-height: 1.25;
+}
+
+.quick-action-subtitle {
+    font-size: 0.75rem;
+    color: #64748b;
+    line-height: 1.3;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Badges e indicadores derechos */
+.quick-action-badge {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.quick-action-arrow {
+    color: #94a3b8;
+    font-size: 1.05rem;
+    transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.quick-action-tile:hover .quick-action-arrow {
+    transform: translateX(3px);
+    color: #0b1c30;
+}
+
+.badge-purple-pill {
+    background: #f5f3ff;
+    color: #7c3aed;
+    border: 1px solid #ddd6fe;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 9999px;
 }
 
 /* ── Transición Suave de Módulos (Estable sin Desplazamiento Horizontal) ──────── */
@@ -1788,14 +2203,9 @@ label {
         min-height: 56px !important;
     }
 
-    /* Botón de búsqueda/limpiar a ancho completo */
-    .row.g-2 .btn {
+    /* Botón de búsqueda/limpiar individual a ancho completo (excepto dentro de grupos flex) */
+    .row.g-2 > .col-12 > .btn:not(.d-flex .btn) {
         width: 100%;
-    }
-
-    /* Reducir gap en filas de filtros */
-    .row.g-2 {
-        gap: 0.5rem !important;
     }
 }
 

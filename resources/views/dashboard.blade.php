@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Dashboard')
-@section('page_title', 'Panel de Control General')
+@section('page_title', 'Panel de Control')
 
 @section('content')
 
@@ -28,8 +28,15 @@
                 <div class="mob-turno-nombre">
                     @if($turnoHoy)
                         Turno del día
+                        <div class="mob-turno-responsable text-truncate mt-1" style="font-size: 0.85rem; font-weight: 500; color: #e2e8f0; display: flex; align-items: center; gap: 5px;">
+                            <i class="ti ti-user text-warning" style="font-size: 0.95rem;"></i>
+                            <span>{{ $turnoHoy->nombre_responsable }}</span>
+                        </div>
                     @else
                         No asignado hoy
+                        <div class="mt-1" style="font-size: 0.8rem; font-weight: 400; color: #94a3b8;">
+                            Sin personal asignado
+                        </div>
                     @endif
                 </div>
             </div>
@@ -45,13 +52,13 @@
 
     {{-- Encabezado de sección --}}
     <div class="d-flex justify-content-between align-items-center mb-2 px-1">
-        <h2 class="mob-panel-title">Panel de Control General</h2>
+        <h2 class="mob-panel-title">Resumen de Hoy</h2>
         <span class="mob-panel-updated">
             Actualizado {{ now()->format('H:i') }}
         </span>
     </div>
 
-    {{-- Tarjetas de métricas 2×2 --}}
+    {{-- Tarjetas de métricas --}}
     <div class="mob-metrics-grid">
 
         {{-- Pacientes --}}
@@ -65,45 +72,28 @@
             <div class="mob-metric-value">{{ $totalPacientes }}</div>
         </div>
 
-        {{-- Llegadas hoy --}}
+        {{-- Familias --}}
         <div class="mob-metric-card">
             <div class="mob-metric-header">
-                <span class="mob-metric-label">Llegadas Hoy</span>
-                <span class="mob-metric-icon mob-icon-success">
+                <span class="mob-metric-label">Familias Reg.</span>
+                <span class="mob-metric-icon mob-icon-warning">
+                    <i class="ti ti-users-group"></i>
+                </span>
+            </div>
+            <div class="mob-metric-value">{{ $familias->count() }}</div>
+        </div>
+
+        {{-- Llegadas hoy (destacado ancho) --}}
+        <div class="mob-metric-card" style="grid-column: span 2;">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="mob-metric-label d-block mb-1">Llegadas de Hoy</span>
+                    <div class="mob-metric-value">{{ $llegadasHoy }}</div>
+                </div>
+                <span class="mob-metric-icon mob-icon-success" style="width: 38px; height: 38px; font-size: 1.15rem;">
                     <i class="ti ti-calendar-event"></i>
                 </span>
             </div>
-            <div class="mob-metric-value">{{ $llegadasHoy }}</div>
-        </div>
-
-        {{-- Alertas --}}
-        <div class="mob-metric-card">
-            <div class="mob-metric-header">
-                <span class="mob-metric-label">Alertas Duplic.</span>
-                <span class="mob-metric-icon mob-icon-danger">
-                    <i class="ti ti-alert-triangle"></i>
-                </span>
-            </div>
-            <div class="mob-metric-value">{{ $alertasDuplicado }}</div>
-        </div>
-
-        {{-- Turno --}}
-        <div class="mob-metric-card">
-            <div class="mob-metric-header">
-                <span class="mob-metric-label">Turno de Hoy</span>
-                <span class="mob-metric-icon mob-icon-warning">
-                    <i class="ti ti-clock"></i>
-                </span>
-            </div>
-            @if($turnoHoy)
-                <div class="mob-metric-value" style="font-size:1rem;">
-                    Turno del día
-                </div>
-            @else
-                <div class="mob-metric-value" style="font-size:1rem;color:var(--on-surface-variant);">
-                    Sin turno
-                </div>
-            @endif
         </div>
 
     </div>
@@ -149,19 +139,19 @@
         </div>
     </div>
 
-    {{-- Alertas de Duplicidad --}}
+    {{-- Núcleos Familiares --}}
     <div class="col-sm-6 col-lg-3">
         <div class="card card-sm">
             <div class="card-body">
                 <div class="row align-items-center">
                     <div class="col-auto">
-                        <span class="avatar bg-danger-lt rounded">
-                            <i class="ti ti-alert-triangle fs-2"></i>
+                        <span class="avatar bg-warning-lt rounded">
+                            <i class="ti ti-users-group fs-2"></i>
                         </span>
                     </div>
                     <div class="col">
-                        <div class="font-weight-medium fs-2 text-dark">{{ $alertasDuplicado }}</div>
-                        <div class="text-secondary">Alertas de Duplicidad</div>
+                        <div class="font-weight-medium fs-2 text-dark">{{ $familias->count() }}</div>
+                        <div class="text-secondary">Núcleos Familiares</div>
                     </div>
                 </div>
             </div>
@@ -221,64 +211,97 @@
 </div>
 @endif
 
-{{-- ── Panel de Accesos Rápidos ────────────────────────── --}}
-<div class="card">
-    <div class="card-header">
-        <h3 class="card-title text-primary">
-            <i class="ti ti-keyframe me-2"></i> Accesos Rápidos del Sistema
+{{-- ── Panel de Acciones Rápidas ────────────────────────── --}}
+<div class="card mb-4 shadow-sm border-0">
+    <div class="card-header bg-transparent d-flex align-items-center justify-content-between py-3">
+        <h3 class="card-title fw-bold mb-0" style="color: #0b1c30;">
+            Acciones Rápidas
         </h3>
+        <span class="text-secondary small d-none d-sm-inline">Operación diaria</span>
     </div>
     <div class="card-body">
-        <p class="text-secondary">
-            Bienvenido, <strong>{{ Auth::user()->nombre_completo }}</strong>.
-            Seleccione una de las siguientes opciones para comenzar su gestión diaria en el CAP Chicamán.
-        </p>
+        <div class="row g-2 g-sm-3">
+            {{-- Acción 1: Ir a Ventanilla (Color Azul de Ventanilla) --}}
+            @if(Auth::user()->esAdministrador() || Auth::user()->esRecepcionista())
+                <div class="col-12 col-md-6">
+                    <a href="{{ $turnoHoy ? route('ventanilla.index', ['turno_id' => $turnoHoy->id_turno]) : route('ventanilla.index') }}" 
+                       class="quick-action-tile quick-action-blue">
+                        <div class="quick-action-icon bg-blue-subtle">
+                            <i class="ti ti-building-hospital"></i>
+                        </div>
+                        <div class="quick-action-info">
+                            <span class="quick-action-title">Ir a mi Ventanilla</span>
+                            <span class="quick-action-subtitle">
+                                @if($turnoHoy)
+                                    Turno: {{ $turnoHoy->nombre_responsable }}
+                                @else
+                                    Recepción y control de llegadas
+                                @endif
+                            </span>
+                        </div>
+                        <div class="quick-action-badge">
+                            @if($turnoHoy)
+                                <span class="nav-badge-pill">Activo</span>
+                            @else
+                                <i class="ti ti-chevron-right quick-action-arrow"></i>
+                            @endif
+                        </div>
+                    </a>
+                </div>
 
-        {{-- Ventanilla --}}
-        @if(Auth::user()->esAdministrador() || Auth::user()->esRecepcionista())
-        <h4 class="text-uppercase text-secondary small fw-bold mt-4 mb-2">
-            Ventanilla
-        </h4>
-        <div class="d-flex flex-wrap gap-2 mb-3">
-            @if($turnoHoy)
-            <a href="{{ route('ventanilla.index', ['turno_id' => $turnoHoy->id_turno]) }}"
-               class="btn btn-primary">
-               Ir a mi Ventanilla (Turno del día)
-            </a>
-            @else
-            <a href="{{ route('ventanilla.index') }}" class="btn btn-outline-primary">
-                Ir a Ventanilla
-            </a>
+                {{-- Acción 2: Nuevo Paciente (Color Púrpura de Pacientes) --}}
+                <div class="col-12 col-md-6">
+                    <button type="button" class="quick-action-tile quick-action-purple w-100 text-start" data-bs-toggle="modal" data-bs-target="#modalCrearPaciente">
+                        <div class="quick-action-icon bg-purple-subtle">
+                            <i class="ti ti-user-plus"></i>
+                        </div>
+                        <div class="quick-action-info">
+                            <span class="quick-action-title">Registrar Paciente</span>
+                            <span class="quick-action-subtitle">Nuevo expediente clínico</span>
+                        </div>
+                        <div class="quick-action-badge">
+                            <span class="badge-purple-pill">+ Nuevo</span>
+                        </div>
+                    </button>
+                </div>
             @endif
-            <a href="{{ route('turnos.index') }}" class="btn btn-outline-secondary">
-                Ver Turnos
-            </a>
-            @if(Auth::user()->esAdministrador())
-            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalCrearTurno">
-                Nuevo Turno
-            </button>
+
+            {{-- Acción 3: Crear turno si no hay turno asignado hoy y es administrador (Color Ámbar de Turnos) --}}
+            @if(Auth::user()->esAdministrador() && !$turnoHoy)
+                <div class="col-12 col-md-6">
+                    <button type="button" class="quick-action-tile quick-action-amber w-100 text-start" data-bs-toggle="modal" data-bs-target="#modalCrearTurno">
+                        <div class="quick-action-icon bg-amber-subtle">
+                            <i class="ti ti-clock-plus"></i>
+                        </div>
+                        <div class="quick-action-info">
+                            <span class="quick-action-title">Asignar Turno</span>
+                            <span class="quick-action-subtitle">Sin turno asignado hoy</span>
+                        </div>
+                        <div class="quick-action-badge">
+                            <i class="ti ti-chevron-right quick-action-arrow"></i>
+                        </div>
+                    </button>
+                </div>
+            @endif
+
+            {{-- Para Director: Acceso directo a reportes (Color Teal de Reportes) --}}
+            @if(Auth::user()->esDirector())
+                <div class="col-12 col-md-6">
+                    <a href="{{ route('reportes.index') }}" class="quick-action-tile quick-action-teal">
+                        <div class="quick-action-icon bg-teal-subtle">
+                            <i class="ti ti-chart-bar"></i>
+                        </div>
+                        <div class="quick-action-info">
+                            <span class="quick-action-title">Ver Reportes</span>
+                            <span class="quick-action-subtitle">Estadísticas y métricas del CAP</span>
+                        </div>
+                        <div class="quick-action-badge">
+                            <i class="ti ti-chevron-right quick-action-arrow"></i>
+                        </div>
+                    </a>
+                </div>
             @endif
         </div>
-        @endif
-
-        {{-- Registros --}}
-        @if(Auth::user()->esAdministrador() || Auth::user()->esRecepcionista())
-        <h4 class="text-uppercase text-secondary small fw-bold mt-3 mb-2">
-            Registros
-        </h4>
-        <div class="d-flex flex-wrap gap-2 mb-3">
-            <a href="{{ route('pacientes.index') }}" class="btn btn-outline-primary">
-                Pacientes
-            </a>
-            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalCrearPaciente">
-                Nuevo Paciente
-            </button>
-            <a href="{{ route('familias.index') }}" class="btn btn-outline-secondary">
-                Núcleos Familiares
-            </a>
-        </div>
-        @endif
-
     </div>
 </div>
 

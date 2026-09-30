@@ -41,38 +41,38 @@
 <div class="card border-0 shadow-sm mb-3">
 
     {{-- Cabecera --}}
-    <div class="card-header d-flex align-items-center justify-content-between py-3 px-3 bg-white border-bottom">
-        <div class="d-flex align-items-center gap-2">
+    <div class="card-header d-flex flex-column flex-md-row align-items-stretch align-items-md-center justify-content-between gap-2 py-2 py-md-3 px-2 px-md-3 bg-white border-bottom">
+        <div class="d-flex align-items-center justify-content-center justify-content-md-start gap-1 gap-sm-2">
             <a href="{{ route('turnos.index', ['mes' => $prevMes, 'anio' => $prevAnio]) }}"
-               class="btn btn-ghost-secondary btn-icon btn-sm">
+               class="btn btn-ghost-secondary btn-icon btn-sm" title="Mes anterior">
                 <i class="ti ti-chevron-left"></i>
             </a>
-            <h5 class="mb-0 fw-bold text-capitalize" style="min-width: 150px; text-align: center; font-size: 1rem;">
+            <h5 class="mb-0 fw-bold text-capitalize text-center text-truncate px-1" style="min-width: 140px; font-size: 1rem;">
                 {{ $nombreMes }}
             </h5>
             <a href="{{ route('turnos.index', ['mes' => $nextMes, 'anio' => $nextAnio]) }}"
-               class="btn btn-ghost-secondary btn-icon btn-sm">
+               class="btn btn-ghost-secondary btn-icon btn-sm" title="Mes siguiente">
                 <i class="ti ti-chevron-right"></i>
             </a>
             <a href="{{ route('turnos.index', ['mes' => now()->month, 'anio' => now()->year]) }}"
-               class="btn btn-sm btn-outline-primary py-1">Hoy</a>
+               class="btn btn-sm btn-outline-primary py-1 px-2 ms-1">Hoy</a>
         </div>
-        <div class="d-flex gap-2">
-            @if(Auth::user()->esAdministrador())
-            <button type="button" class="btn btn-sm btn-ghost-secondary"
+        @if(Auth::user()->esAdministrador())
+        <div class="d-flex align-items-center gap-2 w-100 w-md-auto">
+            <button type="button" class="btn btn-sm btn-outline-secondary flex-fill flex-md-grow-0 d-inline-flex align-items-center justify-content-center"
                     data-bs-toggle="modal" data-bs-target="#modalRecepcionistas"
                     title="Gestionar Recepcionistas">
-                <i class="ti ti-users"></i>
-                <span class="d-none d-sm-inline ms-1">Recepcionistas</span>
+                <i class="ti ti-users me-1"></i>
+                <span class="text-nowrap">Recepcionistas</span>
             </button>
-            <button type="button" class="btn btn-sm btn-primary"
+            <button type="button" class="btn btn-sm btn-primary flex-fill flex-md-grow-0 d-inline-flex align-items-center justify-content-center"
                     id="btnNuevoTurnoHeader"
                     data-bs-toggle="modal" data-bs-target="#modalCrearTurno">
                 <i class="ti ti-plus me-1"></i>
-                <span class="d-none d-sm-inline">Nuevo Turno</span>
+                <span class="text-nowrap">Nuevo Turno</span>
             </button>
-            @endif
         </div>
+        @endif
     </div>
 
     {{-- Días de la semana --}}
@@ -116,12 +116,12 @@
     </div>
 
     {{-- Pie --}}
-    <div class="card-footer bg-white border-top py-2 px-3 d-flex align-items-center">
+    <div class="card-footer bg-white border-top py-2 px-2 px-md-3 d-flex flex-wrap align-items-center justify-content-between gap-1">
         <span class="d-flex align-items-center gap-1 text-secondary" style="font-size:0.72rem;">
             <span class="cal-dot" style="flex-shrink:0;"></span>
             Turno asignado
         </span>
-        <span class="ms-auto text-secondary" style="font-size:0.72rem;">
+        <span class="text-secondary" style="font-size:0.72rem;">
             <i class="ti ti-hand-click me-1"></i>Toca un día para ver o agregar turnos
         </span>
     </div>
