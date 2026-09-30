@@ -27,9 +27,7 @@
                 </div>
                 <div class="mob-turno-nombre">
                     @if($turnoHoy)
-                        {{ ucfirst($turnoHoy->tipo_turno) }}
-                        ({{ \Carbon\Carbon::parse($turnoHoy->hora_inicio)->format('H:i') }}
-                        – {{ \Carbon\Carbon::parse($turnoHoy->hora_fin)->format('H:i') }})
+                        Turno del día
                     @else
                         No asignado hoy
                     @endif
@@ -98,8 +96,8 @@
                 </span>
             </div>
             @if($turnoHoy)
-                <div class="mob-metric-value" style="font-size:1.125rem;">
-                    {{ ucfirst($turnoHoy->tipo_turno) }}
+                <div class="mob-metric-value" style="font-size:1rem;">
+                    Turno del día
                 </div>
             @else
                 <div class="mob-metric-value" style="font-size:1rem;color:var(--on-surface-variant);">
@@ -188,12 +186,11 @@
                     </div>
                     <div class="col">
                         @if($turnoHoy)
-                            <div class="font-weight-medium text-dark text-capitalize">
-                                {{ $turnoHoy->tipo_turno }}
+                            <div class="font-weight-medium text-dark">
+                                Turno del día
                             </div>
                             <div class="text-secondary small">
-                                {{ \Carbon\Carbon::parse($turnoHoy->hora_inicio)->format('H:i') }}
-                                – {{ \Carbon\Carbon::parse($turnoHoy->hora_fin)->format('H:i') }}
+                                {{ $turnoHoy->nombre_responsable }}
                             </div>
                         @else
                             <div class="font-weight-medium text-secondary">Sin turno</div>
@@ -246,7 +243,7 @@
             @if($turnoHoy)
             <a href="{{ route('ventanilla.index', ['turno_id' => $turnoHoy->id_turno]) }}"
                class="btn btn-primary">
-                Ir a mi Ventanilla (Turno {{ ucfirst($turnoHoy->tipo_turno) }})
+               Ir a mi Ventanilla (Turno del día)
             </a>
             @else
             <a href="{{ route('ventanilla.index') }}" class="btn btn-outline-primary">
@@ -298,37 +295,9 @@
                 @csrf
                 <div class="modal-body">
                     <div class="row g-3">
-                        <div class="col-md-12">
-                            <label for="create_turno_usuario" class="form-label required">Personal Asignado</label>
-                            <select id="create_turno_usuario" name="id_usuario" class="form-select" required>
-                                <option value="">— Seleccione un usuario —</option>
-                                @foreach($usuarios as $u)
-                                    <option value="{{ $u->id_usuario }}">
-                                        {{ $u->nombre_completo }} ({{ $u->rol->nombre_rol }})
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-6">
+                        <div class="col-12">
                             <label for="create_turno_fecha" class="form-label required">Fecha del Turno</label>
                             <input type="date" id="create_turno_fecha" name="fecha" class="form-control" value="{{ today()->toDateString() }}" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="create_tipo_turno" class="form-label required">Tipo de Turno</label>
-                            <select id="create_tipo_turno" name="tipo_turno" class="form-select" required>
-                                <option value="">— Seleccione —</option>
-                                <option value="matutino">Matutino (6:00 – 14:00)</option>
-                                <option value="vespertino">Vespertino (14:00 – 22:00)</option>
-                                <option value="nocturno">Nocturno (22:00 – 6:00)</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="create_hora_inicio" class="form-label required">Hora de Inicio</label>
-                            <input type="time" id="create_hora_inicio" name="hora_inicio" class="form-control" value="06:00" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="create_hora_fin" class="form-label required">Hora de Fin</label>
-                            <input type="time" id="create_hora_fin" name="hora_fin" class="form-control" value="14:00" required>
                         </div>
                         <div class="col-12">
                             <label for="create_turno_obs" class="form-label">Observaciones</label>
@@ -359,7 +328,7 @@
                 <div class="modal-body">
                     <h6 class="text-secondary border-bottom pb-2 mb-3">1. Adscripción al Núcleo Familiar</h6>
                     <div class="row g-3 mb-3">
-                        <div class="col-md-8">
+                        <div class="col-12">
                             <label class="form-label required" for="create_id_family">Núcleo Familiar</label>
                             <select id="create_id_family" name="id_family" class="form-select" required>
                                 <option value="">-- Seleccione un núcleo familiar --</option>
@@ -369,10 +338,6 @@
                                     </option>
                                 @endforeach
                             </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="create_numero_expediente_fisico">No. Expediente Físico</label>
-                            <input type="text" id="create_numero_expediente_fisico" name="numero_expediente_fisico" class="form-control bg-light" readonly placeholder="Se asigna según la familia">
                         </div>
                     </div>
 
@@ -445,15 +410,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Auto-completar número de expediente del paciente
-    const familySelect = document.getElementById('create_id_family');
-    const expInput = document.getElementById('create_numero_expediente_fisico');
-    if (familySelect) {
-        familySelect.addEventListener('change', function () {
-            const opt = this.options[this.selectedIndex];
-            expInput.value = opt ? (opt.dataset.numeroFamilia || '') : '';
-        });
-    }
 
     // Validación de DPI en tiempo real
     const dpiInput = document.getElementById('create_dpi');

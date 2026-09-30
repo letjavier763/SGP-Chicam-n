@@ -11,7 +11,8 @@ class TurnoPersonal extends Model
     protected $table = 'turnos_personal';
 
     protected $fillable = [
-        'id_usuario', 'fecha', 'tipo_turno', 'hora_inicio', 'hora_fin', 'observaciones',
+        'id_usuario', 'id_recepcionista', 'nombre_recepcionista',
+        'fecha', 'tipo_turno', 'hora_inicio', 'hora_fin', 'observaciones',
     ];
 
     protected $casts = [
@@ -23,6 +24,11 @@ class TurnoPersonal extends Model
         return $this->belongsTo(Usuario::class, 'id_usuario', 'id_usuario');
     }
 
+    public function recepcionista()
+    {
+        return $this->belongsTo(Recepcionista::class, 'id_recepcionista', 'id_recepcionista');
+    }
+
     public function registrosLlegada()
     {
         return $this->hasMany(RegistroLlegada::class, 'id_turno', 'id_turno');
@@ -32,4 +38,23 @@ class TurnoPersonal extends Model
     {
         return $this->hasMany(ReporteDiario::class, 'id_turno', 'id_turno');
     }
+
+    /**
+     * Obtener el nombre del responsable del turno
+     * (recepcionista si existe, si no el usuario del sistema)
+     */
+    public function getNombreResponsableAttribute(): string
+    {
+        if ($this->nombre_recepcionista) {
+            return $this->nombre_recepcionista;
+        }
+        if ($this->recepcionista) {
+            return $this->recepcionista->nombre;
+        }
+        if ($this->usuario) {
+            return $this->usuario->nombre_completo;
+        }
+        return 'Sin asignar';
+    }
 }
+

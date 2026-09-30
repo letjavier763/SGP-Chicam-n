@@ -34,7 +34,7 @@
                     <h4 class="mb-3 text-secondary border-bottom pb-2">1. Adscripción al Núcleo Familiar / Expediente</h4>
 
                     <div class="row g-3 mb-3">
-                        <div class="col-md-8">
+                        <div class="col-12">
                             <label class="form-label required" for="id_family">Núcleo Familiar / Expediente Compartido</label>
                             <select id="id_family" name="id_family" class="form-select" required>
                                 <option value="">-- Seleccione un núcleo familiar registrado --</option>
@@ -45,11 +45,6 @@
                                 @endforeach
                             </select>
                             <span class="form-hint">¿No encuentra el núcleo familiar? <a href="{{ route('familias.create') }}" target="_blank">Registrar nueva familia</a></span>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="numero_expediente_fisico">No. Expediente Físico</label>
-                            <input type="text" id="numero_expediente_fisico" name="numero_expediente_fisico" class="form-control bg-light" value="{{ old('numero_expediente_fisico') }}" readonly placeholder="Se asigna según la familia">
-                            <span class="form-hint small text-muted">Hereda el número del núcleo familiar</span>
                         </div>
                     </div>
 
@@ -107,20 +102,6 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const familySelect = document.getElementById('id_family');
-    const expInput = document.getElementById('numero_expediente_fisico');
-
-    function updateExpediente() {
-        const selectedOpt = familySelect.options[familySelect.selectedIndex];
-        if (selectedOpt && selectedOpt.dataset.numeroFamilia) {
-            expInput.value = selectedOpt.dataset.numeroFamilia;
-        } else {
-            expInput.value = '';
-        }
-    }
-
-    familySelect.addEventListener('change', updateExpediente);
-    updateExpediente();
 
     const dpiInput = document.getElementById('dpi');
     const msgEl = document.getElementById('msg-dup-dpi');

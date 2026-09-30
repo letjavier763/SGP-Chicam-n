@@ -69,12 +69,21 @@ Route::middleware(['auth', 'nocache'])->group(function () {
     // ---------------------------------------------------------------
 
     // Turnos del Personal
-    Route::resource('turnos', TurnoController::class)->except(['show']);
+    Route::get('/turnos', [TurnoController::class, 'index'])->name('turnos.index');
+    Route::post('/turnos', [TurnoController::class, 'store'])->name('turnos.store');
+    Route::put('/turnos/{id}', [TurnoController::class, 'update'])->name('turnos.update');
+    Route::delete('/turnos/{id}', [TurnoController::class, 'destroy'])->name('turnos.destroy');
+
+    // Recepcionistas
+    Route::get('/recepcionistas', [TurnoController::class, 'recepcionistas'])->name('recepcionistas.index');
+    Route::post('/recepcionistas', [TurnoController::class, 'storeRecepcionista'])->name('recepcionistas.store');
+    Route::delete('/recepcionistas/{id}', [TurnoController::class, 'destroyRecepcionista'])->name('recepcionistas.destroy');
 
     // Ventanilla (registro de llegadas del día)
     Route::get('/ventanilla', [VentanillaController::class, 'index'])->name('ventanilla.index');
     Route::get('/ventanilla/buscar', [VentanillaController::class, 'buscar'])->name('ventanilla.buscar');
     Route::post('/ventanilla', [VentanillaController::class, 'store'])->name('ventanilla.store');
+    Route::post('/ventanilla/iniciar-turno', [VentanillaController::class, 'iniciarTurno'])->name('ventanilla.iniciar-turno');
     Route::delete('/ventanilla/{id}', [VentanillaController::class, 'destroy'])->name('ventanilla.destroy');
 
     // ---------------------------------------------------------------

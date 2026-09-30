@@ -3,47 +3,34 @@
 namespace App\Http\Controllers;
 
 use App\Models\TurnoPersonal;
-use App\Models\Usuario;
+use App\Models\Recepcionista;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class TurnoController extends Controller
 {
     /**
-     * Listar todos los turnos (Admin ve todos, Recepcionista ve solo los suyos).
+     * Vista principal: calendario mensual de turnos.
      */
     public function index(Request $request)
     {
-        $query = TurnoPersonal::with('usuario')
-            ->orderBy('fecha', 'desc')
-            ->orderBy('hora_inicio', 'desc');
+        $mes  = (int) $request->get('mes',  now()->month);
+        $anio = (int) $request->get('anio', now()->year);
 
-        if (!Auth::user()->esAdministrador()) {
-            $query->where('id_usuario', Auth::id());
-        }
+        $inicio = Carbon::createFromDate($anio, $mes, 1)->startOfMonth();
+        $fin    = $inicio->copy()->endOfMonth();
 
-        if ($request->filled('fecha')) {
-            $query->whereDate('fecha', $request->fecha);
-        }
+        $turnos = TurnoPersonal::with(['recepcionista'])
+            ->whereBetween('fecha', [$inicio->toDateString(), $fin->toDateString()])
+            ->orderBy('fecha')
+            ->orderBy('hora_inicio')
+            ->get()
+            ->groupBy(fn($t) => $t->fecha->toDateString());
 
-        if ($request->filled('tipo_turno')) {
-            $query->where('tipo_turno', $request->tipo_turno);
-        }
+        $recepcionistas = Recepcionista::where('activo', true)->orderBy('nombre')->get();
 
-        $turnos = $query->paginate(20)->withQueryString();
-        $usuarios = Usuario::where('activo', true)->orderBy('nombre_completo')->get();
-
-        return view('turnos.index', compact('turnos', 'usuarios'));
-    }
-
-    /**
-     * Formulario de creación (solo Administrador).
-     */
-    public function create()
-    {
-        $this->authorizeAdmin();
-        $usuarios = Usuario::where('activo', true)->orderBy('nombre_completo')->get();
-        return view('turnos.create', compact('usuarios'));
+        return view('turnos.index', compact('turnos', 'recepcionistas', 'mes', 'anio', 'inicio'));
     }
 
     /**
@@ -54,29 +41,39 @@ class TurnoController extends Controller
         $this->authorizeAdmin();
 
         $validated = $request->validate([
-            'id_usuario'    => 'required|exists:usuarios,id_usuario',
-            'fecha'         => 'required|date',
-            'tipo_turno'    => 'required|in:matutino,vespertino,nocturno',
-            'hora_inicio'   => 'required',
-            'hora_fin'      => 'required|after:hora_inicio',
-            'observaciones' => 'nullable|string|max:500',
+            'fecha'               => 'required|date',
+            'hora_inicio'         => 'nullable',
+            'hora_fin'            => 'nullable',
+            'id_recepcionista'    => 'nullable|exists:recepcionistas,id_recepcionista',
+            'nombre_nuevo_recep'  => 'nullable|string|max:150',
+            'observaciones'       => 'nullable|string|max:500',
         ]);
 
-        TurnoPersonal::create($validated);
+        $idRecep   = $validated['id_recepcionista'] ?? null;
+        $nombreRec = null;
 
-        return redirect()->route('turnos.index')
+        // Si ingresaron un nombre nuevo, creamos el recepcionista
+        if (empty($idRecep) && !empty($request->nombre_nuevo_recep)) {
+            $rec       = Recepcionista::create(['nombre' => trim($request->nombre_nuevo_recep), 'activo' => true]);
+            $idRecep   = $rec->id_recepcionista;
+            $nombreRec = $rec->nombre;
+        } elseif ($idRecep) {
+            $nombreRec = Recepcionista::find($idRecep)?->nombre;
+        }
+
+        TurnoPersonal::create([
+            'id_usuario'           => Auth::id(),
+            'id_recepcionista'     => $idRecep,
+            'nombre_recepcionista' => $nombreRec,
+            'fecha'                => $validated['fecha'],
+            'tipo_turno'           => 'dia',
+            'hora_inicio'          => $validated['hora_inicio'] ?? null,
+            'hora_fin'             => $validated['hora_fin'] ?? null,
+            'observaciones'        => $validated['observaciones'] ?? null,
+        ]);
+
+        return redirect()->route('turnos.index', ['mes' => date('n', strtotime($validated['fecha'])), 'anio' => date('Y', strtotime($validated['fecha']))])
             ->with('success', 'Turno creado correctamente.');
-    }
-
-    /**
-     * Formulario de edición (solo Administrador).
-     */
-    public function edit($id)
-    {
-        $this->authorizeAdmin();
-        $turno    = TurnoPersonal::findOrFail($id);
-        $usuarios = Usuario::where('activo', true)->orderBy('nombre_completo')->get();
-        return view('turnos.edit', compact('turno', 'usuarios'));
     }
 
     /**
@@ -88,22 +85,41 @@ class TurnoController extends Controller
         $turno = TurnoPersonal::findOrFail($id);
 
         $validated = $request->validate([
-            'id_usuario'    => 'required|exists:usuarios,id_usuario',
-            'fecha'         => 'required|date',
-            'tipo_turno'    => 'required|in:matutino,vespertino,nocturno',
-            'hora_inicio'   => 'required',
-            'hora_fin'      => 'required|after:hora_inicio',
-            'observaciones' => 'nullable|string|max:500',
+            'fecha'               => 'required|date',
+            'hora_inicio'         => 'nullable',
+            'hora_fin'            => 'nullable',
+            'id_recepcionista'    => 'nullable|exists:recepcionistas,id_recepcionista',
+            'nombre_nuevo_recep'  => 'nullable|string|max:150',
+            'observaciones'       => 'nullable|string|max:500',
         ]);
 
-        $turno->update($validated);
+        $idRecep   = $validated['id_recepcionista'] ?? null;
+        $nombreRec = null;
 
-        return redirect()->route('turnos.index')
+        if (empty($idRecep) && !empty($request->nombre_nuevo_recep)) {
+            $rec       = Recepcionista::create(['nombre' => trim($request->nombre_nuevo_recep), 'activo' => true]);
+            $idRecep   = $rec->id_recepcionista;
+            $nombreRec = $rec->nombre;
+        } elseif ($idRecep) {
+            $nombreRec = Recepcionista::find($idRecep)?->nombre;
+        }
+
+        $turno->update([
+            'id_recepcionista'     => $idRecep,
+            'nombre_recepcionista' => $nombreRec,
+            'fecha'                => $validated['fecha'],
+            'tipo_turno'           => 'dia',
+            'hora_inicio'          => $validated['hora_inicio'] ?? null,
+            'hora_fin'             => $validated['hora_fin'] ?? null,
+            'observaciones'        => $validated['observaciones'] ?? null,
+        ]);
+
+        return redirect()->route('turnos.index', ['mes' => date('n', strtotime($validated['fecha'])), 'anio' => date('Y', strtotime($validated['fecha']))])
             ->with('success', 'Turno actualizado correctamente.');
     }
 
     /**
-     * Eliminar turno (solo si no tiene llegadas registradas).
+     * Eliminar turno.
      */
     public function destroy($id)
     {
@@ -115,8 +131,39 @@ class TurnoController extends Controller
         }
 
         $turno->delete();
-        return redirect()->route('turnos.index')
-            ->with('success', 'Turno eliminado correctamente.');
+        return back()->with('success', 'Turno eliminado correctamente.');
+    }
+
+    // ── Recepcionistas ──────────────────────────────────────────────
+
+    /**
+     * Listar recepcionistas (AJAX JSON).
+     */
+    public function recepcionistas()
+    {
+        return response()->json(Recepcionista::where('activo', true)->orderBy('nombre')->get());
+    }
+
+    /**
+     * Guardar nuevo recepcionista.
+     */
+    public function storeRecepcionista(Request $request)
+    {
+        $this->authorizeAdmin();
+        $request->validate(['nombre' => 'required|string|max:150']);
+        $rec = Recepcionista::create(['nombre' => trim($request->nombre), 'activo' => true]);
+        return response()->json(['id_recepcionista' => $rec->id_recepcionista, 'nombre' => $rec->nombre]);
+    }
+
+    /**
+     * Eliminar recepcionista.
+     */
+    public function destroyRecepcionista($id)
+    {
+        $this->authorizeAdmin();
+        $rec = Recepcionista::findOrFail($id);
+        $rec->update(['activo' => false]);
+        return back()->with('success', 'Recepcionista desactivado.');
     }
 
     // ---------------------------------------------------------------

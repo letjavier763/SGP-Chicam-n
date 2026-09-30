@@ -26,65 +26,93 @@
     ============================================================ --}}
     <div class="col-lg-5">
 
-        {{-- Selector de turno del día --}}
-        <div class="card mb-3 shadow-sm border-0">
-            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h3 class="card-title mb-0 fw-bold">
-                    <i class="ti ti-calendar-event me-2 text-primary"></i>
-                    Turno Activo — {{ now()->locale('es')->isoFormat('D [de] MMMM, YYYY') }}
-                </h3>
-
-            </div>
-            <div class="card-body p-2 p-md-3">
-                @if($turnosHoy->isEmpty())
-                    <div class="text-center text-secondary py-4">
-                        <i class="ti ti-calendar-off fs-1 d-block mb-2 text-muted opacity-50"></i>
-                        <div class="fw-bold text-dark mb-1">No hay turnos registrados para hoy</div>
-                        <div class="small text-secondary mb-3">Abra o registre un turno de trabajo para comenzar el control de llegadas.</div>
-                        @if(Auth::user()->esAdministrador())
-                            <a href="{{ route('turnos.create') }}" class="btn btn-primary btn-sm shadow-sm">
-                                <i class="ti ti-plus me-1"></i> Crear Turno de Hoy
-                            </a>
-                        @endif
+        {{-- Barra no invasiva del turno del día --}}
+        @if($turnosHoy->isEmpty())
+            <div class="card mb-2 border-warning-subtle shadow-none bg-warning-lt">
+                <div class="card-body p-2 p-md-3">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="ti ti-user-plus text-warning fs-3"></i>
+                        <div>
+                            <div class="fw-bold text-dark small">Sin turno activo hoy</div>
+                            <div class="text-secondary" style="font-size: 0.75rem;">Selecciona o ingresa quién atenderá en ventanilla:</div>
+                        </div>
                     </div>
-                @else
-                    <form method="GET" action="{{ route('ventanilla.index') }}" class="d-flex gap-2">
-                        <select name="turno_id" class="form-select" onchange="this.form.submit()">
-                            @foreach($turnosHoy as $t)
-                                <option value="{{ $t->id_turno }}"
-                                    {{ $turnoActivo && $turnoActivo->id_turno == $t->id_turno ? 'selected' : '' }}>
-                                    {{ ucfirst($t->tipo_turno) }} — {{ $t->usuario->nombre_completo }}
-                                    ({{ \Carbon\Carbon::parse($t->hora_inicio)->format('H:i') }})
-                                </option>
-                            @endforeach
-                        </select>
+                    <form method="POST" action="{{ route('ventanilla.iniciar-turno') }}">
+                        @csrf
+                        <div class="d-flex gap-2 flex-wrap">
+                            <div class="flex-grow-1" style="min-width: 160px;">
+                                @if($recepcionistas->isNotEmpty())
+                                    <select name="id_recepcionista" id="v_recep" class="form-select form-select-sm" onchange="toggleNuevoRecepVentanilla(this.value)">
+                                        <option value="">— Seleccionar recepcionista —</option>
+                                        @foreach($recepcionistas as $r)
+                                            <option value="{{ $r->id_recepcionista }}">{{ $r->nombre }}</option>
+                                        @endforeach
+                                        <option value="nuevo">+ Registrar nuevo recepcionista…</option>
+                                    </select>
+                                @endif
+                                <div id="v_nuevo_recep_box" style="{{ $recepcionistas->isEmpty() ? '' : 'display: none;' }}" class="{{ $recepcionistas->isNotEmpty() ? 'mt-1' : '' }}">
+                                    <input type="text" id="v_nombre_nuevo" name="nombre_nuevo_recep" class="form-control form-control-sm"
+                                           placeholder="Nombre completo (ej: María García)" maxlength="150"
+                                           {{ $recepcionistas->isEmpty() ? 'required' : '' }}>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-warning btn-sm flex-shrink-0 align-self-start">
+                                <i class="ti ti-play me-1"></i> Iniciar
+                            </button>
+                        </div>
                     </form>
-                @endif
-
-                @if($turnoActivo)
-                <div class="mt-3 d-flex gap-2 flex-wrap">
-                    @php
-                        $colorTurno = match($turnoActivo->tipo_turno) {
-                            'matutino'   => 'warning',
-                            'vespertino' => 'primary',
-                            'nocturno'   => 'dark',
-                            default      => 'secondary'
-                        };
-                    @endphp
-                    <span class="badge bg-{{ $colorTurno }}-lt text-{{ $colorTurno }} px-2 py-1" style="font-size: 0.75rem;">
-                        <i class="ti ti-clock me-1"></i>
-                        {{ ucfirst($turnoActivo->tipo_turno) }}:
-                        {{ \Carbon\Carbon::parse($turnoActivo->hora_inicio)->format('H:i') }}
-                        – {{ \Carbon\Carbon::parse($turnoActivo->hora_fin)->format('H:i') }}
-                    </span>
-                    <span class="badge bg-blue-lt text-blue px-2 py-1" style="font-size: 0.75rem;">
-                        <i class="ti ti-users me-1"></i>
-                        {{ $llegadas->count() }} llegadas
-                    </span>
                 </div>
-                @endif
             </div>
-        </div>
+        @elseif($turnosHoy->count() === 1)
+            {{-- Turno único: Barra compacta y discreta --}}
+            <div class="card mb-2 shadow-sm border-0">
+                <div class="card-body py-2 px-3 d-flex align-items-center justify-content-between gap-2">
+                    <div class="d-flex align-items-center gap-2 text-truncate" style="min-width: 0;">
+                        <span class="status-dot status-dot-animated bg-success flex-shrink-0" title="Turno activo"></span>
+                        <span class="text-muted small text-nowrap">Turno:</span>
+                        <span class="fw-bold text-dark text-truncate" style="font-size: 0.875rem;">
+                            {{ $turnoActivo->nombre_responsable }}
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                        <span class="badge bg-blue-lt text-blue px-2 py-1" style="font-size: 0.72rem;">
+                            <i class="ti ti-users me-1"></i>{{ $llegadas->count() }} llegadas
+                        </span>
+                        <button type="button" class="btn btn-ghost-secondary btn-icon btn-sm" style="width: 28px; height: 28px;" title="Abrir otro turno hoy" data-bs-toggle="modal" data-bs-target="#modalNuevoTurnoVentanilla">
+                            <i class="ti ti-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        @else
+            {{-- Múltiples turnos: Selector compacto en una sola línea --}}
+            <div class="card mb-2 shadow-sm border-0">
+                <div class="card-body py-1 px-3 d-flex align-items-center justify-content-between gap-2">
+                    <div class="d-flex align-items-center gap-1 flex-grow-1 text-truncate" style="min-width: 0;">
+                        <span class="status-dot status-dot-animated bg-success flex-shrink-0" title="Turno activo"></span>
+                        <span class="text-muted small text-nowrap me-1">Turno:</span>
+                        <form method="GET" action="{{ route('ventanilla.index') }}" class="m-0 flex-grow-1" style="max-width: 200px;">
+                            <select name="turno_id" id="select_turno_id" class="form-select form-select-sm py-0 px-2 border-0 bg-light fw-bold text-dark" style="font-size: 0.85rem; height: 30px; cursor: pointer;" onchange="this.form.submit()">
+                                @foreach($turnosHoy as $t)
+                                    <option value="{{ $t->id_turno }}"
+                                        {{ $turnoActivo && $turnoActivo->id_turno == $t->id_turno ? 'selected' : '' }}>
+                                        {{ $t->nombre_responsable }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </form>
+                    </div>
+                    <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                        <span class="badge bg-blue-lt text-blue px-2 py-1" style="font-size: 0.72rem;">
+                            <i class="ti ti-users me-1"></i>{{ $llegadas->count() }} llegadas
+                        </span>
+                        <button type="button" class="btn btn-ghost-secondary btn-icon btn-sm" style="width: 28px; height: 28px;" title="Abrir otro turno hoy" data-bs-toggle="modal" data-bs-target="#modalNuevoTurnoVentanilla">
+                            <i class="ti ti-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        @endif
 
         {{-- Formulario de búsqueda y registro de llegada --}}
         @if($turnoActivo)
@@ -133,7 +161,8 @@
             @if(!$turnoActivo)
             <div class="card-body text-center text-secondary py-5">
                 <i class="ti ti-door-off fs-1 d-block mb-3 opacity-50"></i>
-                <p>Seleccione un turno para ver los registros de llegada.</p>
+                <p class="mb-1 fw-bold text-dark">No hay un turno activo en este momento</p>
+                <p class="small text-muted">Ingrese quién está en ventanilla en el panel izquierdo para comenzar a registrar llegadas.</p>
             </div>
             @elseif($llegadas->isEmpty())
             <div class="card-body text-center text-secondary py-5">
@@ -351,12 +380,7 @@
                         </div>
                     </div>
 
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label" for="nv_expediente">No. Expediente Físico</label>
-                            <input type="text" id="nv_expediente" name="numero_expediente_fisico" class="form-control" placeholder="Se auto-rellena con el número de familia">
-                        </div>
-                    </div>
+
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -386,6 +410,49 @@
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-danger"><i class="ti ti-trash me-1"></i> Confirmar Anulación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- ══════════════════ MODAL NUEVO TURNO DESDE VENTANILLA ══════════════════ --}}
+<div class="modal fade" id="modalNuevoTurnoVentanilla" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="ti ti-plus me-2"></i> Abrir Otro Turno Hoy</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ route('ventanilla.iniciar-turno') }}">
+                @csrf
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted mb-1">RECEPCIONISTA / RESPONSABLE</label>
+                        @if($recepcionistas->isNotEmpty())
+                            <select name="id_recepcionista" class="form-select form-select-sm mb-2" onchange="toggleModalNuevoRecep(this.value)">
+                                <option value="">— Seleccionar recepcionista registrado —</option>
+                                @foreach($recepcionistas as $r)
+                                    <option value="{{ $r->id_recepcionista }}">{{ $r->nombre }}</option>
+                                @endforeach
+                                <option value="nuevo">+ Registrar nuevo recepcionista…</option>
+                            </select>
+                        @endif
+                        <div id="modal_v_nuevo_box" style="{{ $recepcionistas->isEmpty() ? '' : 'display: none;' }}">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text"><i class="ti ti-user-plus"></i></span>
+                                <input type="text" id="modal_v_nombre_nuevo" name="nombre_nuevo_recep" class="form-control"
+                                       placeholder="Nombre completo (ej: Juan Pérez)" maxlength="150"
+                                       {{ $recepcionistas->isEmpty() ? 'required' : '' }}>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="ti ti-check me-1"></i> Abrir Turno
+                    </button>
                 </div>
             </form>
         </div>
@@ -471,10 +538,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         <input type="hidden" name="id_turno"    value="${turnoId}">
                         <input type="hidden" name="id_paciente" value="${p.id_paciente}">
                         <input type="time" name="hora_llegada" value="${nowHHMM}" class="form-control form-control-sm" style="width:120px" required>
-                        <div class="form-check form-switch mb-0">
-                            <input class="form-check-input" type="checkbox" name="es_nuevo" value="1" id="nuevo_${p.id_paciente}">
-                            <label class="form-check-label small" for="nuevo_${p.id_paciente}">1ª visita</label>
-                        </div>
                         <button type="submit" class="btn btn-sm btn-success">
                             <i class="ti ti-login me-1"></i>Registrar
                         </button>
@@ -612,7 +675,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const nvIdFamInput   = document.getElementById('nv_id_family');
     const nvFamSug       = document.getElementById('nv_familia_suggestions');
     const nvFamStatus    = document.getElementById('nv_familia_status');
-    const nvExpediente   = document.getElementById('nv_expediente');
     const buscarFamPath  = '{{ route('api.familias.buscar') }}';
     
     const nvFamLocCont   = document.getElementById('nv_family_location_container');
@@ -688,8 +750,6 @@ document.addEventListener('DOMContentLoaded', function () {
             nvFamStatus.innerHTML = `<i class="ti ti-plus-circle me-1"></i>Se creará la familia <strong>${q}</strong> automáticamente`;
             nvFamSug.style.display = 'none';
             showLocationFields();
-            // Auto-rellenar expediente con el número
-            if (nvExpediente && !nvExpediente.value) nvExpediente.value = q;
             return;
         }
 
@@ -717,7 +777,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 nvFamSug.style.display = 'none';
                 nvFamStatus.className = 'form-hint text-success fw-bold mt-1 d-block';
                 nvFamStatus.innerHTML = `<i class="ti ti-check me-1"></i>Familia existente seleccionada (ID ${f.id_family})`;
-                if (nvExpediente && !nvExpediente.value) nvExpediente.value = f.numero_familia;
                 hideLocationFields();
             });
             nvFamSug.appendChild(item);
@@ -760,5 +819,43 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+
+function toggleNuevoRecepVentanilla(val) {
+    const box   = document.getElementById('v_nuevo_recep_box');
+    const input = document.getElementById('v_nombre_nuevo');
+    if (!box) return;
+    if (val === 'nuevo' || val === '') {
+        box.style.display = 'block';
+        if (input && val === 'nuevo') {
+            input.required = true;
+            input.focus();
+        }
+    } else {
+        box.style.display = 'none';
+        if (input) {
+            input.required = false;
+            input.value = '';
+        }
+    }
+}
+
+function toggleModalNuevoRecep(val) {
+    const box   = document.getElementById('modal_v_nuevo_box');
+    const input = document.getElementById('modal_v_nombre_nuevo');
+    if (!box) return;
+    if (val === 'nuevo' || val === '') {
+        box.style.display = 'block';
+        if (input && val === 'nuevo') {
+            input.required = true;
+            input.focus();
+        }
+    } else {
+        box.style.display = 'none';
+        if (input) {
+            input.required = false;
+            input.value = '';
+        }
+    }
+}
 </script>
 @endsection

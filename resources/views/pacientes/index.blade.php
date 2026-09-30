@@ -255,7 +255,7 @@
                 <div class="modal-body">
                     <h6 class="text-secondary border-bottom pb-2 mb-3">1. Adscripción al Núcleo Familiar</h6>
                     <div class="row g-3 mb-3">
-                        <div class="col-md-8">
+                        <div class="col-12">
                             <label class="form-label required" for="create_id_family">Núcleo Familiar</label>
                             <select id="create_id_family" name="id_family" class="form-select" required>
                                 <option value="">-- Seleccione un núcleo familiar --</option>
@@ -265,10 +265,6 @@
                                     </option>
                                 @endforeach
                             </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="create_numero_expediente_fisico">No. Expediente Físico</label>
-                            <input type="text" id="create_numero_expediente_fisico" name="numero_expediente_fisico" class="form-control bg-light" readonly placeholder="Se asigna según la familia">
                         </div>
                     </div>
 
@@ -404,15 +400,6 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // Auto-completar expediente en crear
-    const createFamSelect = document.getElementById('create_id_family');
-    const createExpInput = document.getElementById('create_numero_expediente_fisico');
-    if (createFamSelect) {
-        createFamSelect.addEventListener('change', function () {
-            const opt = this.options[this.selectedIndex];
-            createExpInput.value = opt ? (opt.dataset.numeroFamilia || '') : '';
-        });
-    }
 
     // Auto-completar expediente en editar
     const editFamSelect = document.getElementById('edit_id_family');

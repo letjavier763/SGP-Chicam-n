@@ -7,6 +7,7 @@ use App\Models\Paciente;
 use App\Models\RegistroLlegada;
 use App\Models\Bitacora;
 use App\Models\Departamento;
+use App\Models\Recepcionista;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -21,27 +22,25 @@ class VentanillaController extends Controller
         $hoy = today();
 
         // Obtener los turnos disponibles del día de hoy
-        $turnosHoy = TurnoPersonal::with('usuario')
+        $turnosHoy = TurnoPersonal::with(['usuario', 'recepcionista'])
             ->whereDate('fecha', $hoy)
-            ->orderBy('hora_inicio')
+            ->orderBy('id_turno')
             ->get();
 
-        // Seleccionar turno: por parámetro, o el turno del usuario logueado de hoy
         $turnoId = $request->get('turno_id');
         $turnoActivo = null;
 
-        if ($turnoId) {
-            $turnoActivo = TurnoPersonal::find($turnoId);
-        } else {
-            // Buscar turno del usuario actual hoy
-            $turnoActivo = TurnoPersonal::where('id_usuario', Auth::id())
-                ->whereDate('fecha', $hoy)
-                ->orderBy('hora_inicio')
-                ->first();
-
-            // Si es admin sin turno propio, tomar el primer turno del día
-            if (!$turnoActivo && Auth::user()->esAdministrador() && $turnosHoy->isNotEmpty()) {
-                $turnoActivo = $turnosHoy->first();
+        if ($turnosHoy->count() === 1) {
+            // Si hay solo un turno disponible en el día, se asigna automáticamente
+            $turnoActivo = $turnosHoy->first();
+        } elseif ($turnosHoy->count() > 1) {
+            // Si hay más de un turno, permite elegir cuál está en el turno
+            if ($turnoId) {
+                $turnoActivo = $turnosHoy->firstWhere('id_turno', $turnoId);
+            }
+            if (!$turnoActivo) {
+                // Por defecto, asignar el del usuario logueado o el primero
+                $turnoActivo = $turnosHoy->firstWhere('id_usuario', Auth::id()) ?? $turnosHoy->first();
             }
         }
 
@@ -71,10 +70,11 @@ class VentanillaController extends Controller
                 ->get();
         }
 
-        $departamentos = Departamento::orderBy('nombre')->get();
+        $departamentos  = Departamento::orderBy('nombre')->get();
+        $recepcionistas = Recepcionista::where('activo', true)->orderBy('nombre')->get();
 
         return view('ventanilla.index', compact(
-            'turnosHoy', 'turnoActivo', 'llegadas', 'pacientes', 'buscarPaciente', 'departamentos'
+            'turnosHoy', 'turnoActivo', 'llegadas', 'pacientes', 'buscarPaciente', 'departamentos', 'recepcionistas'
         ));
     }
 
@@ -87,7 +87,6 @@ class VentanillaController extends Controller
             'id_turno'      => 'required|exists:turnos_personal,id_turno',
             'id_paciente'   => 'required|exists:pacientes,id_paciente',
             'hora_llegada'  => 'required',
-            'es_nuevo'      => 'boolean',
             'observaciones' => 'nullable|string|max:500',
         ]);
 
@@ -103,12 +102,16 @@ class VentanillaController extends Controller
             return back()->with('error', 'Este paciente ya fue registrado hoy en el turno actual.');
         }
 
+        // Determinar automáticamente si es primera visita (si no tiene registros previos de llegada)
+        $tieneVisitasPrevias = RegistroLlegada::where('id_paciente', $validated['id_paciente'])->exists();
+        $esNuevo = !$tieneVisitasPrevias;
+
         $registro = RegistroLlegada::create([
             'id_paciente'   => $validated['id_paciente'],
             'id_turno'      => $turno->id_turno,
             'fecha'         => today(),
             'hora_llegada'  => $validated['hora_llegada'],
-            'es_nuevo'      => $request->boolean('es_nuevo'),
+            'es_nuevo'      => $esNuevo,
             'observaciones' => $validated['observaciones'] ?? null,
         ]);
 
@@ -204,5 +207,62 @@ class VentanillaController extends Controller
         });
 
         return response()->json($resultado);
+    }
+
+    /**
+     * Iniciar un turno rápidamente desde Ventanilla cuando no hay turnos activos o se agrega otro.
+     */
+    public function iniciarTurno(Request $request)
+    {
+        $validated = $request->validate([
+            'id_recepcionista'   => 'nullable|string',
+            'nombre_nuevo_recep' => 'nullable|string|max:150',
+            'observaciones'      => 'nullable|string|max:500',
+        ]);
+
+        $idRecep   = $validated['id_recepcionista'] ?? null;
+        $nombreRec = null;
+
+        if ($idRecep === 'nuevo' || (empty($idRecep) && !empty($request->nombre_nuevo_recep))) {
+            $nombreNuevo = trim($request->nombre_nuevo_recep ?? '');
+            if (!empty($nombreNuevo)) {
+                $rec = Recepcionista::firstOrCreate(
+                    ['nombre' => $nombreNuevo],
+                    ['activo' => true]
+                );
+                $idRecep   = $rec->id_recepcionista;
+                $nombreRec = $rec->nombre;
+            }
+        } elseif (!empty($idRecep)) {
+            $rec = Recepcionista::find($idRecep);
+            if ($rec) {
+                $nombreRec = $rec->nombre;
+            }
+        }
+
+        if (empty($nombreRec)) {
+            return back()->with('error', 'Por favor selecciona o ingresa el nombre de quien atenderá en ventanilla.');
+        }
+
+        $turno = TurnoPersonal::create([
+            'id_usuario'           => Auth::id(),
+            'id_recepcionista'     => $idRecep ?: null,
+            'nombre_recepcionista' => $nombreRec,
+            'fecha'                => today()->toDateString(),
+            'tipo_turno'           => 'dia',
+            'observaciones'        => $validated['observaciones'] ?? null,
+        ]);
+
+        Bitacora::registrar(
+            Auth::id(),
+            'crear',
+            'turnos_personal',
+            $turno->id_turno,
+            "Turno del día iniciado desde ventanilla: {$nombreRec}",
+            $request->ip()
+        );
+
+        return redirect()->route('ventanilla.index', ['turno_id' => $turno->id_turno])
+            ->with('success', "Turno iniciado para {$nombreRec}. Puede registrar llegadas.");
     }
 }

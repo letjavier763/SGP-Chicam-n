@@ -1,493 +1,593 @@
 @extends('layouts.app')
 
-@section('title', 'Turnos del Personal')
-@section('page_title', 'Módulo de Ventanilla — Turnos del Personal')
+@section('title', 'Gestión de Turnos')
+@section('page_title', 'Módulo de Ventanilla — Gestión de Turnos')
 
 @section('content')
-{{-- Barra de filtros + botón crear --}}
-<div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <h3 class="card-title mb-0">
-            <i class="ti ti-clock me-2 text-primary"></i> Turnos Registrados
-        </h3>
-        @if(Auth::user()->esAdministrador())
-        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalCrearTurno">
-            <i class="ti ti-plus me-1"></i> Nuevo Turno
-        </button>
-        @endif
-    </div>
-    <div class="card-body border-bottom py-3">
-        <form method="GET" action="{{ route('turnos.index') }}" class="row g-2 align-items-end" id="search-form">
-            <div class="col-md-4">
-                <label class="form-label text-secondary small">Filtrar por Fecha</label>
-                <input type="date" name="fecha" class="form-control" value="{{ request('fecha') }}">
-            </div>
-            <div class="col-md-4">
-                <label class="form-label text-secondary small">Tipo de Turno</label>
-                <select name="tipo_turno" class="form-select">
-                    <option value="">Todos</option>
-                    <option value="matutino"   {{ request('tipo_turno') === 'matutino'   ? 'selected' : '' }}>Matutino</option>
-                    <option value="vespertino" {{ request('tipo_turno') === 'vespertino' ? 'selected' : '' }}>Vespertino</option>
-                    <option value="nocturno"   {{ request('tipo_turno') === 'nocturno'   ? 'selected' : '' }}>Nocturno</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <a href="{{ route('turnos.index') }}" class="btn btn-outline-secondary w-100">
-                    <i class="ti ti-rotate-clockwise me-1"></i> Limpiar Filtros
-                </a>
-            </div>
-        </form>
-    </div>
-</div>
 
 @if(session('success'))
-<div class="alert alert-success alert-dismissible fade show" role="alert">
+<div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
     <i class="ti ti-check me-2"></i> {{ session('success') }}
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
 @endif
 @if(session('error'))
-<div class="alert alert-danger alert-dismissible fade show" role="alert">
+<div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
     <i class="ti ti-alert-circle me-2"></i> {{ session('error') }}
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
 @endif
 @if($errors->any())
-<div class="alert alert-danger alert-dismissible fade show" role="alert">
-    <strong>Atención: Revise los siguientes errores:</strong>
-    <ul class="mb-0 ps-3">
-        @foreach($errors->all() as $e)
-            <li>{{ $e }}</li>
-        @endforeach
-    </ul>
+<div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+    <strong>Errores:</strong>
+    <ul class="mb-0 ps-3">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
 @endif
 
-{{-- Tabla de turnos --}}
-<div class="card shadow-sm border-0" id="table-container">
-    <div class="table-responsive d-none d-md-block">
-        <table class="table table-vcenter table-hover card-table">
-            <thead class="bg-light">
-                <tr>
-                    <th>#</th>
-                    <th>Personal</th>
-                    <th>Fecha</th>
-                    <th>Tipo</th>
-                    <th>Horario</th>
-                    <th>Observaciones</th>
-                    <th class="text-end">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-            @forelse($turnos as $turno)
-                <tr>
-                    <td class="text-secondary">{{ $turno->id_turno }}</td>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="avatar avatar-sm bg-blue-lt text-blue rounded-circle fw-bold">
-                                {{ strtoupper(substr($turno->usuario->nombre_completo, 0, 2)) }}
-                            </span>
-                            <div>
-                                <div class="fw-medium text-dark">{{ $turno->usuario->nombre_completo }}</div>
-                                <div class="text-secondary small">{{ $turno->usuario->rol->nombre_rol }}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        <span class="fw-medium text-dark">{{ $turno->fecha->format('d/m/Y') }}</span>
-                        @if($turno->fecha->isToday())
-                            <span class="badge bg-green-lt text-green ms-1">Hoy</span>
-                        @endif
-                    </td>
-                    <td>
-                        @php
-                            $badgeColor = match($turno->tipo_turno) {
-                                'matutino'   => 'warning',
-                                'vespertino' => 'primary',
-                                'nocturno'   => 'dark',
-                                default      => 'secondary'
-                            };
-                        @endphp
-                        <span class="badge bg-{{ $badgeColor }}-lt text-{{ $badgeColor }} text-capitalize">
-                            {{ $turno->tipo_turno }}
-                        </span>
-                    </td>
-                    <td>
-                        <i class="ti ti-clock text-secondary me-1"></i>
-                        {{ \Carbon\Carbon::parse($turno->hora_inicio)->format('H:i') }}
-                        — {{ \Carbon\Carbon::parse($turno->hora_fin)->format('H:i') }}
-                    </td>
-                    <td class="text-secondary small">
-                        {{ Str::limit($turno->observaciones, 50, '…') ?: '—' }}
-                    </td>
-                    <td class="text-end">
-                        <div class="d-flex justify-content-end gap-1 flex-wrap">
-                            <a href="{{ route('ventanilla.index', ['turno_id' => $turno->id_turno]) }}"
-                               class="btn btn-sm btn-outline-primary" title="Ir a Ventanilla">
-                                <i class="ti ti-door-enter me-1"></i>Ventanilla
-                            </a>
-                            <a href="{{ route('reportes.diario', $turno->id_turno) }}"
-                               class="btn btn-sm btn-outline-success" title="Ver Reporte">
-                                <i class="ti ti-chart-bar me-1"></i>Reporte
-                            </a>
-                            @if(Auth::user()->esAdministrador())
-                            <button type="button" class="btn btn-sm btn-outline-secondary btn-editar-turno"
-                                    title="Editar"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#modalEditarTurno"
-                                    data-id="{{ $turno->id_turno }}"
-                                    data-usuario="{{ $turno->id_usuario }}"
-                                    data-fecha="{{ $turno->fecha->format('Y-m-d') }}"
-                                    data-tipo="{{ $turno->tipo_turno }}"
-                                    data-inicio="{{ \Carbon\Carbon::parse($turno->hora_inicio)->format('H:i') }}"
-                                    data-fin="{{ \Carbon\Carbon::parse($turno->hora_fin)->format('H:i') }}"
-                                    data-obs="{{ $turno->observaciones }}">
-                                <i class="ti ti-edit"></i>
-                            </button>
-                            <form action="{{ route('turnos.destroy', $turno->id_turno) }}" method="POST" class="d-inline"
-                                  onsubmit="return confirm('¿Eliminar este turno?')">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
-                                    <i class="ti ti-trash"></i>
-                                </button>
-                            </form>
-                            @endif
-                        </div>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="7" class="text-center text-secondary py-5">
-                        <i class="ti ti-calendar-off fs-1 d-block mb-2 text-muted opacity-50"></i>
-                        No se encontraron turnos con los filtros aplicados.
-                    </td>
-                </tr>
-            @endforelse
-            </tbody>
-        </table>
+@php
+    $prevMes  = $mes == 1  ? 12 : $mes - 1;
+    $prevAnio = $mes == 1  ? $anio - 1 : $anio;
+    $nextMes  = $mes == 12 ?  1 : $mes + 1;
+    $nextAnio = $mes == 12 ? $anio + 1 : $anio;
+    $nombreMes = \Carbon\Carbon::createFromDate($anio, $mes, 1)->locale('es')->isoFormat('MMMM YYYY');
+
+    $totalDias    = $inicio->daysInMonth;
+    $primerDia    = $inicio->copy()->startOfMonth();
+    $offsetInicio = ($primerDia->dayOfWeek === 0) ? 6 : $primerDia->dayOfWeek - 1;
+@endphp
+
+{{-- ══════════════════ CALENDARIO ══════════════════ --}}
+<div class="card border-0 shadow-sm mb-3">
+
+    {{-- Cabecera --}}
+    <div class="card-header d-flex align-items-center justify-content-between py-3 px-3 bg-white border-bottom">
+        <div class="d-flex align-items-center gap-2">
+            <a href="{{ route('turnos.index', ['mes' => $prevMes, 'anio' => $prevAnio]) }}"
+               class="btn btn-ghost-secondary btn-icon btn-sm">
+                <i class="ti ti-chevron-left"></i>
+            </a>
+            <h5 class="mb-0 fw-bold text-capitalize" style="min-width: 150px; text-align: center; font-size: 1rem;">
+                {{ $nombreMes }}
+            </h5>
+            <a href="{{ route('turnos.index', ['mes' => $nextMes, 'anio' => $nextAnio]) }}"
+               class="btn btn-ghost-secondary btn-icon btn-sm">
+                <i class="ti ti-chevron-right"></i>
+            </a>
+            <a href="{{ route('turnos.index', ['mes' => now()->month, 'anio' => now()->year]) }}"
+               class="btn btn-sm btn-outline-primary py-1">Hoy</a>
+        </div>
+        <div class="d-flex gap-2">
+            @if(Auth::user()->esAdministrador())
+            <button type="button" class="btn btn-sm btn-ghost-secondary"
+                    data-bs-toggle="modal" data-bs-target="#modalRecepcionistas"
+                    title="Gestionar Recepcionistas">
+                <i class="ti ti-users"></i>
+                <span class="d-none d-sm-inline ms-1">Recepcionistas</span>
+            </button>
+            <button type="button" class="btn btn-sm btn-primary"
+                    id="btnNuevoTurnoHeader"
+                    data-bs-toggle="modal" data-bs-target="#modalCrearTurno">
+                <i class="ti ti-plus me-1"></i>
+                <span class="d-none d-sm-inline">Nuevo Turno</span>
+            </button>
+            @endif
+        </div>
     </div>
 
-    <!-- Vista de Tarjetas Adaptada para Móviles -->
-    <div class="divide-y d-md-none">
-        @forelse($turnos as $turno)
+    {{-- Días de la semana --}}
+    <div class="cal-grid cal-header border-bottom">
+        @foreach(['L','M','X','J','V','S','D'] as $d)
+        <div class="cal-cell cal-hd">{{ $d }}</div>
+        @endforeach
+    </div>
+
+    {{-- Celdas del mes --}}
+    <div class="cal-grid cal-body">
+        @for($pad = 0; $pad < $offsetInicio; $pad++)
+        <div class="cal-cell cal-empty"></div>
+        @endfor
+
+        @for($d = 1; $d <= $totalDias; $d++)
             @php
-                $badgeColor = match($turno->tipo_turno) {
-                    'matutino'   => 'warning',
-                    'vespertino' => 'primary',
-                    'nocturno'   => 'dark',
-                    default      => 'secondary'
-                };
+                $fecha     = \Carbon\Carbon::createFromDate($anio, $mes, $d)->toDateString();
+                $turnosDia = $turnos[$fecha] ?? collect();
+                $esHoy     = $fecha === today()->toDateString();
+                $esPasado  = $fecha < today()->toDateString();
+                $esFin     = in_array(\Carbon\Carbon::createFromDate($anio, $mes, $d)->dayOfWeek, [0, 6]);
             @endphp
-            <div class="p-3 bg-white">
-                <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
-                    <div class="d-flex align-items-center gap-2 min-w-0">
-                        <span class="avatar avatar-sm bg-blue-lt text-blue rounded-circle fw-bold flex-shrink-0">
-                            {{ strtoupper(substr($turno->usuario->nombre_completo, 0, 2)) }}
-                        </span>
-                        <div class="min-w-0">
-                            <div class="fw-bold text-dark text-truncate" style="font-size: 0.925rem;">
-                                {{ $turno->usuario->nombre_completo }}
-                            </div>
-                            <div class="text-secondary small">{{ $turno->usuario->rol->nombre_rol }}</div>
-                        </div>
-                    </div>
-                    <span class="badge bg-{{ $badgeColor }}-lt text-{{ $badgeColor }} text-capitalize flex-shrink-0">
-                        {{ $turno->tipo_turno }}
-                    </span>
-                </div>
+            <div class="cal-cell cal-day
+                        {{ $esHoy ? 'cal-hoy' : '' }}
+                        {{ $esFin ? 'cal-fin' : '' }}
+                        {{ ($esPasado && $turnosDia->isEmpty()) ? 'cal-pasado' : '' }}"
+                 data-fecha="{{ $fecha }}"
+                 onclick="openDayModal('{{ $fecha }}', {{ $d }})">
 
-                <div class="d-flex align-items-center justify-content-between py-1.5 px-2 bg-light rounded-2 my-2" style="font-size: 0.8rem;">
-                    <div class="fw-bold text-dark">
-                        <i class="ti ti-calendar me-1 text-muted"></i>{{ $turno->fecha->format('d/m/Y') }}
-                        @if($turno->fecha->isToday())
-                            <span class="badge bg-green-lt text-green ms-1 py-0 px-1" style="font-size: 0.7rem;">Hoy</span>
-                        @endif
-                    </div>
-                    <div class="text-secondary font-monospace">
-                        <i class="ti ti-clock me-1 text-muted"></i>
-                        {{ \Carbon\Carbon::parse($turno->hora_inicio)->format('H:i') }} — {{ \Carbon\Carbon::parse($turno->hora_fin)->format('H:i') }}
-                    </div>
-                </div>
+                <div class="cal-num {{ $esHoy ? 'cal-num-hoy' : '' }}">{{ $d }}</div>
 
-                @if($turno->observaciones)
-                    <div class="text-secondary small mb-2 fst-italic" style="font-size: 0.78rem;">
-                        "{{ $turno->observaciones }}"
-                    </div>
-                @endif
-
-                <div class="d-flex gap-1.5 pt-1 flex-wrap">
-                    <a href="{{ route('ventanilla.index', ['turno_id' => $turno->id_turno]) }}"
-                       class="btn btn-outline-primary btn-sm flex-fill py-1">
-                        <i class="ti ti-door-enter me-1"></i> Ventanilla
-                    </a>
-                    <a href="{{ route('reportes.diario', $turno->id_turno) }}"
-                       class="btn btn-outline-success btn-sm flex-fill py-1">
-                        <i class="ti ti-chart-bar me-1"></i> Reporte
-                    </a>
-                    @if(Auth::user()->esAdministrador())
-                    <button type="button" class="btn btn-outline-secondary btn-sm btn-editar-turno px-2.5 py-1"
-                            title="Editar"
-                            data-bs-toggle="modal"
-                            data-bs-target="#modalEditarTurno"
-                            data-id="{{ $turno->id_turno }}"
-                            data-usuario="{{ $turno->id_usuario }}"
-                            data-fecha="{{ $turno->fecha->format('Y-m-d') }}"
-                            data-tipo="{{ $turno->tipo_turno }}"
-                            data-inicio="{{ \Carbon\Carbon::parse($turno->hora_inicio)->format('H:i') }}"
-                            data-fin="{{ \Carbon\Carbon::parse($turno->hora_fin)->format('H:i') }}"
-                            data-obs="{{ $turno->observaciones }}">
-                        <i class="ti ti-edit"></i>
-                    </button>
-                    <form action="{{ route('turnos.destroy', $turno->id_turno) }}" method="POST" class="d-inline"
-                          onsubmit="return confirm('¿Eliminar este turno?')">
-                        @csrf @method('DELETE')
-                        <button type="submit" class="btn btn-outline-danger btn-sm px-2.5 py-1" title="Eliminar">
-                            <i class="ti ti-trash"></i>
-                        </button>
-                    </form>
-                    @endif
+                {{-- Un punto azul por cada turno registrado en el día --}}
+                <div class="cal-dots">
+                    @foreach($turnosDia as $t)
+                        <span class="cal-dot" title="{{ $t->nombre_responsable }}"></span>
+                    @endforeach
                 </div>
             </div>
-        @empty
-            <div class="text-center text-secondary py-5 px-3">
-                <i class="ti ti-clock-off fs-1 d-block mb-2 text-muted opacity-50"></i>
-                <div class="fw-bold text-dark mb-1">No se encontraron turnos</div>
-                <div class="small text-secondary">No hay turnos registrados con los criterios seleccionados.</div>
-            </div>
-        @endforelse
+        @endfor
     </div>
 
-    @if($turnos->hasPages())
-    <div class="card-footer d-flex align-items-center">
-        <p class="m-0 text-secondary">
-            Mostrando {{ $turnos->firstItem() }}–{{ $turnos->lastItem() }} de {{ $turnos->total() }} turnos
-        </p>
-        <ul class="pagination m-0 ms-auto">
-            {{ $turnos->links('pagination::bootstrap-5') }}
-        </ul>
+    {{-- Pie --}}
+    <div class="card-footer bg-white border-top py-2 px-3 d-flex align-items-center">
+        <span class="d-flex align-items-center gap-1 text-secondary" style="font-size:0.72rem;">
+            <span class="cal-dot" style="flex-shrink:0;"></span>
+            Turno asignado
+        </span>
+        <span class="ms-auto text-secondary" style="font-size:0.72rem;">
+            <i class="ti ti-hand-click me-1"></i>Toca un día para ver o agregar turnos
+        </span>
     </div>
-    @endif
 </div>
 
-{{-- MODAL CREAR TURNO --}}
+{{-- ══════════════════ MODAL DÍA ══════════════════ --}}
+<div class="modal fade" id="modalDia" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width: 440px;">
+        <div class="modal-content">
+            <div class="modal-header" id="modalDiaHeader">
+                <h5 class="modal-title fw-bold" id="modalDiaTitle">—</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-3" id="modalDiaBody">
+                <div class="text-center text-secondary py-3 fst-italic" id="modalDiaSinTurnos">
+                    <i class="ti ti-calendar-off d-block fs-2 mb-1 opacity-40"></i>
+                    Sin turnos registrados este día.
+                </div>
+                <div id="modalDiaLista"></div>
+            </div>
+            <div class="modal-footer bg-light justify-content-between">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+                @if(Auth::user()->esAdministrador())
+                <button type="button" class="btn btn-primary btn-sm" id="btnAgregarDesdeDia"
+                        data-bs-dismiss="modal"
+                        data-bs-toggle="modal" data-bs-target="#modalCrearTurno">
+                    <i class="ti ti-plus me-1"></i> Agregar Turno
+                </button>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+
 @if(Auth::user()->esAdministrador())
+
+{{-- ══════════════════ MODAL CREAR TURNO ══════════════════ --}}
 <div class="modal fade" id="modalCrearTurno" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fw-bold"><i class="ti ti-clock-plus me-2"></i> Crear Nuevo Turno</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title fw-bold"><i class="ti ti-calendar-plus me-2"></i> Nuevo Turno</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form action="{{ route('turnos.store') }}" method="POST">
                 @csrf
                 <div class="modal-body">
                     <div class="row g-3">
-                        <div class="col-md-12">
-                            <label for="create_turno_usuario" class="form-label required">Personal Asignado</label>
-                            <select id="create_turno_usuario" name="id_usuario" class="form-select" required>
-                                <option value="">— Seleccione un usuario —</option>
-                                @foreach($usuarios as $u)
-                                    <option value="{{ $u->id_usuario }}">
-                                        {{ $u->nombre_completo }} ({{ $u->rol->nombre_rol }})
-                                    </option>
+                        <div class="col-12">
+                            <label for="c_fecha" class="form-label required">Fecha</label>
+                            <input type="date" id="c_fecha" name="fecha" class="form-control form-control-sm"
+                                   value="{{ today()->toDateString() }}" required>
+                        </div>
+                        <div class="col-12">
+                            <label for="c_recep" class="form-label">Recepcionista Asignado</label>
+                            <select id="c_recep" name="id_recepcionista" class="form-select form-select-sm">
+                                <option value="">— Nuevo o sin asignar —</option>
+                                @foreach($recepcionistas as $r)
+                                    <option value="{{ $r->id_recepcionista }}">{{ $r->nombre }}</option>
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label for="create_turno_fecha" class="form-label required">Fecha del Turno</label>
-                            <input type="date" id="create_turno_fecha" name="fecha" class="form-control" value="{{ today()->toDateString() }}" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="create_tipo_turno" class="form-label required">Tipo de Turno</label>
-                            <select id="create_tipo_turno" name="tipo_turno" class="form-select" required>
-                                <option value="">— Seleccione —</option>
-                                <option value="matutino">Matutino (6:00 – 14:00)</option>
-                                <option value="vespertino">Vespertino (14:00 – 22:00)</option>
-                                <option value="nocturno">Nocturno (22:00 – 6:00)</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="create_hora_inicio" class="form-label required">Hora de Inicio</label>
-                            <input type="time" id="create_hora_inicio" name="hora_inicio" class="form-control" value="06:00" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="create_hora_fin" class="form-label required">Hora de Fin</label>
-                            <input type="time" id="create_hora_fin" name="hora_fin" class="form-control" value="14:00" required>
+                        <div class="col-12" id="c_nuevo_recep_wrapper" style="display:none;">
+                            <label for="c_nombre_nuevo" class="form-label">Nombre del nuevo recepcionista</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text"><i class="ti ti-user-plus"></i></span>
+                                <input type="text" id="c_nombre_nuevo" name="nombre_nuevo_recep"
+                                       class="form-control" placeholder="Ej: María García" maxlength="150">
+                            </div>
+                            <div class="form-hint text-info small mt-1">
+                                <i class="ti ti-info-circle me-1"></i>Se guardará como recepcionista registrado.
+                            </div>
                         </div>
                         <div class="col-12">
-                            <label for="create_turno_obs" class="form-label">Observaciones</label>
-                            <textarea id="create_turno_obs" name="observaciones" class="form-control" rows="3" placeholder="Notas adicionales sobre el turno…"></textarea>
+                            <label for="c_obs" class="form-label">Observaciones</label>
+                            <textarea id="c_obs" name="observaciones" class="form-control form-control-sm" rows="2"
+                                      placeholder="Notas adicionales…"></textarea>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy me-1"></i> Guardar Turno</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="ti ti-device-floppy me-1"></i> Guardar Turno
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-{{-- MODAL EDITAR TURNO --}}
+{{-- ══════════════════ MODAL EDITAR TURNO ══════════════════ --}}
 <div class="modal fade" id="modalEditarTurno" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
         <div class="modal-content">
             <div class="modal-header bg-warning text-dark">
-                <h5 class="modal-title fw-bold"><i class="ti ti-edit me-2"></i> Editar Turno de Personal</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title fw-bold"><i class="ti ti-edit me-2"></i> Editar Turno</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+            <!-- Formulario oculto para eliminar turno -->
+            <form id="formEliminarTurno" method="POST" action="" class="d-none">
+                @csrf
+                @method('DELETE')
+            </form>
+
             <form action="" method="POST" id="formEditarTurno">
                 @csrf
                 @method('PUT')
                 <div class="modal-body">
                     <div class="row g-3">
-                        <div class="col-md-12">
-                            <label for="edit_turno_usuario" class="form-label required">Personal Asignado</label>
-                            <select id="edit_turno_usuario" name="id_usuario" class="form-select" required>
-                                <option value="">— Seleccione un usuario —</option>
-                                @foreach($usuarios as $u)
-                                    <option value="{{ $u->id_usuario }}">
-                                        {{ $u->nombre_completo }} ({{ $u->rol->nombre_rol }})
-                                    </option>
+                        <div class="col-12">
+                            <label for="e_fecha" class="form-label required">Fecha</label>
+                            <input type="date" id="e_fecha" name="fecha" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="col-12">
+                            <label for="e_recep" class="form-label">Recepcionista</label>
+                            <select id="e_recep" name="id_recepcionista" class="form-select form-select-sm">
+                                <option value="">— Nuevo o sin asignar —</option>
+                                @foreach($recepcionistas as $r)
+                                    <option value="{{ $r->id_recepcionista }}">{{ $r->nombre }}</option>
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label for="edit_turno_fecha" class="form-label required">Fecha del Turno</label>
-                            <input type="date" id="edit_turno_fecha" name="fecha" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="edit_tipo_turno" class="form-label required">Tipo de Turno</label>
-                            <select id="edit_tipo_turno" name="tipo_turno" class="form-select" required>
-                                <option value="">— Seleccione —</option>
-                                <option value="matutino">Matutino (6:00 – 14:00)</option>
-                                <option value="vespertino">Vespertino (14:00 – 22:00)</option>
-                                <option value="nocturno">Nocturno (22:00 – 6:00)</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="edit_hora_inicio" class="form-label required">Hora de Inicio</label>
-                            <input type="time" id="edit_hora_inicio" name="hora_inicio" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="edit_hora_fin" class="form-label required">Hora de Fin</label>
-                            <input type="time" id="edit_hora_fin" name="hora_fin" class="form-control" required>
+                        <div class="col-12" id="e_nuevo_recep_wrapper" style="display:none;">
+                            <label for="e_nombre_nuevo" class="form-label">Nombre del nuevo recepcionista</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text"><i class="ti ti-user-plus"></i></span>
+                                <input type="text" id="e_nombre_nuevo" name="nombre_nuevo_recep"
+                                       class="form-control" placeholder="Ej: María García" maxlength="150">
+                            </div>
                         </div>
                         <div class="col-12">
-                            <label for="edit_turno_obs" class="form-label">Observaciones</label>
-                            <textarea id="edit_turno_obs" name="observaciones" class="form-control" rows="3"></textarea>
+                            <label for="e_obs" class="form-label">Observaciones</label>
+                            <textarea id="e_obs" name="observaciones" class="form-control form-control-sm" rows="2"></textarea>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-warning"><i class="ti ti-device-floppy me-1"></i> Actualizar Turno</button>
+                <div class="modal-footer bg-light" style="display: flex !important; flex-wrap: nowrap !important; justify-content: flex-end !important; align-items: center !important; gap: 0.5rem !important;">
+                    <button type="submit" form="formEliminarTurno" class="btn btn-outline-danger btn-sm text-nowrap"
+                            style="margin-right: auto !important; padding: 0.35rem 0.65rem !important;"
+                            onclick="return confirm('¿Eliminar este turno?')">
+                        <i class="ti ti-trash me-1"></i> Eliminar
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm text-nowrap"
+                            style="padding: 0.35rem 0.65rem !important;"
+                            data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-warning btn-sm text-nowrap"
+                            style="padding: 0.35rem 0.65rem !important;">
+                        <i class="ti ti-device-floppy me-1"></i> Actualizar
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+{{-- ══════════════════ MODAL RECEPCIONISTAS ══════════════════ --}}
+<div class="modal fade" id="modalRecepcionistas" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold"><i class="ti ti-users me-2"></i> Recepcionistas</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex gap-2 mb-3">
+                    <input type="text" id="nuevoRecepNombre" class="form-control form-control-sm"
+                           placeholder="Nombre del recepcionista…" maxlength="150">
+                    <button type="button" id="btnGuardarRecep" class="btn btn-primary btn-sm flex-shrink-0">
+                        <i class="ti ti-plus"></i> Agregar
+                    </button>
+                </div>
+                <div id="listaRecepcionistas">
+                    @foreach($recepcionistas as $r)
+                    <div class="d-flex align-items-center justify-content-between py-2 border-bottom" data-id="{{ $r->id_recepcionista }}">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="avatar avatar-xs bg-blue-lt text-blue rounded-circle fw-bold">
+                                {{ strtoupper(substr($r->nombre, 0, 1)) }}
+                            </span>
+                            <span style="font-size:0.9rem;">{{ $r->nombre }}</span>
+                        </div>
+                        <form action="{{ route('recepcionistas.destroy', $r->id_recepcionista) }}" method="POST"
+                              onsubmit="return confirm('¿Desactivar a {{ addslashes($r->nombre) }}?')">
+                            @csrf @method('DELETE')
+                            <button type="submit" class="btn btn-xs btn-outline-danger">
+                                <i class="ti ti-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                    @endforeach
+                    @if($recepcionistas->isEmpty())
+                    <div class="text-center text-secondary py-3" id="sinRecepMsg">
+                        <i class="ti ti-users-off d-block fs-2 mb-1 opacity-50"></i>
+                        No hay recepcionistas registrados.
+                    </div>
+                    @endif
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endif
+
+{{-- Datos de turnos para JS --}}
+@php
+    $turnosJson = [];
+    foreach($turnos as $fecha => $dias) {
+        foreach($dias as $t) {
+            $turnosJson[$fecha][] = [
+                'id'     => $t->id_turno,
+                'nombre' => $t->nombre_responsable,
+                'recep'  => $t->id_recepcionista,
+                'obs'    => $t->observaciones ?? '',
+                'fecha'  => $t->fecha->format('Y-m-d'),
+            ];
+        }
+    }
+@endphp
+<script id="turnosData" type="application/json">@json($turnosJson)</script>
+
 @endsection
 
 @section('scripts')
+<style>
+/* ── Calendario compacto ── */
+.cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+.cal-hd {
+    padding: 6px 2px;
+    text-align: center;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #6b7280;
+}
+.cal-cell {
+    border: 1px solid #e5e7eb;
+    min-height: 58px;
+    position: relative;
+    cursor: pointer;
+    transition: background .12s;
+    padding: 4px 4px 3px 4px;
+    box-sizing: border-box;
+}
+.cal-empty  { background: #f9fafb; cursor: default; border-color: #f3f4f6; }
+.cal-fin    { background: #fafcff; }
+.cal-day:hover { background: #eff6ff; }
+.cal-hoy    { background: #eff6ff !important; }
+.cal-pasado { opacity: 0.55; }
+.cal-num {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1f2937;
+    text-align: right;
+    line-height: 1;
+    margin-bottom: 3px;
+}
+.cal-num-hoy {
+    background: #3b82f6;
+    color: #fff;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-left: auto;
+}
+.cal-dots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+}
+.cal-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #3b82f6;
+    flex-shrink: 0;
+}
+
+/* Tarjeta de turno en modal día */
+.turno-card {
+    border-radius: 10px;
+    padding: 11px 14px;
+    margin-bottom: 8px;
+    background: #ffffff;
+    border: 1.5px solid #dbeafe;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.10), 0 1px 2px rgba(15, 23, 42, 0.06);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+</style>
+
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const horarios = {
-        matutino:   { inicio: '06:00', fin: '14:00' },
-        vespertino: { inicio: '14:00', fin: '22:00' },
-        nocturno:   { inicio: '22:00', fin: '06:00' },
+(function () {
+    const turnosData = JSON.parse(document.getElementById('turnosData').textContent || '{}');
+    const isAdmin    = {{ Auth::user()->esAdministrador() ? 'true' : 'false' }};
+    const diasEs     = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+    const mesesEs    = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+    // ── Modal Día ──────────────────────────────────────────────
+    window.openDayModal = function(fecha, dia) {
+        const turnos = turnosData[fecha] || [];
+        const d      = new Date(fecha + 'T00:00:00');
+        const label  = `${diasEs[d.getDay()]} ${dia} de ${mesesEs[d.getMonth()]}`;
+
+        document.getElementById('modalDiaTitle').textContent =
+            label.charAt(0).toUpperCase() + label.slice(1);
+
+        const hoy    = new Date().toISOString().split('T')[0];
+        const header = document.getElementById('modalDiaHeader');
+        header.className = 'modal-header ' + (fecha === hoy ? 'bg-primary text-white' : 'bg-light');
+        // Ajustar color del btn-close para header oscuro
+        const closeBtn = header.querySelector('.btn-close');
+        if (closeBtn) {
+            closeBtn.classList.toggle('btn-close-white', fecha === hoy);
+        }
+
+        const lista     = document.getElementById('modalDiaLista');
+        const sinTurnos = document.getElementById('modalDiaSinTurnos');
+        lista.innerHTML = '';
+
+        if (turnos.length === 0) {
+            sinTurnos.style.display = '';
+        } else {
+            sinTurnos.style.display = 'none';
+            turnos.forEach(t => {
+                const card = document.createElement('div');
+                card.className = 'turno-card';
+                card.innerHTML = `
+                    <div style="min-width:0;">
+                        <div class="fw-semibold mb-1" style="font-size:.9rem;">
+                            <i class="ti ti-calendar-event me-1 text-primary"></i>Turno del día
+                        </div>
+                        <div style="font-size:.84rem; color:#374151;">
+                            <i class="ti ti-user me-1 text-muted"></i>${t.nombre}
+                        </div>
+                        ${t.obs ? `<div style="font-size:.75rem;color:#9ca3af;margin-top:3px;font-style:italic;">${t.obs}</div>` : ''}
+                    </div>
+                    <div class="d-flex flex-column gap-1 flex-shrink-0">
+                        <a href="/ventanilla?turno_id=${t.id}"
+                           class="btn btn-xs btn-outline-primary" title="Ir a Ventanilla">
+                            <i class="ti ti-door-enter"></i>
+                        </a>
+                        ${isAdmin ? `
+                        <button type="button" class="btn btn-xs btn-outline-secondary btn-edit-turno"
+                                data-id="${t.id}" data-fecha="${t.fecha}"
+                                data-recep="${t.recep || ''}" data-obs="${t.obs || ''}">
+                            <i class="ti ti-edit"></i>
+                        </button>` : ''}
+                    </div>`;
+                lista.appendChild(card);
+            });
+
+            lista.querySelectorAll('.btn-edit-turno').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    openEditModal(btn.dataset.id, btn.dataset.fecha, btn.dataset.recep, btn.dataset.obs);
+                });
+            });
+        }
+
+        // Pre-cargar fecha en modal crear
+        const btnAgregar = document.getElementById('btnAgregarDesdeDia');
+        if (btnAgregar) {
+            btnAgregar.onclick = () => {
+                const cFecha = document.getElementById('c_fecha');
+                if (cFecha) cFecha.value = fecha;
+            };
+        }
+
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalDia')).show();
     };
 
-    // Auto-rellenar horas en Crear Turno
-    const createTipoSelect = document.getElementById('create_tipo_turno');
-    if (createTipoSelect) {
-        createTipoSelect.addEventListener('change', function () {
-            const sel = horarios[this.value];
-            if (sel) {
-                document.getElementById('create_hora_inicio').value = sel.inicio;
-                document.getElementById('create_hora_fin').value    = sel.fin;
-            }
-        });
-    }
+    // ── Abrir modal Editar ──────────────────────────────────────
+    function openEditModal(id, fecha, recep, obs) {
+        const diaModal = bootstrap.Modal.getInstance(document.getElementById('modalDia'));
+        if (diaModal) diaModal.hide();
 
-    // Auto-rellenar horas en Editar Turno
-    const editTipoSelect = document.getElementById('edit_tipo_turno');
-    if (editTipoSelect) {
-        editTipoSelect.addEventListener('change', function () {
-            const sel = horarios[this.value];
-            if (sel) {
-                document.getElementById('edit_hora_inicio').value = sel.inicio;
-                document.getElementById('edit_hora_fin').value    = sel.fin;
-            }
-        });
-    }
+        document.getElementById('formEditarTurno').action = `/turnos/${id}`;
+        const delForm = document.getElementById('formEliminarTurno');
+        if (delForm) delForm.action = `/turnos/${id}`;
 
-    // Llenar Modal de Editar Turno y AJAX para Filtros
-    const searchForm = document.getElementById('search-form');
-    const tableContainer = document.getElementById('table-container');
+        document.getElementById('e_fecha').value = fecha;
+        document.getElementById('e_obs').value   = obs || '';
 
-    function performSearch(url = null) {
-        if (!url && searchForm) {
-            const formData = new FormData(searchForm);
-            const query = new URLSearchParams(formData).toString();
-            url = `${searchForm.action}?${query}`;
+        const recepSel = document.getElementById('e_recep');
+        if (recepSel) {
+            recepSel.value = recep || '';
+            recepSel.dispatchEvent(new Event('change'));
         }
-        if (!url) return;
 
-        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-            .then(res => res.text())
-            .then(html => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const newTable = doc.getElementById('table-container');
-                if (newTable && tableContainer) {
-                    tableContainer.innerHTML = newTable.innerHTML;
-                    bindEditButtons();
-                }
-            });
+        setTimeout(() => {
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditarTurno')).show();
+        }, 300);
     }
 
-    const fechaInput = document.querySelector('input[name="fecha"]');
-    if (fechaInput) {
-        fechaInput.addEventListener('change', () => performSearch());
+    // ── Mostrar campo nuevo recepcionista ──
+    function bindRecepSel(selId, wrapperId) {
+        const sel = document.getElementById(selId);
+        const wr  = document.getElementById(wrapperId);
+        if (!sel || !wr) return;
+        const update = () => wr.style.display = sel.value === '' ? 'block' : 'none';
+        sel.addEventListener('change', update);
+        update();
     }
+    bindRecepSel('c_recep', 'c_nuevo_recep_wrapper');
+    bindRecepSel('e_recep', 'e_nuevo_recep_wrapper');
 
-    const tipoSelect = document.querySelector('select[name="tipo_turno"]');
-    if (tipoSelect) {
-        tipoSelect.addEventListener('change', () => performSearch());
-    }
-
-    // Intercept pagination clicks
-    if (tableContainer) {
-        tableContainer.addEventListener('click', function(e) {
-            const link = e.target.closest('.pagination a');
-            if (link) {
-                e.preventDefault();
-                performSearch(link.href);
-            }
+    // ── Agregar recepcionista AJAX ──
+    const btnGuardar = document.getElementById('btnGuardarRecep');
+    if (btnGuardar) {
+        btnGuardar.addEventListener('click', () => {
+            const nombre = document.getElementById('nuevoRecepNombre').value.trim();
+            if (!nombre) return;
+            fetch('{{ route("recepcionistas.store") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ nombre }),
+            })
+            .then(r => r.json())
+            .then(data => {
+                ['c_recep', 'e_recep'].forEach(id => {
+                    const sel = document.getElementById(id);
+                    if (!sel) return;
+                    const opt = document.createElement('option');
+                    opt.value = data.id_recepcionista;
+                    opt.text  = data.nombre;
+                    sel.appendChild(opt);
+                });
+                const lista  = document.getElementById('listaRecepcionistas');
+                const sinMsg = document.getElementById('sinRecepMsg');
+                if (sinMsg) sinMsg.remove();
+                const div = document.createElement('div');
+                div.className = 'd-flex align-items-center justify-content-between py-2 border-bottom';
+                div.innerHTML = `
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="avatar avatar-xs bg-blue-lt text-blue rounded-circle fw-bold">
+                            ${data.nombre.charAt(0).toUpperCase()}
+                        </span>
+                        <span style="font-size:.9rem;">${data.nombre}</span>
+                    </div>
+                    <span class="badge bg-success-lt text-success">Agregado</span>`;
+                lista.appendChild(div);
+                document.getElementById('nuevoRecepNombre').value = '';
+            })
+            .catch(() => alert('Error al guardar el recepcionista.'));
         });
     }
-
-    function bindEditButtons() {
-        document.querySelectorAll('.btn-editar-turno').forEach(btn => {
-            btn.addEventListener('click', function () {
-                const id = this.getAttribute('data-id');
-                const form = document.getElementById('formEditarTurno');
-                form.action = `/turnos/${id}`;
-                document.getElementById('edit_turno_usuario').value = this.getAttribute('data-usuario');
-                document.getElementById('edit_turno_fecha').value = this.getAttribute('data-fecha');
-                document.getElementById('edit_tipo_turno').value = this.getAttribute('data-tipo');
-                document.getElementById('edit_hora_inicio').value = this.getAttribute('data-inicio');
-                document.getElementById('edit_hora_fin').value = this.getAttribute('data-fin');
-                document.getElementById('edit_turno_obs').value = this.getAttribute('data-obs') || '';
-            });
-        });
-    }
-
-    bindEditButtons();
-});
+})();
 </script>
 @endsection
