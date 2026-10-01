@@ -76,7 +76,7 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label" for="dpi">DPI (Opcional - 13 dígitos)</label>
-                            <input type="text" id="dpi" name="dpi" class="form-control" value="{{ old('dpi') }}" maxlength="13" placeholder="Ej: 1987654320101">
+                            <input type="text" id="dpi" name="dpi" class="form-control" value="{{ old('dpi') }}" inputmode="numeric" pattern="[0-9]*" maxlength="13" placeholder="Ej: 1987654320101">
                             <span id="msg-dup-dpi" class="form-hint fw-bold"></span>
                         </div>
                     </div>
@@ -84,7 +84,7 @@
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label class="form-label" for="telefono">Teléfono de Contacto (Opcional - 8 dígitos)</label>
-                            <input type="text" id="telefono" name="telefono" class="form-control" value="{{ old('telefono') }}" maxlength="8" placeholder="Ej: 55551234">
+                            <input type="text" id="telefono" name="telefono" class="form-control" value="{{ old('telefono') }}" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="Ej: 55551234">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label" for="direccion">Dirección</label>
@@ -97,7 +97,7 @@
                     <div class="row g-3 mb-4">
                         <div class="col-md-4">
                             <label class="form-label" for="numero_registro">No. de Registro</label>
-                            <input type="number" id="numero_registro" name="numero_registro" class="form-control" value="{{ old('numero_registro') }}" min="0" step="1" placeholder="Ej: 1024">
+                            <input type="text" id="numero_registro" name="numero_registro" class="form-control" value="{{ old('numero_registro') }}" inputmode="numeric" pattern="[0-9]*" placeholder="Ej: 1024">
                             <span id="msg-dup-reg" class="form-hint fw-bold"></span>
                             <span class="form-hint text-muted">Número entero que identifica el registro físico</span>
                         </div>

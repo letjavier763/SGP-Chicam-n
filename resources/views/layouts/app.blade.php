@@ -635,6 +635,128 @@
                     initAutoExpandTextareas(e.target);
                 }
             });
+
+            // ── Validación Universal de Campos Numéricos (Solo Dígitos 0-9) ──
+            function isNumericField(input) {
+                if (!input || input.tagName !== 'INPUT') return false;
+                var type = (input.type || '').toLowerCase();
+                if (type === 'search' || type === 'checkbox' || type === 'radio' || type === 'submit' || type === 'button' || type === 'file' || type === 'date' || type === 'time' || type === 'datetime-local') {
+                    return false;
+                }
+                var name = (input.name || '').toLowerCase();
+                var id = (input.id || '').toLowerCase();
+                // Excluir barras o campos de búsqueda general
+                if (name === 'buscar' || id === 'buscar' || id.indexOf('search') !== -1 || id.indexOf('busqueda') !== -1 || name.indexOf('search') !== -1 || name.indexOf('filtro') !== -1 || id.indexOf('filtro') !== -1) {
+                    return false;
+                }
+                if (type === 'number' || input.inputMode === 'numeric' || input.classList.contains('only-numbers')) {
+                    return true;
+                }
+                var numericPatterns = [
+                    'telefono', 
+                    'dpi', 
+                    'numero_registro', 
+                    'num_reg', 
+                    'registro_num', 
+                    'num_registro', 
+                    'no_registro', 
+                    'numero_familia', 
+                    'num_fam', 
+                    'fam_numero', 
+                    'no_familia', 
+                    'fam_dpi', 
+                    'codigo_postal', 
+                    'cui', 
+                    'nit'
+                ];
+                return numericPatterns.some(function (p) {
+                    return name.indexOf(p) !== -1 || id.indexOf(p) !== -1;
+                });
+            }
+
+            // Bloquear teclas no numéricas directamente al presionar teclas (Desktop)
+            document.addEventListener('keydown', function (e) {
+                var target = e.target;
+                if (!isNumericField(target)) return;
+
+                // Permitir teclas especiales y de navegación
+                var controlKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+                if (controlKeys.indexOf(e.key) !== -1) return;
+
+                // Permitir atajos con Ctrl o Meta (Cmd en Mac): copiar, cortar, pegar, seleccionar todo, deshacer, rehacer
+                if ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x', 'z', 'y'].indexOf(e.key.toLowerCase()) !== -1) return;
+
+                // Bloquear cualquier carácter que no sea un número del 0 al 9
+                if (!/^[0-9]$/.test(e.key)) {
+                    e.preventDefault();
+                }
+            });
+
+            // Bloquear inserciones no numéricas antes de renderizar (Móviles / teclados virtuales)
+            document.addEventListener('beforeinput', function (e) {
+                var target = e.target;
+                if (!isNumericField(target)) return;
+
+                if (e.data !== null && e.data !== undefined) {
+                    if (!/^[0-9]+$/.test(e.data)) {
+                        e.preventDefault();
+                    }
+                }
+            });
+
+            // Limpieza estricta en el evento input (asegura que nunca quede ningún carácter no numérico)
+            document.addEventListener('input', function (e) {
+                var target = e.target;
+                if (!isNumericField(target)) return;
+
+                var val = target.value;
+                var clean = val.replace(/[^0-9]/g, '');
+                if (val !== clean) {
+                    target.value = clean;
+                }
+            });
+
+            // Limpieza estricta al pegar texto
+            document.addEventListener('paste', function (e) {
+                var target = e.target;
+                if (!isNumericField(target)) return;
+
+                e.preventDefault();
+                var pasteData = (e.clipboardData || window.clipboardData).getData('text') || '';
+                var clean = pasteData.replace(/[^0-9]/g, '');
+
+                var max = target.getAttribute('maxlength');
+                var start = target.selectionStart || 0;
+                var end = target.selectionEnd || 0;
+                var current = target.value || '';
+                var next = current.slice(0, start) + clean + current.slice(end);
+                if (max && next.length > parseInt(max, 10)) {
+                    next = next.slice(0, parseInt(max, 10));
+                }
+                target.value = next;
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+
+            // Bloquear arrastrar y soltar texto no numérico
+            document.addEventListener('drop', function (e) {
+                var target = e.target;
+                if (!isNumericField(target)) return;
+
+                e.preventDefault();
+                var dropData = e.dataTransfer ? e.dataTransfer.getData('text') : '';
+                var clean = (dropData || '').replace(/[^0-9]/g, '');
+
+                var max = target.getAttribute('maxlength');
+                var start = target.selectionStart || 0;
+                var end = target.selectionEnd || 0;
+                var current = target.value || '';
+                var next = current.slice(0, start) + clean + current.slice(end);
+                if (max && next.length > parseInt(max, 10)) {
+                    next = next.slice(0, parseInt(max, 10));
+                }
+                target.value = next;
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+            });
         });
     </script>
 </body>

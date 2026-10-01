@@ -354,14 +354,14 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label" for="nv_dpi">DPI (13 dígitos)</label>
-                            <input type="text" id="nv_dpi" name="dpi" class="form-control" maxlength="13" placeholder="Ej: 1987654320101">
+                            <input type="text" id="nv_dpi" name="dpi" class="form-control" inputmode="numeric" pattern="[0-9]*" maxlength="13" placeholder="Ej: 1987654320101">
                             <span id="msg-nv-dpi" class="form-hint fw-bold"></span>
                         </div>
                     </div>
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label" for="nv_telefono">Teléfono</label>
-                            <input type="text" id="nv_telefono" name="telefono" class="form-control" maxlength="8" placeholder="Ej: 55551234">
+                            <input type="text" id="nv_telefono" name="telefono" class="form-control" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="Ej: 55551234">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label" for="nv_direccion">Dirección</label>
@@ -375,7 +375,7 @@
                             <input type="hidden" id="nv_id_family" name="id_family">
                             <div class="position-relative">
                                 <input type="text" id="nv_numero_familia" name="numero_familia"
-                                       class="form-control" required autocomplete="off"
+                                       class="form-control" inputmode="numeric" pattern="[0-9]*" required autocomplete="off"
                                        placeholder="Ej: 115 (existente o nuevo)">
                                 <div id="nv_familia_suggestions"
                                      style="display:none; position:absolute; top:100%; left:0; right:0;
@@ -394,7 +394,7 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-4">
                             <label class="form-label" for="nv_numero_registro">No. de Registro</label>
-                            <input type="number" id="nv_numero_registro" name="numero_registro" class="form-control" min="0" step="1" placeholder="Ej: 1024">
+                            <input type="text" id="nv_numero_registro" name="numero_registro" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="Ej: 1024">
                             <span id="msg-nv-numero-registro" class="form-hint fw-bold"></span>
                             <span class="form-hint text-muted">Número del registro físico</span>
                         </div>
@@ -442,8 +442,8 @@
 
                 </div>
                 <div class="modal-footer bg-light d-flex flex-column-reverse flex-sm-row justify-content-sm-end gap-2">
-                    <button type="button" class="btn btn-secondary w-100 w-sm-auto" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-success w-100 w-sm-auto"><i class="ti ti-login me-1"></i> Guardar y Registrar Primera Llegada</button>
+                    <button type="button" class="btn btn-secondary w-100 w-sm-auto" data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </form>
         </div>

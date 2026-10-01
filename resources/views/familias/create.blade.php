@@ -36,7 +36,7 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label required" for="numero_familia">Número de Familia</label>
-                            <input type="text" id="numero_familia" name="numero_familia" class="form-control" value="{{ old('numero_familia') }}" required placeholder="Ej: FAM-2026-001">
+                            <input type="text" id="numero_familia" name="numero_familia" class="form-control" value="{{ old('numero_familia') }}" inputmode="numeric" pattern="[0-9]*" required placeholder="Ej: 1001">
                             <span id="msg-dup-numero_familia" class="form-hint fw-bold"></span>
                         </div>
                         <div class="col-md-6">
@@ -48,7 +48,7 @@
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label class="form-label" for="dpi">DPI Cabeza de Familia (Opcional - 13 dígitos)</label>
-                            <input type="text" id="dpi" name="dpi" class="form-control" value="{{ old('dpi') }}" maxlength="13" placeholder="Ej: 1234567890101">
+                            <input type="text" id="dpi" name="dpi" class="form-control" value="{{ old('dpi') }}" inputmode="numeric" pattern="[0-9]*" maxlength="13" placeholder="Ej: 1234567890101">
                             <span id="msg-dup-dpi" class="form-hint fw-bold"></span>
                         </div>
                         <div class="col-md-6">

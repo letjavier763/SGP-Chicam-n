@@ -225,7 +225,7 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label" for="create_dpi">DPI (13 dígitos)</label>
-                            <input type="text" id="create_dpi" name="dpi" class="form-control" maxlength="13" placeholder="Ej: 1987654320101">
+                            <input type="text" id="create_dpi" name="dpi" class="form-control" inputmode="numeric" pattern="[0-9]*" maxlength="13" placeholder="Ej: 1987654320101">
                             <span id="msg-dup-dpi" class="form-hint fw-bold"></span>
                         </div>
                     </div>
@@ -233,7 +233,7 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label" for="create_telefono">Teléfono de Contacto (8 dígitos)</label>
-                            <input type="text" id="create_telefono" name="telefono" class="form-control" maxlength="8" placeholder="Ej: 55551234">
+                            <input type="text" id="create_telefono" name="telefono" class="form-control" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="Ej: 55551234">
                         </div>
                     </div>
                 </div>

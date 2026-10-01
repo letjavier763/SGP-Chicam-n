@@ -32,7 +32,7 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                 <div>
                     <label class="form-label" for="numero_familia">Número de Familia <span style="color: #dc2626;">*</span></label>
-                    <input type="text" id="numero_familia" name="numero_familia" class="form-control" value="{{ old('numero_familia', $familia->numero_familia) }}" required>
+                    <input type="text" id="numero_familia" name="numero_familia" class="form-control" value="{{ old('numero_familia', $familia->numero_familia) }}" inputmode="numeric" pattern="[0-9]*" required>
                 </div>
                 <div>
                     <label class="form-label" for="apellido_cabeza">Apellido Cabeza de Familia <span style="color: #dc2626;">*</span></label>
@@ -43,7 +43,7 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
                 <div>
                     <label class="form-label" for="dpi">DPI Cabeza de Familia (Opcional - 13 dígitos)</label>
-                    <input type="text" id="dpi" name="dpi" class="form-control" value="{{ old('dpi', $familia->dpi) }}" maxlength="13">
+                    <input type="text" id="dpi" name="dpi" class="form-control" value="{{ old('dpi', $familia->dpi) }}" inputmode="numeric" pattern="[0-9]*" maxlength="13">
                 </div>
                 <div>
                     <label class="form-label" for="fecha_nacimiento">Fecha Nacimiento Cabeza (Opcional)</label>

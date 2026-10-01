@@ -242,7 +242,7 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label required" for="create_fam_numero">Número de Familia</label>
-                            <input type="text" id="create_fam_numero" name="numero_familia" class="form-control" required placeholder="Ej: FAM-2026-001">
+                            <input type="text" id="create_fam_numero" name="numero_familia" class="form-control" inputmode="numeric" pattern="[0-9]*" required placeholder="Ej: 1001">
                             <span id="msg-dup-numfam-create" class="form-hint fw-bold"></span>
                         </div>
                         <div class="col-md-6">
@@ -254,7 +254,7 @@
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label class="form-label" for="create_fam_dpi">DPI Cabeza de Familia (13 dígitos)</label>
-                            <input type="text" id="create_fam_dpi" name="dpi" class="form-control" maxlength="13" placeholder="Ej: 1234567890101">
+                            <input type="text" id="create_fam_dpi" name="dpi" class="form-control" inputmode="numeric" pattern="[0-9]*" maxlength="13" placeholder="Ej: 1234567890101">
                             <span id="msg-dup-dpi-fam-create" class="form-hint fw-bold"></span>
                         </div>
                         <div class="col-md-6">
@@ -318,7 +318,7 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label required" for="edit_fam_numero">Número de Familia</label>
-                            <input type="text" id="edit_fam_numero" name="numero_familia" class="form-control" required>
+                            <input type="text" id="edit_fam_numero" name="numero_familia" class="form-control" inputmode="numeric" pattern="[0-9]*" required>
                             <span id="msg-dup-numfam-edit" class="form-hint fw-bold"></span>
                         </div>
                         <div class="col-md-6">
@@ -330,7 +330,7 @@
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label class="form-label" for="edit_fam_dpi">DPI Cabeza de Familia (13 dígitos)</label>
-                            <input type="text" id="edit_fam_dpi" name="dpi" class="form-control" maxlength="13">
+                            <input type="text" id="edit_fam_dpi" name="dpi" class="form-control" inputmode="numeric" pattern="[0-9]*" maxlength="13">
                             <span id="msg-dup-dpi-fam-edit" class="form-hint fw-bold"></span>
                         </div>
                         <div class="col-md-6">

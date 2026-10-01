@@ -373,7 +373,7 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label" for="create_dpi">DPI (13 dígitos)</label>
-                            <input type="text" id="create_dpi" name="dpi" class="form-control" maxlength="13" placeholder="Ej: 1987654320101">
+                            <input type="text" id="create_dpi" name="dpi" class="form-control" inputmode="numeric" pattern="[0-9]*" maxlength="13" placeholder="Ej: 1987654320101">
                             <span id="msg-dup-dpi-create" class="form-hint fw-bold"></span>
                         </div>
                     </div>
@@ -381,7 +381,7 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label" for="create_telefono">Teléfono de Contacto (8 dígitos)</label>
-                            <input type="text" id="create_telefono" name="telefono" class="form-control" maxlength="8" placeholder="Ej: 55551234">
+                            <input type="text" id="create_telefono" name="telefono" class="form-control" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="Ej: 55551234">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label" for="create_direccion">Dirección</label>
@@ -393,7 +393,7 @@
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label" for="create_numero_registro">No. de Registro</label>
-                            <input type="number" id="create_numero_registro" name="numero_registro" class="form-control" min="0" step="1" placeholder="Ej: 1024">
+                            <input type="text" id="create_numero_registro" name="numero_registro" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="Ej: 1024">
                             <span id="msg-dup-reg-create" class="form-hint fw-bold"></span>
                             <span class="form-hint text-muted">Número entero del registro físico</span>
                         </div>
@@ -472,7 +472,7 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label" for="edit_dpi">DPI (13 dígitos)</label>
-                            <input type="text" id="edit_dpi" name="dpi" class="form-control" maxlength="13">
+                            <input type="text" id="edit_dpi" name="dpi" class="form-control" inputmode="numeric" pattern="[0-9]*" maxlength="13">
                             <span id="msg-dup-dpi-edit" class="form-hint fw-bold"></span>
                         </div>
                     </div>
@@ -480,7 +480,7 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label" for="edit_telefono">Teléfono de Contacto (8 dígitos)</label>
-                            <input type="text" id="edit_telefono" name="telefono" class="form-control" maxlength="8">
+                            <input type="text" id="edit_telefono" name="telefono" class="form-control" inputmode="numeric" pattern="[0-9]*" maxlength="8">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label" for="edit_direccion">Dirección</label>
@@ -492,7 +492,7 @@
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label" for="edit_numero_registro">No. de Registro</label>
-                            <input type="number" id="edit_numero_registro" name="numero_registro" class="form-control" min="0" step="1" placeholder="Ej: 1024">
+                            <input type="text" id="edit_numero_registro" name="numero_registro" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="Ej: 1024">
                             <span id="msg-dup-reg-edit" class="form-hint fw-bold"></span>
                             <span class="form-hint text-muted">Número entero del registro físico</span>
                         </div>

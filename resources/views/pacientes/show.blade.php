@@ -306,14 +306,14 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label" for="show_dpi">DPI (13 dígitos)</label>
-                            <input type="text" id="show_dpi" name="dpi" class="form-control" value="{{ $paciente->dpi }}" maxlength="13">
+                            <input type="text" id="show_dpi" name="dpi" class="form-control" value="{{ $paciente->dpi }}" inputmode="numeric" pattern="[0-9]*" maxlength="13">
                         </div>
                     </div>
 
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label" for="show_telefono">Teléfono de Contacto (8 dígitos)</label>
-                            <input type="text" id="show_telefono" name="telefono" class="form-control" value="{{ $paciente->telefono }}" maxlength="8">
+                            <input type="text" id="show_telefono" name="telefono" class="form-control" value="{{ $paciente->telefono }}" inputmode="numeric" pattern="[0-9]*" maxlength="8">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label" for="show_direccion">Dirección</label>
@@ -325,7 +325,7 @@
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label" for="show_numero_registro">No. de Registro</label>
-                            <input type="number" id="show_numero_registro" name="numero_registro" class="form-control" value="{{ $paciente->numero_registro }}" min="0" step="1" placeholder="Ej: 1024">
+                            <input type="text" id="show_numero_registro" name="numero_registro" class="form-control" value="{{ $paciente->numero_registro }}" inputmode="numeric" pattern="[0-9]*" placeholder="Ej: 1024">
                             <span class="form-hint">Número entero del registro físico</span>
                         </div>
                         <div class="col-md-8">
