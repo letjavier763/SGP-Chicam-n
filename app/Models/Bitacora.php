@@ -20,13 +20,17 @@ class Bitacora extends Model
         'fecha',
     ];
 
+    protected $casts = [
+        'fecha' => 'datetime',
+    ];
+
     public function usuario()
     {
         return $this->belongsTo(Usuario::class, 'id_usuario', 'id_usuario');
     }
 
     /**
-     * Registra una entrada en la bitácora.
+     * Registra una entrada en la bitácora con la fecha y hora configurada en el sistema.
      */
     public static function registrar(
         int $idUsuario,
@@ -43,6 +47,7 @@ class Bitacora extends Model
             'id_registro_afectado' => $idRegistro,
             'detalle'              => $detalle,
             'ip_equipo'            => $ip,
+            'fecha'                => now(),
         ]);
     }
 }
