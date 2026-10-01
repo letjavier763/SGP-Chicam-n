@@ -2481,3 +2481,35 @@ label {
         color: #000;
     }
 }
+
+/* ==========================================================================
+   Textarea Auto-expandible para Campos de Descripción
+   ========================================================================== */
+.auto-expand-textarea {
+    resize: none !important;
+    min-height: 38px !important;
+    height: 38px;
+    max-height: 76px !important; /* Máximo 2 veces su altura inicial (38px * 2) */
+    line-height: 1.42 !important;
+    padding-top: 0.45rem !important;
+    padding-bottom: 0.45rem !important;
+    overflow-y: hidden;
+    overflow-x: hidden;
+    word-break: break-word;
+    transition: height 0.12s ease-out;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.auto-expand-textarea::-webkit-scrollbar {
+    width: 5px;
+}
+
+.auto-expand-textarea::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 4px;
+}
+
+.auto-expand-textarea::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
+}

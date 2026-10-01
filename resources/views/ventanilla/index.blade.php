@@ -394,7 +394,7 @@
                         </div>
                         <div class="col-md-8">
                             <label class="form-label" for="nv_descripcion_registro">Descripción / Ubicación del Registro</label>
-                            <input type="text" id="nv_descripcion_registro" name="descripcion_registro" class="form-control" maxlength="150" placeholder="Ej: Archivero 3, Cajón B, Folder amarillo">
+                            <textarea id="nv_descripcion_registro" name="descripcion_registro" class="form-control auto-expand-textarea" rows="1" maxlength="150" placeholder="Ej: Archivero 3, Cajón B, Folder amarillo"></textarea>
                             <span class="form-hint">Máx. 150 caracteres</span>
                         </div>
                     </div>

@@ -106,7 +106,7 @@
                         </div>
                         <div class="col-md-8">
                             <label class="form-label" for="descripcion_registro">Descripción / Ubicación del Registro</label>
-                            <input type="text" id="descripcion_registro" name="descripcion_registro" class="form-control" value="{{ old('descripcion_registro', $paciente->descripcion_registro) }}" maxlength="150" placeholder="Ej: Archivero 3, Cajón B, Folder amarillo">
+                            <textarea id="descripcion_registro" name="descripcion_registro" class="form-control auto-expand-textarea" rows="1" maxlength="150" placeholder="Ej: Archivero 3, Cajón B, Folder amarillo">{{ old('descripcion_registro', $paciente->descripcion_registro) }}</textarea>
                             <span class="form-hint">Máx. 150 caracteres — indica dónde se encuentra el expediente físico</span>
                         </div>
                     </div>

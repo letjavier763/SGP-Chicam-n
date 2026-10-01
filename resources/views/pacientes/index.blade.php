@@ -399,7 +399,7 @@
                         </div>
                         <div class="col-md-8">
                             <label class="form-label" for="create_descripcion_registro">Descripción / Ubicación del Registro</label>
-                            <input type="text" id="create_descripcion_registro" name="descripcion_registro" class="form-control" maxlength="150" placeholder="Ej: Archivero 3, Cajón B, Folder amarillo">
+                            <textarea id="create_descripcion_registro" name="descripcion_registro" class="form-control auto-expand-textarea" rows="1" maxlength="150" placeholder="Ej: Archivero 3, Cajón B, Folder amarillo"></textarea>
                             <span class="form-hint">Máx. 150 caracteres — indica dónde está el expediente físico</span>
                         </div>
                     </div>
@@ -498,7 +498,7 @@
                         </div>
                         <div class="col-md-8">
                             <label class="form-label" for="edit_descripcion_registro">Descripción / Ubicación del Registro</label>
-                            <input type="text" id="edit_descripcion_registro" name="descripcion_registro" class="form-control" maxlength="150" placeholder="Ej: Archivero 3, Cajón B, Folder amarillo">
+                            <textarea id="edit_descripcion_registro" name="descripcion_registro" class="form-control auto-expand-textarea" rows="1" maxlength="150" placeholder="Ej: Archivero 3, Cajón B, Folder amarillo"></textarea>
                             <span class="form-hint">Máx. 150 caracteres — indica dónde está el expediente físico</span>
                         </div>
                     </div>
@@ -548,6 +548,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('edit_telefono').value = this.getAttribute('data-telefono') || '';
                 document.getElementById('edit_numero_registro').value = this.getAttribute('data-numero-registro') || '';
                 document.getElementById('edit_descripcion_registro').value = this.getAttribute('data-descripcion-registro') || '';
+                document.getElementById('edit_descripcion_registro').dispatchEvent(new Event('input'));
                 document.getElementById('edit_direccion').value = this.getAttribute('data-direccion') || '';
                 
                 const msgDpiEdit = document.getElementById('msg-dup-dpi-edit');

@@ -594,6 +594,47 @@
                     });
                 }
             }
+
+            // ── Auto-expand Textareas (Crecimiento hasta máx 2 veces y scroll interno) ──
+            function initAutoExpandTextareas(root) {
+                var scope = root || document;
+                var textareas = scope.querySelectorAll('.auto-expand-textarea');
+                textareas.forEach(function (el) {
+                    function resize() {
+                        el.style.height = '38px';
+                        var minH = 38;
+                        var maxH = 76; // Exactamente 2 veces la altura inicial
+                        var scrollH = el.scrollHeight;
+
+                        if (scrollH > maxH) {
+                            el.style.height = maxH + 'px';
+                            el.style.overflowY = 'auto';
+                        } else if (scrollH > minH + 2) {
+                            el.style.height = scrollH + 'px';
+                            el.style.overflowY = 'hidden';
+                        } else {
+                            el.style.height = minH + 'px';
+                            el.style.overflowY = 'hidden';
+                        }
+                    }
+
+                    if (!el.dataset.autoExpandBound) {
+                        el.dataset.autoExpandBound = 'true';
+                        el.addEventListener('input', resize);
+                        el.addEventListener('focus', resize);
+                    }
+                    resize();
+                });
+            }
+
+            initAutoExpandTextareas(document);
+
+            // Reajustar cuando se abra cualquier modal de Bootstrap
+            document.addEventListener('shown.bs.modal', function (e) {
+                if (e.target) {
+                    initAutoExpandTextareas(e.target);
+                }
+            });
         });
     </script>
 </body>
