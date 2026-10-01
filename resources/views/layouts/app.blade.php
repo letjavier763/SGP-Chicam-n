@@ -115,17 +115,14 @@
 
                             {{-- ── Desplegable: Administración ──────────────────── --}}
                             @if(Auth::user()->esAdministrador())
-                                <li class="nav-item dropdown {{ Request::routeIs('alertas.*', 'bitacora.*', 'personal.*') ? 'active' : '' }}">
-                                    <a class="nav-link dropdown-toggle" href="#sidebar-admin" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="{{ Request::routeIs('alertas.*', 'bitacora.*', 'personal.*') ? 'true' : 'false' }}">
+                                <li class="nav-item dropdown {{ Request::routeIs('bitacora.*', 'personal.*') ? 'active' : '' }}">
+                                    <a class="nav-link dropdown-toggle" href="#sidebar-admin" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="{{ Request::routeIs('bitacora.*', 'personal.*') ? 'true' : 'false' }}">
                                         <i class="ti ti-settings me-2"></i>
                                         <span class="nav-link-title">Administración</span>
                                     </a>
-                                    <div class="dropdown-menu {{ Request::routeIs('alertas.*', 'bitacora.*', 'personal.*') ? 'show' : '' }}">
+                                    <div class="dropdown-menu {{ Request::routeIs('bitacora.*', 'personal.*') ? 'show' : '' }}">
                                         <a class="dropdown-item {{ Request::routeIs('personal.*') ? 'active' : '' }}" href="{{ route('personal.index') }}">
                                             <i class="ti ti-user-check me-2"></i> Gestión de Personal
-                                        </a>
-                                        <a class="dropdown-item {{ Request::routeIs('alertas.*') ? 'active' : '' }}" href="{{ route('alertas.index') }}">
-                                            <i class="ti ti-copy-off me-2"></i> Alertas Duplicidad
                                         </a>
                                         <a class="dropdown-item {{ Request::routeIs('bitacora.*') ? 'active' : '' }}" href="{{ route('bitacora.index') }}">
                                             <i class="ti ti-history me-2"></i> Bitácora
@@ -367,11 +364,8 @@
 
         {{-- Administración --}}
         @if(Auth::user()->esAdministrador())
-            @php
-                $totalAlertasDuplicidad = \App\Models\AlertaDuplicado::count();
-            @endphp
-            <div class="nav-item dropup nav-item-admin {{ Request::routeIs('alertas.*', 'bitacora.*', 'personal.*') ? 'active' : '' }}">
-                <a href="#" class="dropup-toggle nav-link {{ Request::routeIs('alertas.*', 'bitacora.*', 'personal.*') ? 'active' : '' }}"
+            <div class="nav-item dropup nav-item-admin {{ Request::routeIs('bitacora.*', 'personal.*') ? 'active' : '' }}">
+                <a href="#" class="dropup-toggle nav-link {{ Request::routeIs('bitacora.*', 'personal.*') ? 'active' : '' }}"
                    data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
                     <i class="ti ti-settings"></i>
                     <span>Admin</span>
@@ -396,27 +390,6 @@
                         </div>
                         <div class="nav-popover-badge">
                             @if(Request::routeIs('personal.*'))
-                                <span class="nav-badge-pill">Activo</span>
-                            @else
-                                <i class="ti ti-chevron-right nav-popover-arrow"></i>
-                            @endif
-                        </div>
-                    </a>
-
-                    <a class="nav-popover-item {{ Request::routeIs('alertas.*') ? 'active' : '' }} {{ $totalAlertasDuplicidad > 0 ? 'highlight-danger' : '' }}" href="{{ route('alertas.index') }}">
-                        <div class="nav-popover-icon bg-danger-subtle">
-                            <i class="ti ti-bell-alert"></i>
-                        </div>
-                        <div class="nav-popover-text">
-                            <span class="nav-popover-item-title">Alertas Duplicidad</span>
-                            <span class="nav-popover-item-desc">Registros duplicados</span>
-                        </div>
-                        <div class="nav-popover-badge">
-                            @if($totalAlertasDuplicidad > 0)
-                                <span class="nav-badge-danger">
-                                    <span class="dot"></span> {{ $totalAlertasDuplicidad }} nuevas
-                                </span>
-                            @elseif(Request::routeIs('alertas.*'))
                                 <span class="nav-badge-pill">Activo</span>
                             @else
                                 <i class="ti ti-chevron-right nav-popover-arrow"></i>
