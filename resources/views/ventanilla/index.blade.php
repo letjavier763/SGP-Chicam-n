@@ -140,13 +140,19 @@
             </div>
             <div class="card-body p-2 p-md-3">
                 {{-- Barra de búsqueda rápida inteligente --}}
-                <div class="mb-3 position-relative">
-                    <input type="text" id="buscar_paciente" class="form-control form-control-lg"
-                           placeholder="Nombre, DPI, expediente, No. registro o familia…" autocomplete="off">
-                    <div id="search-suggestions"
-                         style="display:none; position:absolute; top:100%; left:0; right:0; max-height:420px;
-                                overflow-y:auto; z-index:1060; background:#fff;
-                                border:1px solid #cbd5e1; border-radius:0 0 8px 8px; box-shadow:0 8px 24px rgba(0,0,0,.12);">
+                <div class="position-relative">
+                    <div class="input-icon">
+                        <span class="input-icon-addon ps-3">
+                            <i class="ti ti-search text-primary fs-2"></i>
+                        </span>
+                        <input type="text" id="buscar_paciente" class="form-control form-control-lg pe-5 ps-5"
+                               placeholder="Nombre, DPI, expediente, No. registro…" autocomplete="off"
+                               style="border-radius: 10px; font-size: 0.95rem; height: 46px;">
+                        <span id="btn_clear_buscar" class="input-icon-addon pe-2" style="display: none; cursor: pointer; pointer-events: all;" title="Limpiar búsqueda">
+                            <i class="ti ti-x text-muted fs-2"></i>
+                        </span>
+                    </div>
+                    <div id="search-suggestions" class="search-suggestions-dropdown">
                     </div>
                 </div>
             </div>
@@ -525,6 +531,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let timer;
 
     // ── Buscador inteligente ───────────────────────────────────────
+    const btnClearBuscar = document.getElementById('btn_clear_buscar');
     if (buscarInput && suggestions) {
         document.addEventListener('click', e => {
             if (buscarInput && suggestions && !buscarInput.contains(e.target) && !suggestions.contains(e.target)) {
@@ -535,6 +542,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         buscarInput.addEventListener('input', function () {
             const q = this.value.trim();
+            if (btnClearBuscar) {
+                btnClearBuscar.style.display = q.length > 0 ? 'flex' : 'none';
+            }
             if (q.length < 2) { suggestions.style.display = 'none'; return; }
 
             clearTimeout(timer);
@@ -546,6 +556,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(data => renderSuggestions(data, q));
             }, 180);
         });
+
+        if (btnClearBuscar) {
+            btnClearBuscar.addEventListener('click', function () {
+                buscarInput.value = '';
+                buscarInput.focus();
+                btnClearBuscar.style.display = 'none';
+                suggestions.style.display = 'none';
+            });
+        }
     }
 
     // ── Ocultar sugerencias al abrir modal ──────────────────────────
@@ -562,10 +581,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!data.length) {
             // ─ Sin resultados: ofrecer registro de nuevo paciente ─
             suggestions.innerHTML = `
-                <div class="p-3 text-center border-bottom">
-                    <i class="ti ti-user-off d-block fs-3 text-muted mb-1"></i>
-                    <p class="text-muted small mb-2">No se encontró ningún paciente con <strong>"${q}"</strong></p>
-                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoPaciente">
+                <div class="p-3 text-center border-bottom bg-white">
+                    <i class="ti ti-user-off d-block fs-2 text-muted mb-2 opacity-50"></i>
+                    <p class="text-secondary small mb-2">No se encontró ningún paciente con <strong>"${q}"</strong></p>
+                    <button type="button" class="btn btn-sm btn-primary w-100 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoPaciente">
                         <i class="ti ti-user-plus me-1"></i>Registrar nuevo paciente
                     </button>
                 </div>`;
@@ -581,44 +600,60 @@ document.addEventListener('DOMContentLoaded', function () {
             let actionBlock;
             if (p.ya_registrado) {
                 actionBlock = `
-                    <span class="badge bg-success-lt text-success">
-                        <i class="ti ti-check me-1"></i>Ya registrado en este turno
-                    </span>`;
+                    <div class="mt-2 pt-2 border-top">
+                        <span class="badge bg-success-lt text-success w-100 py-2 d-inline-flex align-items-center justify-content-center fw-medium" style="font-size: 0.8rem; border-radius: 6px;">
+                            <i class="ti ti-check me-1"></i> Ya registrado en este turno
+                        </span>
+                    </div>`;
             } else {
                 actionBlock = `
-                    <form action="${storePath}" method="POST" class="d-flex align-items-center gap-2 flex-wrap mt-1">
+                    <form action="${storePath}" method="POST" class="mt-2 pt-2 border-top">
                         <input type="hidden" name="_token"      value="${csrfToken}">
                         <input type="hidden" name="id_turno"    value="${turnoId}">
                         <input type="hidden" name="id_paciente" value="${p.id_paciente}">
-                        <input type="time" name="hora_llegada" value="${nowHHMM}" class="form-control form-control-sm" style="width:120px" required>
-                        <button type="submit" class="btn btn-sm btn-success">
-                            <i class="ti ti-login me-1"></i>Registrar
-                        </button>
+                        <div class="row g-2 align-items-center">
+                            <div class="col-5 col-sm-4">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text px-1 px-sm-2 bg-light text-muted border-end-0">
+                                        <i class="ti ti-clock"></i>
+                                    </span>
+                                    <input type="time" name="hora_llegada" value="${nowHHMM}" 
+                                           class="form-control form-control-sm border-start-0 px-1 text-center font-monospace fw-bold" 
+                                           style="font-size: 0.84rem; min-width: 0;" required>
+                                </div>
+                            </div>
+                            <div class="col-7 col-sm-8">
+                                <button type="submit" class="btn btn-sm btn-success w-100 fw-bold shadow-sm py-1 d-flex align-items-center justify-content-center" style="font-size: 0.84rem;">
+                                    <i class="ti ti-login me-1"></i>
+                                    <span class="text-nowrap">Registrar Llegada</span>
+                                </button>
+                            </div>
+                        </div>
                     </form>`;
             }
 
             const famInfo = p.familia_numero
-                ? `<span class="badge bg-blue-lt text-blue me-1">Fam. ${p.familia_numero}</span>${p.comunidad ?? ''}`
-                : '<span class="text-muted">Sin familia</span>';
+                ? `<span class="badge bg-blue-lt text-blue me-1">Fam. ${p.familia_numero}</span><span>${p.comunidad ?? ''}</span>`
+                : '<span class="text-muted">Sin núcleo familiar</span>';
 
             const item = document.createElement('div');
-            item.className = 'p-3 border-bottom' + (p.ya_registrado ? ' bg-success-lt' : '');
-            item.style.transition = 'background .15s';
+            item.className = 'suggestion-patient-item p-3 border-bottom' + (p.ya_registrado ? ' bg-success-lt' : ' bg-white');
             item.innerHTML = `
-                <div class="d-flex align-items-start gap-3">
-                    <span class="avatar avatar-sm bg-${sexColor}-lt text-${sexColor} rounded-circle flex-shrink-0">
+                <div class="d-flex align-items-start gap-2 gap-sm-3">
+                    <span class="avatar avatar-sm bg-${sexColor}-lt text-${sexColor} rounded-circle flex-shrink-0 mt-1">
                         <i class="ti ti-${sexIcon}"></i>
                     </span>
-                    <div class="flex-grow-1">
-                        <div class="fw-bold">${p.nombres} ${p.apellidos}
-                            <small class="text-muted fw-normal ms-1">${p.edad ?? '?'} años · ${p.sexo}</small>
+                    <div class="flex-grow-1" style="min-width: 0;">
+                        <div class="d-flex align-items-baseline justify-content-between flex-wrap gap-1">
+                            <span class="fw-bold text-dark text-truncate" style="font-size: 0.95rem;">${p.nombres} ${p.apellidos}</span>
+                            <span class="badge bg-secondary-lt text-secondary" style="font-size: 0.72rem;">${p.edad ?? '?'} años · ${p.sexo}</span>
                         </div>
-                        <div class="small text-secondary mb-1">
-                            Exp: <strong>${p.numero_expediente_fisico}</strong>
-                            ${p.numero_registro ? ' · <span class="badge bg-purple-lt text-purple fw-bold">Reg. #' + p.numero_registro + '</span>' : ''}
-                            ${p.dpi ? ' · DPI: ' + p.dpi : ''}
+                        <div class="small text-secondary my-1 d-flex flex-wrap align-items-center gap-1" style="font-size: 0.78rem;">
+                            <span>Exp: <strong>${p.numero_expediente_fisico}</strong></span>
+                            ${p.numero_registro ? '<span class="badge bg-purple-lt text-purple fw-bold">Reg. #' + p.numero_registro + '</span>' : ''}
+                            ${p.dpi ? '<span class="text-muted">· DPI: ' + p.dpi + '</span>' : ''}
                         </div>
-                        <div class="small">${famInfo}</div>
+                        <div class="small text-secondary" style="font-size: 0.78rem;">${famInfo}</div>
                         ${actionBlock}
                     </div>
                 </div>`;
@@ -627,10 +662,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Botón al final para nuevo paciente si no se encontró lo que se busca
         const footer = document.createElement('div');
-        footer.className = 'p-2 text-center bg-light';
+        footer.className = 'p-2 text-center bg-light border-top sticky-bottom';
         footer.innerHTML = `
-            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoPaciente">
-                <i class="ti ti-user-plus me-1"></i>¿No está en la lista? Registrar nuevo
+            <button type="button" class="btn btn-sm btn-outline-primary w-100 fw-medium" data-bs-toggle="modal" data-bs-target="#modalNuevoPaciente">
+                <i class="ti ti-user-plus me-1"></i>¿No está en la lista? Registrar nuevo paciente
             </button>`;
         suggestions.appendChild(footer);
 
