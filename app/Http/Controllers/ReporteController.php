@@ -17,6 +17,19 @@ use Barryvdh\DomPDF\Facade\Pdf;
 class ReporteController extends Controller
 {
     /**
+     * Constructor para aplicar políticas de acceso a reportes.
+     */
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            if (Auth::user() && Auth::user()->esRecepcionista()) {
+                abort(403, 'No tiene permisos para generar reportes de los registros del día.');
+            }
+            return $next($request);
+        });
+    }
+
+    /**
      * Panel principal de reportes con filtros.
      */
     public function index(Request $request)
@@ -40,7 +53,7 @@ class ReporteController extends Controller
             ->groupBy('pacientes.sexo')
             ->get();
 
-        $turnos = TurnoPersonal::with(['usuario', 'reportesDiarios'])
+        $turnos = TurnoPersonal::with(['usuario', 'recepcionista', 'reportesDiarios'])
             ->whereBetween('fecha', [$fechaDesde, $fechaHasta])
             ->withCount('registrosLlegada')
             ->orderBy('fecha', 'desc')
@@ -60,7 +73,11 @@ class ReporteController extends Controller
      */
     public function diario($turnoId)
     {
-        $turno = TurnoPersonal::with(['usuario', 'registrosLlegada.paciente.familia'])->findOrFail($turnoId);
+        if (Auth::user() && Auth::user()->esRecepcionista()) {
+            abort(403, 'No tiene permisos para generar reportes de los registros del día.');
+        }
+
+        $turno = TurnoPersonal::with(['usuario', 'recepcionista', 'registrosLlegada.paciente.familia'])->findOrFail($turnoId);
 
         $llegadas         = $turno->registrosLlegada->sortBy('hora_llegada');
         $totalPacientes   = $llegadas->count();
@@ -90,9 +107,13 @@ class ReporteController extends Controller
     /**
      * Exportar el reporte de un turno como PDF.
      */
-    public function exportarPdf($turnoId)
+    public function exportarPdf(Request $request, $turnoId)
     {
-        $turno = TurnoPersonal::with(['usuario', 'registrosLlegada.paciente.familia'])->findOrFail($turnoId);
+        if (Auth::user() && Auth::user()->esRecepcionista()) {
+            abort(403, 'No tiene permisos para generar reportes de los registros del día.');
+        }
+
+        $turno = TurnoPersonal::with(['usuario', 'recepcionista', 'registrosLlegada.paciente.familia'])->findOrFail($turnoId);
 
         $llegadas         = $turno->registrosLlegada->sortBy('hora_llegada');
         $totalPacientes   = $llegadas->count();
@@ -104,6 +125,11 @@ class ReporteController extends Controller
         ))->setPaper('letter', 'portrait');
 
         $filename = 'reporte-turno-' . $turno->id_turno . '-' . $turno->fecha->format('Y-m-d') . '.pdf';
+
+        if ($request->boolean('preview')) {
+            return $pdf->stream($filename);
+        }
+
         return $pdf->download($filename);
     }
 
@@ -149,7 +175,7 @@ class ReporteController extends Controller
         $fechaDesde = $request->get('fecha_desde', now()->startOfMonth()->toDateString());
         $fechaHasta = $request->get('fecha_hasta', now()->toDateString());
 
-        $datos = RegistroLlegada::with(['paciente', 'turno.usuario'])
+        $datos = RegistroLlegada::with(['paciente', 'turno.usuario', 'turno.recepcionista'])
             ->whereBetween('fecha', [$fechaDesde, $fechaHasta])
             ->orderBy('fecha')->orderBy('hora_llegada')
             ->get();
@@ -163,7 +189,7 @@ class ReporteController extends Controller
             optional($r->paciente)->nombres . ' ' . optional($r->paciente)->apellidos,
             optional($r->paciente)->numero_expediente_fisico ?? '—',
             $r->es_nuevo ? 'Sí' : 'No',
-            optional(optional($r->turno)->usuario)->nombre_completo ?? '—',
+            optional($r->turno)->nombre_responsable ?? '—',
         ]);
 
         return $this->generarPdfGenerico($titulo, $subtitulo, $columnas, $filas, 'llegadas-rango');
@@ -261,7 +287,7 @@ class ReporteController extends Controller
         $fechaDesde = $request->get('fecha_desde', now()->startOfMonth()->toDateString());
         $fechaHasta = $request->get('fecha_hasta', now()->toDateString());
 
-        $datos = TurnoPersonal::with('usuario')
+        $datos = TurnoPersonal::with(['usuario', 'recepcionista'])
             ->withCount(['registrosLlegada', 'registrosLlegada as nuevos_count' => fn($q) => $q->where('es_nuevo', true)])
             ->whereBetween('fecha', [$fechaDesde, $fechaHasta])
             ->orderBy('fecha')
@@ -273,7 +299,7 @@ class ReporteController extends Controller
         $filas = $datos->map(fn($t) => [
             $t->fecha->format('d/m/Y'),
             ucfirst($t->tipo_turno),
-            optional($t->usuario)->nombre_completo ?? '—',
+            $t->nombre_responsable,
             $t->registros_llegada_count,
             $t->nuevos_count,
             $t->registros_llegada_count - $t->nuevos_count,
@@ -362,24 +388,17 @@ class ReporteController extends Controller
         $fechaDesde = $request->get('fecha_desde', now()->startOfMonth()->toDateString());
         $fechaHasta = $request->get('fecha_hasta', now()->toDateString());
 
-        $datos = TurnoPersonal::with('usuario')
-            ->selectRaw('id_usuario, COUNT(*) as turnos_trabajados, SUM(registros_count) as total_llegadas')
-            ->withCount(['registrosLlegada as registros_count'])
-            ->whereBetween('fecha', [$fechaDesde, $fechaHasta])
-            ->groupBy('id_usuario')
-            ->with('usuario')
-            ->get();
-
-        // Usar query directa más simple
+        // Agrupar por la persona asignada al turno (recepcionista o usuario)
         $datos = DB::table('turnos_personal')
-            ->join('usuarios', 'turnos_personal.id_usuario', '=', 'usuarios.id_usuario')
-            ->selectRaw('usuarios.nombre_completo, COUNT(turnos_personal.id_turno) as turnos, COALESCE(SUM(rc.cnt),0) as llegadas')
+            ->leftJoin('recepcionistas', 'turnos_personal.id_recepcionista', '=', 'recepcionistas.id_recepcionista')
+            ->leftJoin('usuarios', 'turnos_personal.id_usuario', '=', 'usuarios.id_usuario')
+            ->selectRaw("COALESCE(NULLIF(TRIM(turnos_personal.nombre_recepcionista), ''), recepcionistas.nombre, usuarios.nombre_completo, 'Sin asignar') as responsable, COUNT(turnos_personal.id_turno) as turnos, COALESCE(SUM(rc.cnt),0) as llegadas")
             ->leftJoinSub(
                 DB::table('registros_llegada')->selectRaw('id_turno, COUNT(*) as cnt')->groupBy('id_turno'),
                 'rc', 'rc.id_turno', '=', 'turnos_personal.id_turno'
             )
             ->whereBetween('turnos_personal.fecha', [$fechaDesde, $fechaHasta])
-            ->groupBy('usuarios.nombre_completo')
+            ->groupBy(DB::raw("COALESCE(NULLIF(TRIM(turnos_personal.nombre_recepcionista), ''), recepcionistas.nombre, usuarios.nombre_completo, 'Sin asignar')"))
             ->orderByDesc('llegadas')
             ->get();
 
@@ -387,7 +406,7 @@ class ReporteController extends Controller
         $subtitulo = "Del $fechaDesde al $fechaHasta";
         $columnas = ['Personal', 'Turnos Trabajados', 'Total Llegadas Atendidas'];
         $filas = $datos->map(fn($r) => [
-            $r->nombre_completo,
+            $r->responsable,
             $r->turnos,
             $r->llegadas,
         ]);

@@ -64,7 +64,8 @@ class VentanillaController extends Controller
                     $q->where('nombres', 'ilike', "%{$buscarPaciente}%")
                       ->orWhere('apellidos', 'ilike', "%{$buscarPaciente}%")
                       ->orWhere('dpi', 'like', "%{$buscarPaciente}%")
-                      ->orWhere('numero_expediente_fisico', 'like', "%{$buscarPaciente}%");
+                      ->orWhere('numero_expediente_fisico', 'like', "%{$buscarPaciente}%")
+                      ->orWhereRaw("CAST(numero_registro AS TEXT) ILIKE ?", ["%{$buscarPaciente}%"]);
                 })
                 ->limit(10)
                 ->get();
@@ -174,35 +175,59 @@ class VentanillaController extends Controller
                 ->pluck('id_paciente');
         }
 
+        $criterio = $request->get('criterio', 'todos');
+
         // Buscar pacientes activos que coincidan
-        $pacientes = Paciente::with('familia.comunidad')
-            ->where('activo', true)
-            ->where(function ($q) use ($termino) {
+        $pacientesQuery = Paciente::with('familia.comunidad')->where('activo', true);
+
+        if ($criterio === 'nombre') {
+            $pacientesQuery->where(function ($q) use ($termino) {
                 $q->where('nombres', 'ilike', "%{$termino}%")
-                  ->orWhere('apellidos', 'ilike', "%{$termino}%")
-                  ->orWhere('dpi', 'like', "%{$termino}%")
-                  ->orWhere('numero_expediente_fisico', 'like', "%{$termino}%")
+                  ->orWhere('apellidos', 'ilike', "%{$termino}%");
+            });
+        } elseif ($criterio === 'numero_registro') {
+            $pacientesQuery->whereRaw("CAST(numero_registro AS TEXT) ILIKE ?", ["%{$termino}%"]);
+        } elseif ($criterio === 'familia') {
+            $pacientesQuery->where(function ($q) use ($termino) {
+                $q->where('numero_expediente_fisico', 'like', "%{$termino}%")
                   ->orWhereHas('familia', fn($fq) =>
                       $fq->where('numero_familia', 'ilike', "%{$termino}%")
                          ->orWhere('apellido_cabeza', 'ilike', "%{$termino}%")
                   );
-            })
-            ->limit(12)
-            ->get();
+            });
+        } elseif ($criterio === 'dpi') {
+            $pacientesQuery->where('dpi', 'like', "%{$termino}%");
+        } else {
+            $pacientesQuery->where(function ($q) use ($termino) {
+                $q->where('nombres', 'ilike', "%{$termino}%")
+                  ->orWhere('apellidos', 'ilike', "%{$termino}%")
+                  ->orWhere('dpi', 'like', "%{$termino}%")
+                  ->orWhere('numero_expediente_fisico', 'like', "%{$termino}%")
+                  ->orWhereRaw("CAST(numero_registro AS TEXT) ILIKE ?", ["%{$termino}%"])
+                  ->orWhereHas('familia', fn($fq) =>
+                      $fq->where('numero_familia', 'ilike', "%{$termino}%")
+                         ->orWhere('apellido_cabeza', 'ilike', "%{$termino}%")
+                  );
+            });
+        }
+
+        $pacientes = $pacientesQuery->limit(12)->get();
 
         $resultado = $pacientes->map(function ($p) use ($yaRegistrados) {
             return [
-                'id_paciente'            => $p->id_paciente,
-                'nombres'                => $p->nombres,
-                'apellidos'              => $p->apellidos,
-                'dpi'                    => $p->dpi,
-                'sexo'                   => $p->sexo,
+                'id_paciente'              => $p->id_paciente,
+                'nombres'                  => $p->nombres,
+                'apellidos'                => $p->apellidos,
+                'dpi'                      => $p->dpi,
+                'sexo'                     => $p->sexo,
                 'numero_expediente_fisico' => $p->numero_expediente_fisico,
-                'edad'                   => optional($p->fecha_nacimiento)->age,
-                'familia_numero'         => optional($p->familia)->numero_familia,
-                'familia_cabeza'         => optional($p->familia)->apellido_cabeza,
-                'comunidad'              => optional(optional($p->familia)->comunidad)->nombre,
-                'ya_registrado'          => $yaRegistrados->contains($p->id_paciente),
+                'numero_registro'          => $p->numero_registro,
+                'descripcion_registro'     => $p->descripcion_registro,
+                'edad'                     => optional($p->fecha_nacimiento)->age,
+                'familia_numero'           => optional($p->familia)->numero_familia,
+                'familia_cabeza'           => optional($p->familia)->apellido_cabeza,
+                'comunidad'                => optional(optional($p->familia)->comunidad)->nombre,
+                'ya_registrado'            => $yaRegistrados->contains($p->id_paciente),
             ];
         });
 

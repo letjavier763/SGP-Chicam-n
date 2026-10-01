@@ -82,6 +82,25 @@
                 </div>
 
                 <div class="mb-3">
+                    <label class="form-label text-secondary small fw-bold mb-1">Dirección:</label>
+                    <div class="text-dark small">{{ $paciente->direccion ?? 'No registrada' }}</div>
+                </div>
+
+                @if($paciente->numero_registro || $paciente->descripcion_registro)
+                <div class="mb-3">
+                    <label class="form-label text-secondary small fw-bold mb-1">Registro Físico:</label>
+                    <div class="text-dark small">
+                        @if($paciente->numero_registro)
+                            <strong>No.:</strong> {{ $paciente->numero_registro }}
+                        @endif
+                        @if($paciente->descripcion_registro)
+                            {{ $paciente->numero_registro ? '· ' : '' }}{{ $paciente->descripcion_registro }}
+                        @endif
+                    </div>
+                </div>
+                @endif
+
+                <div class="mb-3">
                     <label class="form-label text-secondary small fw-bold mb-1">Fecha Registro en SGP:</label>
                     <div class="text-dark small">{{ optional($paciente->fecha_registro)->format('d/m/Y H:i A') ?? 'N/A' }}</div>
                 </div>
@@ -141,26 +160,46 @@
                         <thead>
                             <tr>
                                 <th>Fecha / Hora</th>
-                                <th>Tipo de Servicio</th>
+                                <th>Condición</th>
                                 <th>Turno</th>
-                                <th>Estado</th>
+                                <th>Personal Inscrito</th>
+                                <th>Observaciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($paciente->registrosLlegada as $llegada)
                                 <tr>
-                                    <td>{{ optional($llegada->fecha)->format('d/m/Y H:i A') }}</td>
-                                    <td>{{ $llegada->tipo_servicio }}</td>
-                                    <td>Turno #{{ $llegada->numero_turno }}</td>
+                                    <td>
+                                        <div class="fw-semibold text-dark">{{ optional($llegada->fecha)->format('d/m/Y') }}</div>
+                                        <div class="text-secondary small">{{ $llegada->hora_llegada ? \Carbon\Carbon::parse($llegada->hora_llegada)->format('h:i A') : '—' }}</div>
+                                    </td>
+                                    <td>
+                                        @if($llegada->es_nuevo)
+                                            <span class="badge bg-green-lt text-green">Nuevo Ingreso</span>
+                                        @else
+                                            <span class="badge bg-blue-lt text-blue">Recurrente</span>
+                                        @endif
+                                    </td>
                                     <td>
                                         <span class="badge bg-secondary-lt">
-                                            {{ $llegada->estado }}
+                                            Turno #{{ $llegada->id_turno }}
+                                            @if($llegada->turno)
+                                                ({{ ucfirst($llegada->turno->tipo_turno) }})
+                                            @endif
                                         </span>
+                                    </td>
+                                    <td>
+                                        <span class="fw-medium text-dark">
+                                            <i class="ti ti-user-check me-1 text-primary"></i>{{ $llegada->responsable_turno }}
+                                        </span>
+                                    </td>
+                                    <td class="text-secondary small">
+                                        {{ $llegada->observaciones ?: '—' }}
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="text-center text-secondary py-4">
+                                    <td colspan="5" class="text-center text-secondary py-4">
                                         No hay registros de visitas de ventanilla para este paciente aún.
                                     </td>
                                 </tr>
@@ -176,16 +215,28 @@
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <div class="fw-bold text-dark">
                                     {{ optional($llegada->fecha)->format('d/m/Y') }}
+                                    <span class="text-secondary small ms-1">{{ $llegada->hora_llegada ? \Carbon\Carbon::parse($llegada->hora_llegada)->format('h:i A') : '' }}</span>
                                 </div>
-                                <span class="badge bg-secondary-lt">
-                                    {{ $llegada->estado }}
-                                </span>
+                                @if($llegada->es_nuevo)
+                                    <span class="badge bg-green-lt text-green">Nuevo</span>
+                                @else
+                                    <span class="badge bg-blue-lt text-blue">Recurrente</span>
+                                @endif
                             </div>
-                            <div class="text-secondary small">
-                                <strong>Hora:</strong> {{ optional($llegada->fecha)->format('H:i A') }}<br>
-                                <strong>Servicio:</strong> {{ $llegada->tipo_servicio }}<br>
-                                <strong>Turno:</strong> Turno #{{ $llegada->numero_turno }}
+                            <div class="text-secondary small mb-1">
+                                <strong>Turno:</strong> Turno #{{ $llegada->id_turno }}
+                                @if($llegada->turno)
+                                    ({{ ucfirst($llegada->turno->tipo_turno) }})
+                                @endif
                             </div>
+                            <div class="text-secondary small mb-1">
+                                <strong>Personal:</strong> <span class="fw-semibold text-dark"><i class="ti ti-user-check text-primary me-1"></i>{{ $llegada->responsable_turno }}</span>
+                            </div>
+                            @if($llegada->observaciones)
+                                <div class="text-secondary small fst-italic">
+                                    <strong>Obs:</strong> {{ $llegada->observaciones }}
+                                </div>
+                            @endif
                         </div>
                     @empty
                         <div class="text-center text-secondary py-4">
@@ -259,10 +310,28 @@
                         </div>
                     </div>
 
-                    <div class="row g-3">
+                    <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label" for="show_telefono">Teléfono de Contacto (8 dígitos)</label>
                             <input type="text" id="show_telefono" name="telefono" class="form-control" value="{{ $paciente->telefono }}" maxlength="8">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="show_direccion">Dirección</label>
+                            <input type="text" id="show_direccion" name="direccion" class="form-control" value="{{ $paciente->direccion }}" maxlength="255" placeholder="Ej: Caserío El Centro, Sector 2">
+                        </div>
+                    </div>
+
+                    <h6 class="text-secondary border-bottom pb-2 mb-3">3. Datos del Registro Físico</h6>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label" for="show_numero_registro">No. de Registro</label>
+                            <input type="number" id="show_numero_registro" name="numero_registro" class="form-control" value="{{ $paciente->numero_registro }}" min="0" step="1" placeholder="Ej: 1024">
+                            <span class="form-hint">Número entero del registro físico</span>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label" for="show_descripcion_registro">Descripción / Ubicación del Registro</label>
+                            <input type="text" id="show_descripcion_registro" name="descripcion_registro" class="form-control" value="{{ $paciente->descripcion_registro }}" maxlength="150" placeholder="Ej: Archivero 3, Cajón B, Folder amarillo">
+                            <span class="form-hint">Máx. 150 caracteres — indica dónde está el expediente físico</span>
                         </div>
                     </div>
                 </div>

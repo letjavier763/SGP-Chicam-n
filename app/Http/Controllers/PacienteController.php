@@ -18,16 +18,44 @@ class PacienteController extends Controller
 
         if ($request->filled('buscar')) {
             $buscar = trim($request->buscar);
-            $query->where(function ($q) use ($buscar) {
-                $q->where('nombres', 'ilike', "%{$buscar}%")
-                  ->orWhere('apellidos', 'ilike', "%{$buscar}%")
-                  ->orWhere('dpi', 'like', "%{$buscar}%")
-                  ->orWhere('numero_expediente_fisico', 'like', "%{$buscar}%")
-                  ->orWhereHas('familia', function ($fq) use ($buscar) {
-                      $fq->where('numero_familia', 'like', "%{$buscar}%")
-                         ->orWhere('apellido_cabeza', 'ilike', "%{$buscar}%");
-                  });
-            });
+            $criterio = $request->get('criterio', 'todos');
+
+            if ($criterio === 'nombre') {
+                $query->where(function ($q) use ($buscar) {
+                    $q->where('nombres', 'ilike', "%{$buscar}%")
+                      ->orWhere('apellidos', 'ilike', "%{$buscar}%");
+                });
+            } elseif ($criterio === 'numero_registro') {
+                $query->whereRaw("CAST(numero_registro AS TEXT) ILIKE ?", ["%{$buscar}%"]);
+            } elseif ($criterio === 'familia') {
+                $query->where(function ($q) use ($buscar) {
+                    $q->where('numero_expediente_fisico', 'like', "%{$buscar}%")
+                      ->orWhereHas('familia', function ($fq) use ($buscar) {
+                          $fq->where('numero_familia', 'like', "%{$buscar}%")
+                             ->orWhere('apellido_cabeza', 'ilike', "%{$buscar}%");
+                      });
+                });
+            } elseif ($criterio === 'dpi') {
+                $query->where('dpi', 'like', "%{$buscar}%");
+            } else {
+                // 'todos' los campos
+                $query->where(function ($q) use ($buscar) {
+                    $q->where('nombres', 'ilike', "%{$buscar}%")
+                      ->orWhere('apellidos', 'ilike', "%{$buscar}%")
+                      ->orWhere('dpi', 'like', "%{$buscar}%")
+                      ->orWhere('numero_expediente_fisico', 'like', "%{$buscar}%")
+                      ->orWhereRaw("CAST(numero_registro AS TEXT) ILIKE ?", ["%{$buscar}%"])
+                      ->orWhereHas('familia', function ($fq) use ($buscar) {
+                          $fq->where('numero_familia', 'like', "%{$buscar}%")
+                             ->orWhere('apellido_cabeza', 'ilike', "%{$buscar}%");
+                      });
+                });
+            }
+        }
+
+        if ($request->filled('numero_registro')) {
+            $numReg = trim($request->numero_registro);
+            $query->whereRaw("CAST(numero_registro AS TEXT) ILIKE ?", ["%{$numReg}%"]);
         }
 
         if ($request->filled('sexo')) {
@@ -59,6 +87,9 @@ class PacienteController extends Controller
             'apellidos'                 => 'required|string|max:100',
             'dpi'                       => 'nullable|string|digits:13',
             'numero_expediente_fisico'  => 'nullable|string|max:50',
+            'numero_registro'           => 'nullable|integer',
+            'descripcion_registro'      => 'nullable|string|max:150',
+            'direccion'                 => 'nullable|string|max:255',
             'fecha_nacimiento'          => 'required|date|before_or_equal:today',
             'sexo'                      => 'required|in:M,F',
             'telefono'                  => 'nullable|string|digits:8',
@@ -129,8 +160,8 @@ class PacienteController extends Controller
 
         // Verificación de duplicidad de DPI si fue ingresado
         if (!empty($validated['dpi'])) {
-            $dpiEnPaciente = Paciente::where('dpi', $validated['dpi'])->exists();
-            $dpiEnFamilia  = Familia::where('dpi', $validated['dpi'])->exists();
+            $dpiEnPaciente = Paciente::where('dpi', $validated['dpi'])->first();
+            $dpiEnFamilia  = Familia::where('dpi', $validated['dpi'])->first();
 
             if ($dpiEnPaciente || $dpiEnFamilia) {
                 AlertaDuplicado::create([
@@ -140,8 +171,30 @@ class PacienteController extends Controller
                     'accion_tomada'   => 'registro_bloqueado',
                 ]);
 
+                $nombreDpi = $dpiEnPaciente 
+                    ? ($dpiEnPaciente->nombres . ' ' . $dpiEnPaciente->apellidos . ' (Exp: ' . $dpiEnPaciente->numero_expediente_fisico . ')')
+                    : ($dpiEnFamilia->apellido_cabeza . ' (Cabeza de familia #' . $dpiEnFamilia->numero_familia . ')');
+
                 return back()->withInput()->withErrors([
-                    'dpi' => 'El DPI ' . $validated['dpi'] . ' ya existe registrado en el sistema. Se generó una alerta de duplicidad.'
+                    'dpi' => 'El DPI ' . $validated['dpi'] . ' ya existe registrado en el sistema (' . $nombreDpi . '). Se generó una alerta de duplicidad.'
+                ]);
+            }
+        }
+
+        // Verificación de duplicidad de Número de Registro si fue ingresado
+        if (!empty($validated['numero_registro'])) {
+            $regEnPaciente = Paciente::where('numero_registro', $validated['numero_registro'])->first();
+
+            if ($regEnPaciente) {
+                AlertaDuplicado::create([
+                    'id_usuario'      => Auth::id(),
+                    'tipo_duplicado'  => 'numero_registro',
+                    'valor_duplicado' => (string) $validated['numero_registro'],
+                    'accion_tomada'   => 'registro_bloqueado',
+                ]);
+
+                return back()->withInput()->withErrors([
+                    'numero_registro' => 'El número de registro ' . $validated['numero_registro'] . ' ya está asignado al paciente ' . $regEnPaciente->nombres . ' ' . $regEnPaciente->apellidos . ' (Expediente: ' . $regEnPaciente->numero_expediente_fisico . ').'
                 ]);
             }
         }
@@ -152,6 +205,9 @@ class PacienteController extends Controller
             'apellidos'                => $validated['apellidos'],
             'dpi'                      => $validated['dpi'] ?? null,
             'numero_expediente_fisico' => $expedienteNumero,
+            'numero_registro'          => $validated['numero_registro'] ?? null,
+            'descripcion_registro'     => $validated['descripcion_registro'] ?? null,
+            'direccion'                => $validated['direccion'] ?? null,
             'fecha_nacimiento'         => $validated['fecha_nacimiento'],
             'sexo'                     => $validated['sexo'],
             'telefono'                 => $validated['telefono'] ?? null,
@@ -193,7 +249,11 @@ class PacienteController extends Controller
 
     public function show($id)
     {
-        $paciente = Paciente::with(['familia.comunidad.municipio.departamento', 'registrosLlegada'])->findOrFail($id);
+        $paciente = Paciente::with([
+            'familia.comunidad.municipio.departamento',
+            'registrosLlegada.turno.recepcionista',
+            'registrosLlegada.turno.usuario',
+        ])->findOrFail($id);
         $familias = Familia::where('activo', true)->orderBy('numero_familia')->get();
         return view('pacientes.show', compact('paciente', 'familias'));
     }
@@ -216,6 +276,9 @@ class PacienteController extends Controller
             'apellidos'                 => 'required|string|max:100',
             'dpi'                       => 'nullable|string|digits:13',
             'numero_expediente_fisico'  => 'nullable|string|max:50',
+            'numero_registro'           => 'nullable|integer',
+            'descripcion_registro'      => 'nullable|string|max:150',
+            'direccion'                 => 'nullable|string|max:255',
             'fecha_nacimiento'          => 'required|date|before_or_equal:today',
             'sexo'                      => 'required|in:M,F',
             'telefono'                  => 'nullable|string|digits:8',
@@ -227,8 +290,8 @@ class PacienteController extends Controller
             : $familia->numero_familia;
 
         if (!empty($validated['dpi']) && $validated['dpi'] !== $paciente->dpi) {
-            $dpiEnPaciente = Paciente::where('dpi', $validated['dpi'])->where('id_paciente', '!=', $id)->exists();
-            $dpiEnFamilia  = Familia::where('dpi', $validated['dpi'])->exists();
+            $dpiEnPaciente = Paciente::where('dpi', $validated['dpi'])->where('id_paciente', '!=', $id)->first();
+            $dpiEnFamilia  = Familia::where('dpi', $validated['dpi'])->first();
 
             if ($dpiEnPaciente || $dpiEnFamilia) {
                 AlertaDuplicado::create([
@@ -238,8 +301,31 @@ class PacienteController extends Controller
                     'accion_tomada'   => 'modificacion_bloqueada',
                 ]);
 
+                $nombreDpi = $dpiEnPaciente 
+                    ? ($dpiEnPaciente->nombres . ' ' . $dpiEnPaciente->apellidos . ' (Exp: ' . $dpiEnPaciente->numero_expediente_fisico . ')')
+                    : ($dpiEnFamilia->apellido_cabeza . ' (Cabeza de familia #' . $dpiEnFamilia->numero_familia . ')');
+
                 return back()->withInput()->withErrors([
-                    'dpi' => 'El DPI ' . $validated['dpi'] . ' ya pertenece a otro registro en el sistema.'
+                    'dpi' => 'El DPI ' . $validated['dpi'] . ' ya pertenece a otro registro en el sistema (' . $nombreDpi . ').'
+                ]);
+            }
+        }
+
+        if (!empty($validated['numero_registro']) && $validated['numero_registro'] != $paciente->numero_registro) {
+            $regEnPaciente = Paciente::where('numero_registro', $validated['numero_registro'])
+                ->where('id_paciente', '!=', $id)
+                ->first();
+
+            if ($regEnPaciente) {
+                AlertaDuplicado::create([
+                    'id_usuario'      => Auth::id(),
+                    'tipo_duplicado'  => 'numero_registro',
+                    'valor_duplicado' => (string) $validated['numero_registro'],
+                    'accion_tomada'   => 'modificacion_bloqueada',
+                ]);
+
+                return back()->withInput()->withErrors([
+                    'numero_registro' => 'El número de registro ' . $validated['numero_registro'] . ' ya pertenece a otro paciente: ' . $regEnPaciente->nombres . ' ' . $regEnPaciente->apellidos . ' (Expediente: ' . $regEnPaciente->numero_expediente_fisico . ').'
                 ]);
             }
         }
@@ -250,6 +336,9 @@ class PacienteController extends Controller
             'apellidos'                => $validated['apellidos'],
             'dpi'                      => $validated['dpi'] ?? null,
             'numero_expediente_fisico' => $expedienteNumero,
+            'numero_registro'          => $validated['numero_registro'] ?? null,
+            'descripcion_registro'     => $validated['descripcion_registro'] ?? null,
+            'direccion'                => $validated['direccion'] ?? null,
             'fecha_nacimiento'         => $validated['fecha_nacimiento'],
             'sexo'                     => $validated['sexo'],
             'telefono'                 => $validated['telefono'] ?? null,
@@ -281,7 +370,7 @@ class PacienteController extends Controller
         $valor = trim($request->query('valor'));
         $ignoreId = $request->query('ignore_id');
 
-        if (!$tipo || !$valor) {
+        if (!$tipo || $valor === '') {
             return response()->json(['duplicate' => false]);
         }
 
@@ -293,14 +382,16 @@ class PacienteController extends Controller
             if ($ignoreId) {
                 $pacienteQ->where('id_paciente', '!=', $ignoreId);
             }
-            if ($pacienteQ->exists()) {
+            $pExistente = $pacienteQ->first();
+            if ($pExistente) {
                 $isDuplicate = true;
-                $message = 'El DPI ya pertenece a un paciente registrado.';
+                $message = 'El DPI ya pertenece a ' . $pExistente->nombres . ' ' . $pExistente->apellidos . ' (Exp: ' . $pExistente->numero_expediente_fisico . ').';
             } else {
                 $famQ = Familia::where('dpi', $valor);
-                if ($famQ->exists()) {
+                $fExistente = $famQ->first();
+                if ($fExistente) {
                     $isDuplicate = true;
-                    $message = 'El DPI ya pertenece al cabeza de un núcleo familiar registrado.';
+                    $message = 'El DPI pertenece al cabeza de familia ' . $fExistente->apellido_cabeza . ' (Fam. #' . $fExistente->numero_familia . ').';
                 }
             }
         } elseif ($tipo === 'numero_familia') {
@@ -311,6 +402,16 @@ class PacienteController extends Controller
             if ($famQ->exists()) {
                 $isDuplicate = true;
                 $message = 'El número de familia ya está registrado.';
+            }
+        } elseif ($tipo === 'numero_registro') {
+            $pacienteQ = Paciente::where('numero_registro', $valor);
+            if ($ignoreId) {
+                $pacienteQ->where('id_paciente', '!=', $ignoreId);
+            }
+            $pExistente = $pacienteQ->first();
+            if ($pExistente) {
+                $isDuplicate = true;
+                $message = 'El No. de registro ya pertenece a ' . $pExistente->nombres . ' ' . $pExistente->apellidos . ' (Exp: ' . $pExistente->numero_expediente_fisico . ').';
             }
         }
 

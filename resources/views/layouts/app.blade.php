@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
     
     <!-- Estilos del Design System SGP Chicamán -->
-    <link rel="stylesheet" href="{{ asset('css/style.css') }}?v=40">
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}?v=41">
     @yield('styles')
 </head>
 <body>
@@ -66,11 +66,16 @@
                             @if(Auth::user()->esAdministrador() || Auth::user()->esRecepcionista())
                                 <li class="nav-item dropdown {{ Request::routeIs('ventanilla.*', 'turnos.*') ? 'active' : '' }}">
                                     <a class="nav-link dropdown-toggle" href="#sidebar-ventanilla" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="{{ Request::routeIs('ventanilla.*', 'turnos.*') ? 'true' : 'false' }}">
+                                        <i class="ti ti-building-hospital me-2"></i>
                                         <span class="nav-link-title">Ventanilla</span>
                                     </a>
                                     <div class="dropdown-menu {{ Request::routeIs('ventanilla.*', 'turnos.*') ? 'show' : '' }}">
-                                        <a class="dropdown-item {{ Request::routeIs('ventanilla.*') ? 'active' : '' }}" href="{{ route('ventanilla.index') }}">Ventanilla</a>
-                                        <a class="dropdown-item {{ Request::routeIs('turnos.*') ? 'active' : '' }}" href="{{ route('turnos.index') }}">Turnos del Personal</a>
+                                        <a class="dropdown-item {{ Request::routeIs('ventanilla.*') ? 'active' : '' }}" href="{{ route('ventanilla.index') }}">
+                                            <i class="ti ti-app-window me-2"></i> Ventanilla
+                                        </a>
+                                        <a class="dropdown-item {{ Request::routeIs('turnos.*') ? 'active' : '' }}" href="{{ route('turnos.index') }}">
+                                            <i class="ti ti-calendar-time me-2"></i> Turnos del Personal
+                                        </a>
                                     </div>
                                 </li>
                             @endif
@@ -79,11 +84,16 @@
                             @if(Auth::user()->esAdministrador() || Auth::user()->esRecepcionista())
                                 <li class="nav-item dropdown {{ Request::routeIs('pacientes.*', 'familias.*') ? 'active' : '' }}">
                                     <a class="nav-link dropdown-toggle" href="#sidebar-registros" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="{{ Request::routeIs('pacientes.*', 'familias.*') ? 'true' : 'false' }}">
+                                        <i class="ti ti-folder me-2"></i>
                                         <span class="nav-link-title">Registros</span>
                                     </a>
                                     <div class="dropdown-menu {{ Request::routeIs('pacientes.*', 'familias.*') ? 'show' : '' }}">
-                                        <a class="dropdown-item {{ Request::routeIs('pacientes.*') ? 'active' : '' }}" href="{{ route('pacientes.index') }}">Pacientes</a>
-                                        <a class="dropdown-item {{ Request::routeIs('familias.*') ? 'active' : '' }}" href="{{ route('familias.index') }}">Núcleos Familiares</a>
+                                        <a class="dropdown-item {{ Request::routeIs('pacientes.*') ? 'active' : '' }}" href="{{ route('pacientes.index') }}">
+                                            <i class="ti ti-users me-2"></i> Pacientes
+                                        </a>
+                                        <a class="dropdown-item {{ Request::routeIs('familias.*') ? 'active' : '' }}" href="{{ route('familias.index') }}">
+                                            <i class="ti ti-home-heart me-2"></i> Núcleos Familiares
+                                        </a>
                                     </div>
                                 </li>
                             @endif
@@ -92,10 +102,13 @@
                             @if(Auth::user()->esAdministrador() || Auth::user()->esDirector())
                                 <li class="nav-item dropdown {{ Request::routeIs('reportes.*') ? 'active' : '' }}">
                                     <a class="nav-link dropdown-toggle" href="#sidebar-reporteria" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="{{ Request::routeIs('reportes.*') ? 'true' : 'false' }}">
+                                        <i class="ti ti-chart-bar me-2"></i>
                                         <span class="nav-link-title">Reportería</span>
                                     </a>
                                     <div class="dropdown-menu {{ Request::routeIs('reportes.*') ? 'show' : '' }}">
-                                        <a class="dropdown-item {{ Request::routeIs('reportes.*') ? 'active' : '' }}" href="{{ route('reportes.index') }}">Estadísticas y Reportes</a>
+                                        <a class="dropdown-item {{ Request::routeIs('reportes.*') ? 'active' : '' }}" href="{{ route('reportes.index') }}">
+                                            <i class="ti ti-file-analytics me-2"></i> Estadísticas y Reportes
+                                        </a>
                                     </div>
                                 </li>
                             @endif
@@ -104,12 +117,19 @@
                             @if(Auth::user()->esAdministrador())
                                 <li class="nav-item dropdown {{ Request::routeIs('alertas.*', 'bitacora.*', 'personal.*') ? 'active' : '' }}">
                                     <a class="nav-link dropdown-toggle" href="#sidebar-admin" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="{{ Request::routeIs('alertas.*', 'bitacora.*', 'personal.*') ? 'true' : 'false' }}">
+                                        <i class="ti ti-settings me-2"></i>
                                         <span class="nav-link-title">Administración</span>
                                     </a>
                                     <div class="dropdown-menu {{ Request::routeIs('alertas.*', 'bitacora.*', 'personal.*') ? 'show' : '' }}">
-                                        <a class="dropdown-item {{ Request::routeIs('personal.*') ? 'active' : '' }}" href="{{ route('personal.index') }}">Gestión de Personal</a>
-                                        <a class="dropdown-item {{ Request::routeIs('alertas.*') ? 'active' : '' }}" href="{{ route('alertas.index') }}">Alertas Duplicidad</a>
-                                        <a class="dropdown-item {{ Request::routeIs('bitacora.*') ? 'active' : '' }}" href="{{ route('bitacora.index') }}">Bitácora</a>
+                                        <a class="dropdown-item {{ Request::routeIs('personal.*') ? 'active' : '' }}" href="{{ route('personal.index') }}">
+                                            <i class="ti ti-user-check me-2"></i> Gestión de Personal
+                                        </a>
+                                        <a class="dropdown-item {{ Request::routeIs('alertas.*') ? 'active' : '' }}" href="{{ route('alertas.index') }}">
+                                            <i class="ti ti-copy-off me-2"></i> Alertas Duplicidad
+                                        </a>
+                                        <a class="dropdown-item {{ Request::routeIs('bitacora.*') ? 'active' : '' }}" href="{{ route('bitacora.index') }}">
+                                            <i class="ti ti-history me-2"></i> Bitácora
+                                        </a>
                                     </div>
                                 </li>
                             @endif

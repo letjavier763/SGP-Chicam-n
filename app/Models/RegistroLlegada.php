@@ -28,4 +28,9 @@ class RegistroLlegada extends Model
     {
         return $this->belongsTo(TurnoPersonal::class, 'id_turno', 'id_turno');
     }
+
+    public function getResponsableTurnoAttribute(): string
+    {
+        return $this->turno ? $this->turno->nombre_responsable : '—';
+    }
 }

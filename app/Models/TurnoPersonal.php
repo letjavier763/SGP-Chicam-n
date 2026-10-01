@@ -45,14 +45,14 @@ class TurnoPersonal extends Model
      */
     public function getNombreResponsableAttribute(): string
     {
-        if ($this->nombre_recepcionista) {
-            return $this->nombre_recepcionista;
+        if (!empty(trim($this->nombre_recepcionista ?? ''))) {
+            return trim($this->nombre_recepcionista);
         }
-        if ($this->recepcionista) {
-            return $this->recepcionista->nombre;
+        if ($this->recepcionista && !empty(trim($this->recepcionista->nombre ?? ''))) {
+            return trim($this->recepcionista->nombre);
         }
-        if ($this->usuario) {
-            return $this->usuario->nombre_completo;
+        if ($this->usuario && !empty(trim($this->usuario->nombre_completo ?? ''))) {
+            return trim($this->usuario->nombre_completo);
         }
         return 'Sin asignar';
     }

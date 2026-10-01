@@ -1,6 +1,6 @@
 /* ============================================================
    SGP Chicamán — Design System
-   Basado en DESIGN (1).md — Sistema de Color Clínico
+   Sistema de Color Clínico
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -30,7 +30,7 @@
 
     /* Primary */
     --primary: #0057cd;
-    --primary-2: #ffffff;
+    --primary-2: #0057cd;
     --primary-hover: #0b5ed7;
     --primary-container: #0d6efd;
     --on-primary: #ffffff;
@@ -860,6 +860,7 @@ label {
         opacity: 0;
         margin-bottom: -6px;
     }
+
     to {
         opacity: 1;
         margin-bottom: 0;
@@ -1174,6 +1175,7 @@ label {
     background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
     border: 1.5px solid #bfdbfe;
 }
+
 .quick-action-tile.quick-action-blue:hover {
     background: #eff6ff;
     border-color: #93c5fd;
@@ -1184,6 +1186,7 @@ label {
     background: linear-gradient(135deg, #f5f3ff 0%, #ffffff 100%);
     border: 1.5px solid #ddd6fe;
 }
+
 .quick-action-tile.quick-action-purple:hover {
     background: #f5f3ff;
     border-color: #c4b5fd;
@@ -1194,6 +1197,7 @@ label {
     background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
     border: 1.5px solid #fde68a;
 }
+
 .quick-action-tile.quick-action-amber:hover {
     background: #fffbeb;
     border-color: #fcd34d;
@@ -1204,6 +1208,7 @@ label {
     background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%);
     border: 1.5px solid #a7f3d0;
 }
+
 .quick-action-tile.quick-action-teal:hover {
     background: #ecfdf5;
     border-color: #6ee7b7;
@@ -1772,7 +1777,7 @@ label {
 
 /* ── Background utilities ───────────────────────────────── */
 .bg-primary {
-    background-color: var(--primary-2) !important;
+    background-color: var(--primary) !important;
 }
 
 .bg-body {
@@ -2194,7 +2199,7 @@ label {
         font-size: 0.84rem !important;
         height: 38px !important;
         min-height: 38px !important;
-        padding: 0.35rem 0.625rem !important;
+        padding: 0.35rem 2.5rem !important;
         border-radius: var(--radius-md) !important;
     }
 
@@ -2204,7 +2209,7 @@ label {
     }
 
     /* Botón de búsqueda/limpiar individual a ancho completo (excepto dentro de grupos flex) */
-    .row.g-2 > .col-12 > .btn:not(.d-flex .btn) {
+    .row.g-2>.col-12>.btn:not(.d-flex .btn) {
         width: 100%;
     }
 }
@@ -2295,13 +2300,13 @@ label {
         text-transform: uppercase !important;
     }
 
-    /* Footer con botones compactos al lado derecho */
+    /* Footer en tablets: botones a la derecha */
     .modal-footer {
         flex-direction: row !important;
         justify-content: flex-end !important;
         align-items: center !important;
         gap: 0.5rem !important;
-        padding: 0.625rem 0.875rem 0.875rem 0.875rem !important;
+        padding: 0.625rem 0.875rem !important;
     }
 
     .modal-footer>* {
@@ -2316,6 +2321,32 @@ label {
         align-items: center !important;
         justify-content: center !important;
         border-radius: var(--radius-md) !important;
+    }
+}
+
+/* ── Modales en móvil: botones apilados a ancho completo para ergonomía táctil ── */
+@media (max-width: 575.98px) {
+    .modal-footer {
+        flex-direction: column-reverse !important;
+        align-items: stretch !important;
+        gap: 0.5rem !important;
+        padding: 0.75rem 0.875rem !important;
+    }
+
+    .modal-footer>* {
+        width: 100% !important;
+        flex: 1 1 auto !important;
+        margin: 0 !important;
+        min-height: 40px !important;
+        font-size: 0.8125rem !important;
+        font-weight: 600 !important;
+        padding: 0.45rem 0.875rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: var(--radius-md) !important;
+        text-align: center !important;
+        white-space: normal !important;
     }
 }
 
@@ -2367,10 +2398,14 @@ label {
     }
 }
 
-/* ── Touch targets mínimos 44px ─────────────────────────── */
+/* ── Touch targets mínimos en móvil ────────────────────── */
 @media (max-width: 767.98px) {
-    .btn {
-        min-height: 40px;
+    .btn:not(.btn-sm) {
+        min-height: 38px;
+    }
+
+    .btn-sm {
+        min-height: 30px;
     }
 
     /* Nav links en menú más grandes al tacto */

@@ -66,7 +66,7 @@
                             <option value="">-- Seleccionar Rol --</option>
                             @foreach($roles as $rol)
                                 <option value="{{ $rol->id_rol }}" {{ old('id_rol') == $rol->id_rol ? 'selected' : '' }}>
-                                    {{ $rol->nombre_rol }} &mdash; {{ $rol->descripcion }}
+                                    {{ $rol->nombre_rol }}
                                 </option>
                             @endforeach
                         </select>

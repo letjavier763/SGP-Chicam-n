@@ -93,7 +93,7 @@ Route::middleware(['auth', 'nocache'])->group(function () {
     // Fase 3 — 4ª Iteración: Reportería Estadística y PDF
     // ---------------------------------------------------------------
 
-    Route::prefix('reportes')->name('reportes.')->group(function () {
+    Route::prefix('reportes')->name('reportes.')->middleware(['role:Administrador,Director'])->group(function () {
         Route::get('/', [ReporteController::class, 'index'])->name('index');
         Route::get('/turno/{turnoId}', [ReporteController::class, 'diario'])->name('diario');
         Route::get('/turno/{turnoId}/pdf', [ReporteController::class, 'exportarPdf'])->name('pdf');

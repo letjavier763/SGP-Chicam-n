@@ -86,6 +86,26 @@
                             <label class="form-label" for="telefono">Teléfono de Contacto (Opcional - 8 dígitos)</label>
                             <input type="text" id="telefono" name="telefono" class="form-control" value="{{ old('telefono') }}" maxlength="8" placeholder="Ej: 55551234">
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="direccion">Dirección</label>
+                            <input type="text" id="direccion" name="direccion" class="form-control" value="{{ old('direccion') }}" maxlength="255" placeholder="Ej: Caserío El Centro, Sector 2">
+                        </div>
+                    </div>
+
+                    <h4 class="mb-3 text-secondary border-bottom pb-2">3. Datos del Registro Físico</h4>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label" for="numero_registro">No. de Registro</label>
+                            <input type="number" id="numero_registro" name="numero_registro" class="form-control" value="{{ old('numero_registro') }}" min="0" step="1" placeholder="Ej: 1024">
+                            <span id="msg-dup-reg" class="form-hint fw-bold"></span>
+                            <span class="form-hint text-muted">Número entero que identifica el registro físico</span>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label" for="descripcion_registro">Descripción / Ubicación del Registro</label>
+                            <input type="text" id="descripcion_registro" name="descripcion_registro" class="form-control" value="{{ old('descripcion_registro') }}" maxlength="150" placeholder="Ej: Archivero 3, Cajón B, Folder amarillo">
+                            <span class="form-hint">Máx. 150 caracteres — indica dónde se encuentra el expediente físico</span>
+                        </div>
                     </div>
 
                     <div class="d-flex justify-content-end gap-2 mt-4">
@@ -104,27 +124,98 @@
 document.addEventListener('DOMContentLoaded', function () {
 
     const dpiInput = document.getElementById('dpi');
-    const msgEl = document.getElementById('msg-dup-dpi');
+    const msgDpiEl = document.getElementById('msg-dup-dpi');
+    const regInput = document.getElementById('numero_registro');
+    const msgRegEl = document.getElementById('msg-dup-reg');
+    const form = document.getElementById('pacienteForm');
 
-    dpiInput.addEventListener('blur', function () {
-        const val = this.value.trim();
-        if (!val) {
-            msgEl.textContent = '';
-            return;
-        }
+    let dpiDuplicado = false;
+    let regDuplicado = false;
 
-        fetch(`/pacientes/verificar-duplicado?tipo=dpi&valor=${encodeURIComponent(val)}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.duplicate) {
-                    msgEl.className = 'form-hint text-danger fw-bold';
-                    msgEl.textContent = '⚠ ' + data.message;
-                } else {
-                    msgEl.className = 'form-hint text-success fw-bold';
-                    msgEl.textContent = '✓ Disponible';
-                }
-            });
-    });
+    if (dpiInput && msgDpiEl) {
+        dpiInput.addEventListener('input', function() {
+            dpiDuplicado = false;
+            dpiInput.classList.remove('is-invalid');
+            msgDpiEl.textContent = '';
+        });
+
+        dpiInput.addEventListener('blur', function () {
+            const val = this.value.trim();
+            if (!val) {
+                msgDpiEl.textContent = '';
+                dpiDuplicado = false;
+                dpiInput.classList.remove('is-invalid');
+                return;
+            }
+
+            fetch(`/pacientes/verificar-duplicado?tipo=dpi&valor=${encodeURIComponent(val)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.duplicate) {
+                        dpiDuplicado = true;
+                        dpiInput.classList.add('is-invalid');
+                        msgDpiEl.className = 'form-hint text-danger fw-bold';
+                        msgDpiEl.textContent = '⚠ ' + data.message;
+                    } else {
+                        dpiDuplicado = false;
+                        dpiInput.classList.remove('is-invalid');
+                        msgDpiEl.className = 'form-hint text-success fw-bold';
+                        msgDpiEl.textContent = '✓ Disponible';
+                    }
+                });
+        });
+    }
+
+    if (regInput && msgRegEl) {
+        regInput.addEventListener('input', function() {
+            regDuplicado = false;
+            regInput.classList.remove('is-invalid');
+            msgRegEl.textContent = '';
+        });
+
+        regInput.addEventListener('blur', function () {
+            const val = this.value.trim();
+            if (!val) {
+                msgRegEl.textContent = '';
+                regDuplicado = false;
+                regInput.classList.remove('is-invalid');
+                return;
+            }
+
+            fetch(`/pacientes/verificar-duplicado?tipo=numero_registro&valor=${encodeURIComponent(val)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.duplicate) {
+                        regDuplicado = true;
+                        regInput.classList.add('is-invalid');
+                        msgRegEl.className = 'form-hint text-danger fw-bold';
+                        msgRegEl.textContent = '⚠ ' + data.message;
+                    } else {
+                        regDuplicado = false;
+                        regInput.classList.remove('is-invalid');
+                        msgRegEl.className = 'form-hint text-success fw-bold';
+                        msgRegEl.textContent = '✓ Disponible';
+                    }
+                });
+        });
+    }
+
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            if (dpiDuplicado) {
+                e.preventDefault();
+                alert('No se puede guardar: El DPI ya está registrado en el sistema.');
+                dpiInput.focus();
+                return false;
+            }
+            if (regDuplicado) {
+                e.preventDefault();
+                alert('No se puede guardar: El No. de Registro ya está asignado a otro paciente.');
+                regInput.focus();
+                return false;
+            }
+        });
+    }
 });
 </script>
 @endsection

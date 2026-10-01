@@ -18,6 +18,22 @@
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
 @endif
+@if($errors->any())
+<div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+    <div class="d-flex">
+        <div><i class="ti ti-alert-triangle me-2 fs-2"></i></div>
+        <div>
+            <strong>Atención: No se pudo completar el registro:</strong>
+            <ul class="mb-0 ps-3">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+@endif
 
 <div class="row g-3">
 
@@ -26,7 +42,7 @@
     ============================================================ --}}
     <div class="col-lg-5">
 
-        {{-- Barra no invasiva del turno del día --}}
+        {{-- Barra del turno del día --}}
         @if($turnosHoy->isEmpty())
             <div class="card mb-2 border-warning-subtle shadow-none bg-warning-lt">
                 <div class="card-body p-2 p-md-3">
@@ -64,7 +80,7 @@
                 </div>
             </div>
         @elseif($turnosHoy->count() === 1)
-            {{-- Turno único: Barra compacta y discreta --}}
+            {{-- Turno único --}}
             <div class="card mb-2 shadow-sm border-0">
                 <div class="card-body py-2 px-3 d-flex align-items-center justify-content-between gap-2">
                     <div class="d-flex align-items-center gap-2 text-truncate" style="min-width: 0;">
@@ -85,7 +101,7 @@
                 </div>
             </div>
         @else
-            {{-- Múltiples turnos: Selector compacto en una sola línea --}}
+            {{-- Múltiples turnos: Selector  --}}
             <div class="card mb-2 shadow-sm border-0">
                 <div class="card-body py-1 px-3 d-flex align-items-center justify-content-between gap-2">
                     <div class="d-flex align-items-center gap-1 flex-grow-1 text-truncate" style="min-width: 0;">
@@ -126,7 +142,7 @@
                 {{-- Barra de búsqueda rápida inteligente --}}
                 <div class="mb-3 position-relative">
                     <input type="text" id="buscar_paciente" class="form-control form-control-lg"
-                           placeholder="Nombre, DPI, expediente o familia…" autocomplete="off">
+                           placeholder="Nombre, DPI, expediente, No. registro o familia…" autocomplete="off">
                     <div id="search-suggestions"
                          style="display:none; position:absolute; top:100%; left:0; right:0; max-height:420px;
                                 overflow-y:auto; z-index:1060; background:#fff;
@@ -148,13 +164,26 @@
                     <i class="ti ti-list-check me-2 text-primary"></i>
                     Llegadas de Este Turno
                 </h3>
-                @if($turnoActivo && $llegadas->isNotEmpty())
-                <a href="{{ route('reportes.diario', $turnoActivo->id_turno) }}"
-                   class="btn btn-xs btn-outline-success py-1 px-2">
-                    <i class="ti ti-chart-bar me-1"></i>
-                    <span class="d-none d-sm-inline">Ver Reporte</span>
-                    <span class="d-inline d-sm-none">Reporte</span>
-                </a>
+                @if($turnoActivo && $llegadas->isNotEmpty() && !Auth::user()->esRecepcionista())
+                <div class="d-flex gap-1">
+                    <button type="button" 
+                            class="btn btn-xs btn-outline-info py-1 px-2 btn-preview-pdf"
+                            data-preview-url="{{ route('reportes.pdf', ['turnoId' => $turnoActivo->id_turno, 'preview' => 1]) }}"
+                            data-download-url="{{ route('reportes.pdf', $turnoActivo->id_turno) }}"
+                            data-title="Reporte Diario — Turno #{{ $turnoActivo->id_turno }}"
+                            title="Previsualizar PDF en la misma pantalla">
+                        <i class="ti ti-eye me-1"></i>
+                        <span class="d-none d-sm-inline">Previa PDF</span>
+                        <span class="d-inline d-sm-none">Previa</span>
+                    </button>
+                    <a href="{{ route('reportes.diario', ['turnoId' => $turnoActivo->id_turno, 'from' => 'ventanilla']) }}"
+                       class="btn btn-xs btn-outline-success py-1 px-2"
+                       title="Ver Reporte Detallado">
+                        <i class="ti ti-chart-bar me-1"></i>
+                        <span class="d-none d-sm-inline">Ver Reporte</span>
+                        <span class="d-inline d-sm-none">Reporte</span>
+                    </a>
+                </div>
                 @endif
             </div>
 
@@ -289,7 +318,7 @@
                 <h5 class="modal-title fw-bold"><i class="ti ti-user-plus me-2"></i> Registrar Nuevo Paciente</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('pacientes.store') }}" method="POST">
+            <form action="{{ route('pacientes.store') }}" method="POST" id="formNuevoPacienteVentanilla">
                 @csrf
                 <input type="hidden" name="desde_ventanilla" value="1">
                 <input type="hidden" name="turno_id" value="{{ $turnoActivo ? $turnoActivo->id_turno : '' }}">
@@ -329,13 +358,19 @@
                             <input type="text" id="nv_telefono" name="telefono" class="form-control" maxlength="8" placeholder="Ej: 55551234">
                         </div>
                         <div class="col-md-6">
+                            <label class="form-label" for="nv_direccion">Dirección</label>
+                            <input type="text" id="nv_direccion" name="direccion" class="form-control" maxlength="255" placeholder="Ej: Caserío El Centro, Sector 2">
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
                             <label class="form-label required" for="nv_numero_familia">Número de Familia</label>
                             {{-- Campo oculto para id si la familia existe --}}
                             <input type="hidden" id="nv_id_family" name="id_family">
                             <div class="position-relative">
                                 <input type="text" id="nv_numero_familia" name="numero_familia"
                                        class="form-control" required autocomplete="off"
-                                       placeholder="Ej: F-001 (existente o nuevo)">
+                                       placeholder="Ej: 115 (existente o nuevo)">
                                 <div id="nv_familia_suggestions"
                                      style="display:none; position:absolute; top:100%; left:0; right:0;
                                             z-index:1080; background:#fff; border:1px solid #cbd5e1;
@@ -346,6 +381,24 @@
                             <span id="nv_familia_status" class="form-hint fw-bold mt-1 d-block"></span>
                         </div>
                     </div>
+                    {{-- Datos del Registro Físico --}}
+                    <h6 class="text-secondary border-bottom pb-2 mb-3" style="font-size: 0.9rem;">
+                        Datos del Registro Físico
+                    </h6>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label" for="nv_numero_registro">No. de Registro</label>
+                            <input type="number" id="nv_numero_registro" name="numero_registro" class="form-control" min="0" step="1" placeholder="Ej: 1024">
+                            <span id="msg-nv-numero-registro" class="form-hint fw-bold"></span>
+                            <span class="form-hint text-muted">Número del registro físico</span>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label" for="nv_descripcion_registro">Descripción / Ubicación del Registro</label>
+                            <input type="text" id="nv_descripcion_registro" name="descripcion_registro" class="form-control" maxlength="150" placeholder="Ej: Archivero 3, Cajón B, Folder amarillo">
+                            <span class="form-hint">Máx. 150 caracteres</span>
+                        </div>
+                    </div>
+
                     {{-- Ubicación de nueva familia (se muestra dinámicamente si no existe la familia) --}}
                     <div id="nv_family_location_container" style="display: none;" class="card bg-light border-0 p-3 mb-3">
                         <h6 class="text-secondary border-bottom pb-1 mb-2" style="font-size: 0.85rem;">
@@ -382,9 +435,9 @@
 
 
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-success"><i class="ti ti-login me-1"></i> Guardar y Registrar Primera Llegada</button>
+                <div class="modal-footer bg-light d-flex flex-column-reverse flex-sm-row justify-content-sm-end gap-2">
+                    <button type="button" class="btn btn-secondary w-100 w-sm-auto" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success w-100 w-sm-auto"><i class="ti ti-login me-1"></i> Guardar y Registrar Primera Llegada</button>
                 </div>
             </form>
         </div>
@@ -562,6 +615,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         </div>
                         <div class="small text-secondary mb-1">
                             Exp: <strong>${p.numero_expediente_fisico}</strong>
+                            ${p.numero_registro ? ' · <span class="badge bg-purple-lt text-purple fw-bold">Reg. #' + p.numero_registro + '</span>' : ''}
                             ${p.dpi ? ' · DPI: ' + p.dpi : ''}
                         </div>
                         <div class="small">${famInfo}</div>
@@ -798,26 +852,110 @@ document.addEventListener('DOMContentLoaded', function () {
         nvFamSug.style.display = 'block';
     }
 
-    // ── Modal Nuevo Paciente: verificar DPI duplicado 
+    // ── Modal Nuevo Paciente: verificar duplicados (DPI y No. Registro)
     const nvDpi = document.getElementById('nv_dpi');
     const nvDpiMsg = document.getElementById('msg-nv-dpi');
+    const nvNumReg = document.getElementById('nv_numero_registro');
+    const nvNumRegMsg = document.getElementById('msg-nv-numero-registro');
+    const formNuevoPaciente = document.getElementById('formNuevoPacienteVentanilla');
+
+    let nvDpiDuplicado = false;
+    let nvNumRegDuplicado = false;
+
     if (nvDpi && nvDpiMsg) {
+        nvDpi.addEventListener('input', function() {
+            if (nvDpiDuplicado) {
+                nvDpiDuplicado = false;
+                nvDpi.classList.remove('is-invalid');
+                nvDpiMsg.textContent = '';
+            }
+        });
+
         nvDpi.addEventListener('blur', function () {
             const val = this.value.trim();
-            if (!val) { nvDpiMsg.textContent = ''; return; }
+            if (!val) { 
+                nvDpiMsg.textContent = ''; 
+                nvDpiDuplicado = false;
+                nvDpi.classList.remove('is-invalid');
+                return; 
+            }
             fetch(`/pacientes/verificar-duplicado?tipo=dpi&valor=${encodeURIComponent(val)}`)
                 .then(r => r.json())
                 .then(data => {
                     if (data.duplicate) {
+                        nvDpiDuplicado = true;
+                        nvDpi.classList.add('is-invalid');
                         nvDpiMsg.className = 'form-hint text-danger fw-bold';
                         nvDpiMsg.textContent = '⚠ ' + data.message;
                     } else {
+                        nvDpiDuplicado = false;
+                        nvDpi.classList.remove('is-invalid');
                         nvDpiMsg.className = 'form-hint text-success fw-bold';
                         nvDpiMsg.textContent = '✓ Disponible';
                     }
                 });
         });
     }
+
+    if (nvNumReg && nvNumRegMsg) {
+        nvNumReg.addEventListener('input', function() {
+            if (nvNumRegDuplicado) {
+                nvNumRegDuplicado = false;
+                nvNumReg.classList.remove('is-invalid');
+                nvNumRegMsg.textContent = '';
+            }
+        });
+
+        nvNumReg.addEventListener('blur', function () {
+            const val = this.value.trim();
+            if (!val) { 
+                nvNumRegMsg.textContent = ''; 
+                nvNumRegDuplicado = false;
+                nvNumReg.classList.remove('is-invalid');
+                return; 
+            }
+            fetch(`/pacientes/verificar-duplicado?tipo=numero_registro&valor=${encodeURIComponent(val)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.duplicate) {
+                        nvNumRegDuplicado = true;
+                        nvNumReg.classList.add('is-invalid');
+                        nvNumRegMsg.className = 'form-hint text-danger fw-bold';
+                        nvNumRegMsg.textContent = '⚠ ' + data.message;
+                    } else {
+                        nvNumRegDuplicado = false;
+                        nvNumReg.classList.remove('is-invalid');
+                        nvNumRegMsg.className = 'form-hint text-success fw-bold';
+                        nvNumRegMsg.textContent = '✓ Disponible';
+                    }
+                });
+        });
+    }
+
+    if (formNuevoPaciente) {
+        formNuevoPaciente.addEventListener('submit', function (e) {
+            if (nvDpiDuplicado) {
+                e.preventDefault();
+                alert('No se puede registrar: El DPI ingresado ya está asignado a otro registro.');
+                nvDpi.focus();
+                return false;
+            }
+            if (nvNumRegDuplicado) {
+                e.preventDefault();
+                alert('No se puede registrar: El No. de Registro ya está asignado a otro paciente.');
+                nvNumReg.focus();
+                return false;
+            }
+        });
+    }
+
+    @if($errors->any() && old('desde_ventanilla'))
+    const modalNvEl = document.getElementById('modalNuevoPaciente');
+    if (modalNvEl) {
+        const modalNv = new bootstrap.Modal(modalNvEl);
+        modalNv.show();
+    }
+    @endif
 });
 
 function toggleNuevoRecepVentanilla(val) {
@@ -858,4 +996,10 @@ function toggleModalNuevoRecep(val) {
     }
 }
 </script>
+
+{{-- Modal para previsualización en pantalla del PDF --}}
+@if(!Auth::user()->esRecepcionista())
+@include('reportes.preview-modal')
+@endif
+
 @endsection
