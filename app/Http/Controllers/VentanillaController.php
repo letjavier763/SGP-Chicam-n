@@ -87,7 +87,7 @@ class VentanillaController extends Controller
         $validated = $request->validate([
             'id_turno'      => 'required|exists:turnos_personal,id_turno',
             'id_paciente'   => 'required|exists:pacientes,id_paciente',
-            'hora_llegada'  => 'required',
+            'hora_llegada'  => 'nullable',
             'observaciones' => 'nullable|string|max:500',
         ]);
 
@@ -107,11 +107,13 @@ class VentanillaController extends Controller
         $tieneVisitasPrevias = RegistroLlegada::where('id_paciente', $validated['id_paciente'])->exists();
         $esNuevo = !$tieneVisitasPrevias;
 
+        $horaLlegada = !empty($validated['hora_llegada']) ? $validated['hora_llegada'] : now()->format('H:i');
+
         $registro = RegistroLlegada::create([
             'id_paciente'   => $validated['id_paciente'],
             'id_turno'      => $turno->id_turno,
             'fecha'         => today(),
-            'hora_llegada'  => $validated['hora_llegada'],
+            'hora_llegada'  => $horaLlegada,
             'es_nuevo'      => $esNuevo,
             'observaciones' => $validated['observaciones'] ?? null,
         ]);

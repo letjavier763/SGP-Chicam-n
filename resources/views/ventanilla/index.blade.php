@@ -601,7 +601,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (p.ya_registrado) {
                 actionBlock = `
                     <div class="pt-2 border-top">
-                        <span class="badge bg-success-lt text-success w-100 d-flex align-items-center justify-content-center fw-medium" style="height: 36px; font-size: 0.82rem; border-radius: 8px;">
+                        <span class="badge bg-success-lt text-success w-100 d-flex align-items-center justify-content-center fw-medium py-2" style="font-size: 0.82rem; border-radius: 8px;">
                             <i class="ti ti-check me-1"></i> Ya registrado en este turno
                         </span>
                     </div>`;
@@ -611,18 +611,10 @@ document.addEventListener('DOMContentLoaded', function () {
                         <input type="hidden" name="_token"      value="${csrfToken}">
                         <input type="hidden" name="id_turno"    value="${turnoId}">
                         <input type="hidden" name="id_paciente" value="${p.id_paciente}">
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="d-flex align-items-center gap-1 bg-light border rounded px-2 flex-shrink-0" style="height: 38px;">
-                                <i class="ti ti-clock text-muted" style="font-size: 0.9rem;"></i>
-                                <input type="time" name="hora_llegada" value="${nowHHMM}" 
-                                       class="form-control form-control-sm border-0 bg-transparent p-0 text-center font-monospace fw-bold text-dark" 
-                                       style="width: 75px; height: auto; box-shadow: none; font-size: 0.9rem;" required>
-                            </div>
-                            <button type="submit" class="btn btn-success btn-sm flex-grow-1 fw-bold shadow-sm d-flex align-items-center justify-content-center" style="height: 38px; font-size: 0.88rem;">
-                                <i class="ti ti-login me-1"></i>
-                                <span>Registrar Llegada</span>
-                            </button>
-                        </div>
+                        <button type="submit" class="btn btn-success w-100 fw-bold shadow-sm d-flex align-items-center justify-content-center py-2" style="border-radius: 8px; font-size: 0.9rem;">
+                            <i class="ti ti-login me-2 fs-2"></i>
+                            <span>Registrar Llegada</span>
+                        </button>
                     </form>`;
             }
 
