@@ -106,10 +106,11 @@ class PersonalController extends Controller
         $usuario = Usuario::findOrFail($id);
 
         $validated = $request->validate([
-            'nombre_completo' => 'required|string|max:150',
-            'username'        => 'required|string|max:50|unique:usuarios,username,' . $id . ',id_usuario',
-            'password'        => 'nullable|string|min:6|confirmed',
-            'id_rol'          => 'required|exists:roles,id_rol',
+            'nombre_completo'  => 'required|string|max:150',
+            'username'         => 'required|string|max:50|unique:usuarios,username,' . $id . ',id_usuario',
+            'current_password' => 'nullable|string',
+            'password'         => 'nullable|string|min:6|confirmed',
+            'id_rol'           => 'required|exists:roles,id_rol',
         ]);
 
         $data = [
@@ -118,8 +119,22 @@ class PersonalController extends Controller
             'id_rol'          => $validated['id_rol'],
         ];
 
+        $cambioPassword = false;
         if (!empty($validated['password'])) {
+            if (empty($validated['current_password'])) {
+                return back()
+                    ->withErrors(['current_password' => 'Debe ingresar la contraseña actual para poder establecer una nueva.'])
+                    ->withInput();
+            }
+
+            if (!Hash::check($validated['current_password'], $usuario->password_hash)) {
+                return back()
+                    ->withErrors(['current_password' => 'La contraseña actual no coincide con la registrada.'])
+                    ->withInput();
+            }
+
             $data['password_hash'] = Hash::make($validated['password']);
+            $cambioPassword = true;
         }
 
         $usuario->update($data);
@@ -130,7 +145,7 @@ class PersonalController extends Controller
             'edicion_usuario',
             'usuarios',
             $usuario->id_usuario,
-            "Se actualizaron los datos del usuario '{$usuario->username}'.",
+            "Se actualizaron los datos del usuario '{$usuario->username}'" . ($cambioPassword ? " (cambio de contraseña realizado)." : "."),
             $request->ip()
         );
 

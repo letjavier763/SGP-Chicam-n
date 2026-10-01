@@ -79,19 +79,29 @@
                             <i class="ti ti-key text-warning fs-2 me-2 flex-shrink-0"></i>
                             <div>
                                 <strong class="d-block text-dark small fw-bold">¿Desea cambiar la contraseña?</strong>
-                                <span class="text-secondary" style="font-size: 0.775rem;">Deje los campos de contraseña en blanco si desea conservar la clave actual.</span>
+                                <span class="text-secondary" style="font-size: 0.775rem;">Deje los campos de contraseña en blanco si desea conservar la clave actual. Para cambiarla, debe ingresar la contraseña actual registrada.</span>
                             </div>
                         </div>
                     </div>
 
                     <div class="row g-2 mb-2">
+                        <div class="col-12 mb-2">
+                            <label class="form-label fw-medium" for="current_password">Contraseña Actual <span class="text-muted small">(requerida sólo si cambiará la clave)</span></label>
+                            <input type="password" id="current_password" name="current_password" class="form-control @error('current_password') is-invalid @enderror" placeholder="Ingrese la contraseña actual registrada" autocomplete="current-password">
+                            @error('current_password')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
                         <div class="col-12 col-sm-6">
                             <label class="form-label fw-medium" for="password">Nueva Contraseña</label>
                             <input type="password" id="password" name="password" class="form-control @error('password') is-invalid @enderror" placeholder="Mínimo 6 caracteres (opcional)" autocomplete="new-password">
+                            @error('password')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="col-12 col-sm-6">
-                            <label class="form-label fw-medium" for="password_confirmation">Confirmar Contraseña</label>
-                            <input type="password" id="password_confirmation" name="password_confirmation" class="form-control" placeholder="Repita la contraseña" autocomplete="new-password">
+                            <label class="form-label fw-medium" for="password_confirmation">Confirmar Nueva Contraseña</label>
+                            <input type="password" id="password_confirmation" name="password_confirmation" class="form-control" placeholder="Repita la nueva contraseña" autocomplete="new-password">
                         </div>
                     </div>
                 </div>
