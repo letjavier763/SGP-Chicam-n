@@ -600,34 +600,28 @@ document.addEventListener('DOMContentLoaded', function () {
             let actionBlock;
             if (p.ya_registrado) {
                 actionBlock = `
-                    <div class="mt-2 pt-2 border-top">
-                        <span class="badge bg-success-lt text-success w-100 py-2 d-inline-flex align-items-center justify-content-center fw-medium" style="font-size: 0.8rem; border-radius: 6px;">
+                    <div class="pt-2 border-top">
+                        <span class="badge bg-success-lt text-success w-100 d-flex align-items-center justify-content-center fw-medium" style="height: 36px; font-size: 0.82rem; border-radius: 8px;">
                             <i class="ti ti-check me-1"></i> Ya registrado en este turno
                         </span>
                     </div>`;
             } else {
                 actionBlock = `
-                    <form action="${storePath}" method="POST" class="mt-2 pt-2 border-top">
+                    <form action="${storePath}" method="POST" class="pt-2 border-top">
                         <input type="hidden" name="_token"      value="${csrfToken}">
                         <input type="hidden" name="id_turno"    value="${turnoId}">
                         <input type="hidden" name="id_paciente" value="${p.id_paciente}">
-                        <div class="row g-2 align-items-center">
-                            <div class="col-5 col-sm-4">
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text px-1 px-sm-2 bg-light text-muted border-end-0">
-                                        <i class="ti ti-clock"></i>
-                                    </span>
-                                    <input type="time" name="hora_llegada" value="${nowHHMM}" 
-                                           class="form-control form-control-sm border-start-0 px-1 text-center font-monospace fw-bold" 
-                                           style="font-size: 0.84rem; min-width: 0;" required>
-                                </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="d-flex align-items-center gap-1 bg-light border rounded px-2 flex-shrink-0" style="height: 38px;">
+                                <i class="ti ti-clock text-muted" style="font-size: 0.9rem;"></i>
+                                <input type="time" name="hora_llegada" value="${nowHHMM}" 
+                                       class="form-control form-control-sm border-0 bg-transparent p-0 text-center font-monospace fw-bold text-dark" 
+                                       style="width: 75px; height: auto; box-shadow: none; font-size: 0.9rem;" required>
                             </div>
-                            <div class="col-7 col-sm-8">
-                                <button type="submit" class="btn btn-sm btn-success w-100 fw-bold shadow-sm py-1 d-flex align-items-center justify-content-center" style="font-size: 0.84rem;">
-                                    <i class="ti ti-login me-1"></i>
-                                    <span class="text-nowrap">Registrar Llegada</span>
-                                </button>
-                            </div>
+                            <button type="submit" class="btn btn-success btn-sm flex-grow-1 fw-bold shadow-sm d-flex align-items-center justify-content-center" style="height: 38px; font-size: 0.88rem;">
+                                <i class="ti ti-login me-1"></i>
+                                <span>Registrar Llegada</span>
+                            </button>
                         </div>
                     </form>`;
             }
@@ -637,26 +631,28 @@ document.addEventListener('DOMContentLoaded', function () {
                 : '<span class="text-muted">Sin núcleo familiar</span>';
 
             const item = document.createElement('div');
-            item.className = 'suggestion-patient-item p-3 border-bottom' + (p.ya_registrado ? ' bg-success-lt' : ' bg-white');
+            item.className = 'suggestion-patient-item p-2 p-sm-3 border-bottom' + (p.ya_registrado ? ' bg-success-lt' : ' bg-white');
             item.innerHTML = `
-                <div class="d-flex align-items-start gap-2 gap-sm-3">
-                    <span class="avatar avatar-sm bg-${sexColor}-lt text-${sexColor} rounded-circle flex-shrink-0 mt-1">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="avatar avatar-sm bg-${sexColor}-lt text-${sexColor} rounded-circle flex-shrink-0" style="width: 32px; height: 32px;">
                         <i class="ti ti-${sexIcon}"></i>
                     </span>
-                    <div class="flex-grow-1" style="min-width: 0;">
-                        <div class="d-flex align-items-baseline justify-content-between flex-wrap gap-1">
+                    <div class="flex-grow-1 min-w-0">
+                        <div class="d-flex align-items-center justify-content-between gap-1">
                             <span class="fw-bold text-dark text-truncate" style="font-size: 0.95rem;">${p.nombres} ${p.apellidos}</span>
-                            <span class="badge bg-secondary-lt text-secondary" style="font-size: 0.72rem;">${p.edad ?? '?'} años · ${p.sexo}</span>
+                            <span class="badge bg-secondary-lt text-secondary flex-shrink-0" style="font-size: 0.7rem;">${p.edad ?? '?'} a · ${p.sexo}</span>
                         </div>
-                        <div class="small text-secondary my-1 d-flex flex-wrap align-items-center gap-1" style="font-size: 0.78rem;">
-                            <span>Exp: <strong>${p.numero_expediente_fisico}</strong></span>
-                            ${p.numero_registro ? '<span class="badge bg-purple-lt text-purple fw-bold">Reg. #' + p.numero_registro + '</span>' : ''}
-                            ${p.dpi ? '<span class="text-muted">· DPI: ' + p.dpi + '</span>' : ''}
-                        </div>
-                        <div class="small text-secondary" style="font-size: 0.78rem;">${famInfo}</div>
-                        ${actionBlock}
                     </div>
-                </div>`;
+                </div>
+                <div class="ps-4 ms-2 small text-secondary mb-2" style="font-size: 0.78rem;">
+                    <div class="d-flex flex-wrap align-items-center gap-1 mb-1">
+                        <span>Exp: <strong>${p.numero_expediente_fisico}</strong></span>
+                        ${p.numero_registro ? '<span class="badge bg-purple-lt text-purple fw-bold px-1 py-0">Reg. #' + p.numero_registro + '</span>' : ''}
+                        ${p.dpi ? '<span class="text-muted">· DPI: ' + p.dpi + '</span>' : ''}
+                    </div>
+                    <div class="text-truncate">${famInfo}</div>
+                </div>
+                ${actionBlock}`;
             suggestions.appendChild(item);
         });
 

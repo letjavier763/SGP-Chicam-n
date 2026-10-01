@@ -29,7 +29,7 @@
 
                 <h1 class="navbar-brand navbar-brand-autodark">
                     <a href="{{ route('dashboard') }}" class="d-flex align-items-center gap-2 text-decoration-none text-white">
-                        <span>SGP Chicamán</span>
+                        <span>SGP CAP Chicamán</span>
                     </a>
                 </h1>
 
