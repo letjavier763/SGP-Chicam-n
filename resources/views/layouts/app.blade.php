@@ -481,6 +481,13 @@
                 }
             });
 
+            // Evitar advertencia de accesibilidad: desenfocar elementos antes de aplicar aria-hidden
+            document.addEventListener('hide.bs.modal', function (e) {
+                if (document.activeElement && e.target && e.target.contains(document.activeElement)) {
+                    document.activeElement.blur();
+                }
+            });
+
             // Transición al confirmar el Cierre de Sesión (Modal Logout)
             var logoutModalEl = document.getElementById('modalConfirmarLogout');
             if (logoutModalEl) {
