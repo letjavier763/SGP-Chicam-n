@@ -58,7 +58,13 @@
                class="btn btn-sm btn-outline-primary py-1 px-2 ms-1">Hoy</a>
         </div>
         @if(Auth::user()->esAdministrador())
-        <div class="d-flex align-items-center gap-2 w-100 w-md-auto">
+        <div class="d-flex align-items-center gap-2 w-100 w-md-auto flex-wrap flex-md-nowrap">
+            <button type="button" class="btn btn-sm btn-outline-primary flex-fill flex-md-grow-0 d-inline-flex align-items-center justify-content-center"
+                    data-bs-toggle="modal" data-bs-target="#modalEscanearRol"
+                    title="Escanear rol de turnos">
+                <i class="ti ti-camera me-1"></i>
+                <span class="text-nowrap">Escanear Rol</span>
+            </button>
             <button type="button" class="btn btn-sm btn-outline-secondary flex-fill flex-md-grow-0 d-inline-flex align-items-center justify-content-center"
                     data-bs-toggle="modal" data-bs-target="#modalRecepcionistas"
                     title="Gestionar Recepcionistas">
@@ -329,6 +335,148 @@
     </div>
 </div>
 
+{{-- ══════════════════ MODAL ESCANEAR ROL DE TURNOS ══════════════════ --}}
+<div class="modal fade" id="modalEscanearRol" tabindex="-1" data-bs-backdrop="static" aria-labelledby="modalEscanearRolLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow">
+            
+            {{-- Modal Header --}}
+            <div class="modal-header bg-primary text-white py-3">
+                <h5 class="modal-title d-flex align-items-center gap-2" id="modalEscanearRolLabel">
+                    <i class="ti ti-calendar-event fs-3"></i>
+                    <span>Escanear Rol de Turnos</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar" id="btnCerrarModalEscanear"></button>
+            </div>
+
+            {{-- Modal Body --}}
+            <div class="modal-body p-3 p-md-4">
+                
+                {{-- Alerta informativa inicial --}}
+                <div class="alert alert-info d-flex align-items-start gap-2 mb-3 py-2 px-3" role="alert">
+                    <i class="ti ti-info-circle fs-3 text-info flex-shrink-0 mt-1"></i>
+                    <div style="font-size: 0.88rem;">
+                        <strong>¿Cómo funciona?</strong> Toma una foto con tu teléfono o sube una imagen del rol de ventanilla. El sistema extraerá automáticamente los nombres, fechas y días para agregarlos al calendario.
+                    </div>
+                </div>
+
+                {{-- Contenedor de Error --}}
+                <div class="alert alert-danger d-none align-items-center gap-2 mb-3" id="ocrErrorAlert" role="alert">
+                    <i class="ti ti-alert-triangle fs-3 flex-shrink-0"></i>
+                    <div id="ocrErrorMessage" style="font-size: 0.88rem;"></div>
+                </div>
+
+                {{-- PASO 1: Subida de Imagen / Captura --}}
+                <div id="pasoSubirImagen">
+                    <div class="ocr-dropzone p-3 p-md-4 text-center border border-2 border-dashed rounded-3 bg-light position-relative mb-2" id="ocrDropzone" style="cursor: pointer;">
+                        <input type="file" id="inputArchivoOcr" accept="image/*" class="d-none">
+                        <input type="file" id="inputCamaraOcr" accept="image/*" capture="environment" class="d-none">
+
+                        <div id="ocrPromptZone">
+                            <i class="ti ti-camera-plus text-primary fs-1 mb-1 d-block"></i>
+                            <h6 class="fw-bold mb-1">Arrastra la imagen aquí o elige una opción:</h6>
+                            <p class="text-muted small mb-2">Soporta JPG, PNG o WEBP (hasta 15 MB)</p>
+                            
+                            <div class="d-flex flex-column flex-sm-row justify-content-center gap-2">
+                                <button type="button" class="btn btn-primary d-inline-flex align-items-center justify-content-center py-2 px-3" id="btnDispararCamara">
+                                    <i class="ti ti-camera me-1"></i> Tomar Foto con Cámara
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary d-inline-flex align-items-center justify-content-center py-2 px-3" id="btnDispararArchivo">
+                                    <i class="ti ti-folder-open me-1"></i> Seleccionar Archivo
+                                </button>
+                            </div>
+                        </div>
+
+                        {{-- Previsualización de la imagen cargada --}}
+                        <div id="ocrPreviewZone" class="d-none">
+                            <div class="position-relative d-inline-block mb-2">
+                                <img id="ocrPreviewImg" src="" alt="Previsualización del rol" class="rounded shadow-sm" style="max-height: 230px; max-width: 100%; object-fit: contain;">
+                            </div>
+                            <div class="d-flex align-items-center justify-content-center gap-2">
+                                <span class="badge bg-secondary-lt text-truncate" id="ocrPreviewNombre" style="max-width: 250px;"></span>
+                                <button type="button" class="btn btn-xs btn-outline-danger" id="btnQuitarImagen" title="Cambiar imagen">
+                                    <i class="ti ti-trash me-1"></i> Cambiar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Animación / Estado de Carga --}}
+                    <div id="ocrLoadingZone" class="text-center py-4 d-none">
+                        <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <h6 class="fw-bold text-primary mb-1">Procesando imagen...</h6>
+                        <p class="text-muted small mb-0">Detectando tabla de turnos, nombres y fechas del calendario.</p>
+                    </div>
+
+                    {{-- Botón de Acción Paso 1 --}}
+                    <div class="modal-ocr-actions mt-3 pt-3 border-top" id="ocrAccionesPaso1">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" id="btnComenzarAnalisis" disabled>
+                            <i class="ti ti-sparkles me-1"></i> Escanear y Extraer Turnos
+                        </button>
+                    </div>
+                </div>
+
+                {{-- PASO 2: Revisión y Confirmación de Turnos Detectados --}}
+                <div id="pasoRevisionTurnos" class="d-none">
+                    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2 p-2 px-3 bg-light rounded-3 mb-3 border">
+                        <div>
+                            <span class="badge bg-primary text-uppercase" id="ocrTituloDetectado">Rol Detectado</span>
+                            <span class="badge bg-success-lt ms-1" id="ocrTotalTurnosBadge">0 turnos</span>
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="checkSobrescribir" checked>
+                            <label class="form-check-label small fw-semibold" for="checkSobrescribir">
+                                Actualizar si ya hay turno en esa fecha
+                            </label>
+                        </div>
+                    </div>
+
+                    <p class="text-muted small mb-2">
+                        <i class="ti ti-check-double text-success me-1"></i> Revisa los turnos detectados antes de guardarlos. Puedes cambiar de recepcionista o descartar filas:
+                    </p>
+
+                    <div class="table-responsive border rounded-3 mb-3" style="max-height: 340px; overflow-y: auto;">
+                        <table class="table table-sm table-hover table-striped align-middle mb-0" id="tablaTurnosOcr">
+                            <thead class="table-light sticky-top" style="z-index: 1;">
+                                <tr>
+                                    <th style="width: 45px;" class="text-center">#</th>
+                                    <th style="min-width: 130px;">Fecha / Día</th>
+                                    <th style="min-width: 220px;">Recepcionista Asignado</th>
+                                    <th style="min-width: 140px;">Horario</th>
+                                    <th style="width: 50px;" class="text-center"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyTurnosOcr">
+                                {{-- Filas generadas con JS --}}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {{-- Indicador de Guardado --}}
+                    <div id="ocrSavingZone" class="text-center py-2 d-none">
+                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                        <span class="small fw-semibold text-primary">Guardando turnos en el calendario...</span>
+                    </div>
+
+                    {{-- Botones de Acción Paso 2 --}}
+                    <div class="modal-ocr-actions justify-between-sm mt-3 pt-3 border-top" id="ocrAccionesPaso2">
+                        <button type="button" class="btn btn-outline-secondary" id="btnVolverPaso1">
+                            <i class="ti ti-arrow-left me-1"></i> Volver a tomar foto
+                        </button>
+                        <button type="button" class="btn btn-success" id="btnConfirmarImportar">
+                            <i class="ti ti-calendar-plus me-1"></i> Confirmar e Importar Turnos
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
 @endif
 
 {{-- Datos de turnos para JS --}}
@@ -426,6 +574,35 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 10px;
+}
+/* ── Acciones de modal de escaneo ── */
+.modal-ocr-actions {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0.625rem;
+}
+.modal-ocr-actions .btn {
+    width: 100%;
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+@media (min-width: 576px) {
+    .modal-ocr-actions {
+        flex-direction: row;
+        justify-content: flex-end;
+        align-items: center;
+    }
+    .modal-ocr-actions .btn {
+        width: auto;
+        min-height: 38px;
+    }
+    .modal-ocr-actions.justify-between-sm {
+        justify-content: space-between;
+    }
 }
 </style>
 
@@ -586,6 +763,350 @@
                 document.getElementById('nuevoRecepNombre').value = '';
             })
             .catch(() => alert('Error al guardar el recepcionista.'));
+        });
+    }
+
+    // ── Escaneo de Rol de Turnos ───────────────────────────────
+    if (isAdmin) {
+        let archivoSeleccionado = null;
+        let catalogoRecepcionistas = [];
+
+        const modalEl           = document.getElementById('modalEscanearRol');
+        const dropzone          = document.getElementById('ocrDropzone');
+        const inputArchivo      = document.getElementById('inputArchivoOcr');
+        const inputCamara       = document.getElementById('inputCamaraOcr');
+        const promptZone        = document.getElementById('ocrPromptZone');
+        const previewZone       = document.getElementById('ocrPreviewZone');
+        const previewImg        = document.getElementById('ocrPreviewImg');
+        const previewNombre     = document.getElementById('ocrPreviewNombre');
+        const btnQuitarImg      = document.getElementById('btnQuitarImagen');
+        const btnAnalizar       = document.getElementById('btnComenzarAnalisis');
+        const loadingZone       = document.getElementById('ocrLoadingZone');
+        const accionesPaso1     = document.getElementById('ocrAccionesPaso1');
+        const errorAlert        = document.getElementById('ocrErrorAlert');
+        const errorMessage      = document.getElementById('ocrErrorMessage');
+        const pasoSubir         = document.getElementById('pasoSubirImagen');
+        const pasoRevision      = document.getElementById('pasoRevisionTurnos');
+        const tituloDetectado   = document.getElementById('ocrTituloDetectado');
+        const totalTurnosBadge  = document.getElementById('ocrTotalTurnosBadge');
+        const tbodyTurnos       = document.getElementById('tbodyTurnosOcr');
+        const btnVolverPaso1    = document.getElementById('btnVolverPaso1');
+        const btnConfirmar      = document.getElementById('btnConfirmarImportar');
+        const checkSobrescribir = document.getElementById('checkSobrescribir');
+        const savingZone        = document.getElementById('ocrSavingZone');
+
+        function mostrarError(msg) {
+            errorMessage.textContent = msg;
+            errorAlert.classList.remove('d-none');
+            errorAlert.classList.add('d-flex');
+        }
+
+        function ocultarError() {
+            errorAlert.classList.add('d-none');
+            errorAlert.classList.remove('d-flex');
+        }
+
+        function setArchivo(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                mostrarError('Por favor selecciona un archivo de imagen válido (JPG, PNG, WEBP).');
+                return;
+            }
+            ocultarError();
+            archivoSeleccionado = file;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImg.src = e.target.result;
+                previewNombre.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                promptZone.classList.add('d-none');
+                previewZone.classList.remove('d-none');
+                btnAnalizar.disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resetSubida() {
+            archivoSeleccionado = null;
+            inputArchivo.value = '';
+            inputCamara.value = '';
+            previewImg.src = '';
+            previewNombre.textContent = '';
+            previewZone.classList.add('d-none');
+            promptZone.classList.remove('d-none');
+            loadingZone.classList.add('d-none');
+            accionesPaso1.classList.remove('d-none');
+            btnAnalizar.disabled = true;
+            ocultarError();
+        }
+
+        // Eventos de selección de archivo
+        document.getElementById('btnDispararCamara')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            inputCamara.click();
+        });
+
+        document.getElementById('btnDispararArchivo')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            inputArchivo.click();
+        });
+
+        dropzone?.addEventListener('click', (e) => {
+            if (e.target.closest('button')) return;
+            inputArchivo.click();
+        });
+
+        inputArchivo?.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) setArchivo(e.target.files[0]);
+        });
+
+        inputCamara?.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) setArchivo(e.target.files[0]);
+        });
+
+        btnQuitarImg?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            resetSubida();
+        });
+
+        // Drag & Drop
+        ['dragenter', 'dragover'].forEach(name => {
+            dropzone?.addEventListener(name, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.add('border-primary', 'bg-blue-lt');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(name => {
+            dropzone?.addEventListener(name, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.remove('border-primary', 'bg-blue-lt');
+            });
+        });
+
+        dropzone?.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            if (dt && dt.files && dt.files.length) {
+                setArchivo(dt.files[0]);
+            }
+        });
+
+        // Al cerrar modal, reiniciar estado si está en paso 1
+        modalEl?.addEventListener('hidden.bs.modal', () => {
+            resetSubida();
+            pasoSubir.classList.remove('d-none');
+            pasoRevision.classList.add('d-none');
+        });
+
+        // Procesar imagen
+        btnAnalizar?.addEventListener('click', () => {
+            if (!archivoSeleccionado) return;
+
+            ocultarError();
+            dropzone.classList.add('d-none');
+            accionesPaso1.classList.add('d-none');
+            loadingZone.classList.remove('d-none');
+
+            const formData = new FormData();
+            formData.append('imagen', archivoSeleccionado);
+
+            fetch('{{ route("turnos.escanear") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                },
+                body: formData,
+            })
+            .then(async (r) => {
+                const data = await r.json();
+                if (!r.ok || !data.success) {
+                    throw new Error(data.error || 'No se pudo procesar la imagen.');
+                }
+                return data;
+            })
+            .then((data) => {
+                catalogoRecepcionistas = data.recepcionistas || [];
+                tituloDetectado.textContent = data.titulo || `Turnos ${data.mes}/${data.anio}`;
+                totalTurnosBadge.textContent = `${data.turnos.length} turnos detectados`;
+
+                renderizarFilasRevision(data.turnos);
+
+                pasoSubir.classList.add('d-none');
+                pasoRevision.classList.remove('d-none');
+            })
+            .catch((err) => {
+                mostrarError(err.message || 'Error al procesar el documento.');
+                dropzone.classList.remove('d-none');
+                accionesPaso1.classList.remove('d-none');
+                loadingZone.classList.add('d-none');
+            });
+        });
+
+        // Renderizar tabla de revisión
+        function renderizarFilasRevision(turnos) {
+            tbodyTurnos.innerHTML = '';
+
+            if (!turnos || turnos.length === 0) {
+                tbodyTurnos.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-3">
+                            No se detectaron turnos en la imagen. Intenta con una foto más clara o mejor iluminada.
+                        </td>
+                    </tr>`;
+                btnConfirmar.disabled = true;
+                return;
+            }
+
+            btnConfirmar.disabled = false;
+
+            turnos.forEach((t, idx) => {
+                const tr = document.createElement('tr');
+                tr.dataset.index = idx;
+
+                const fechaPartes = t.fecha ? t.fecha.split('-') : [];
+                const fechaFormateada = fechaPartes.length === 3 ? `${fechaPartes[2]}/${fechaPartes[1]}/${fechaPartes[0]}` : t.fecha;
+
+                tr.innerHTML = `
+                    <td class="text-center fw-bold text-muted">${idx + 1}</td>
+                    <td>
+                        <div class="fw-bold text-dark" style="font-size: 0.9rem;">${fechaFormateada}</div>
+                        <span class="badge bg-blue-lt text-uppercase" style="font-size: 0.72rem;">${t.dia || 'DÍA'}</span>
+                        <input type="hidden" class="ocr-val-fecha" value="${t.fecha}">
+                    </td>
+                    <td>
+                        <select class="form-select form-select-sm ocr-val-recep mb-1">
+                            ${catalogoRecepcionistas.map(r => `
+                                <option value="${r.id_recepcionista}" ${r.id_recepcionista === t.id_recepcionista ? 'selected' : ''}>
+                                    ${r.nombre}
+                                </option>
+                            `).join('')}
+                            <option value="__nuevo__" ${t.es_nuevo ? 'selected' : ''}>
+                                ➕ Crear nuevo: "${t.nombre_detectado}"
+                            </option>
+                        </select>
+                        <input type="text" class="form-control form-control-sm ocr-val-nuevo-nombre ${t.es_nuevo ? '' : 'd-none'}"
+                               value="${t.nombre_detectado}" placeholder="Nombre para registrar">
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-1">
+                            <input type="time" class="form-control form-control-sm p-1 ocr-val-inicio" value="${t.hora_inicio || '08:00'}" style="width: 78px;">
+                            <span class="text-muted small">-</span>
+                            <input type="time" class="form-control form-control-sm p-1 ocr-val-fin" value="${t.hora_fin || '16:00'}" style="width: 78px;">
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-xs btn-outline-danger btn-quitar-fila-ocr" title="Descartar este turno">
+                            <i class="ti ti-trash"></i>
+                        </button>
+                    </td>`;
+
+                const selectRecep = tr.querySelector('.ocr-val-recep');
+                const inputNuevo  = tr.querySelector('.ocr-val-nuevo-nombre');
+                selectRecep.addEventListener('change', () => {
+                    inputNuevo.classList.toggle('d-none', selectRecep.value !== '__nuevo__');
+                });
+
+                tr.querySelector('.btn-quitar-fila-ocr').addEventListener('click', () => {
+                    tr.remove();
+                    actualizarContadorFilas();
+                });
+
+                tbodyTurnos.appendChild(tr);
+            });
+        }
+
+        function actualizarContadorFilas() {
+            const total = tbodyTurnos.querySelectorAll('tr').length;
+            totalTurnosBadge.textContent = `${total} turnos`;
+            if (total === 0) {
+                btnConfirmar.disabled = true;
+                tbodyTurnos.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-3">
+                            Has descartado todos los turnos.
+                        </td>
+                    </tr>`;
+            }
+        }
+
+        // Volver al Paso 1
+        btnVolverPaso1?.addEventListener('click', () => {
+            pasoRevision.classList.add('d-none');
+            pasoSubir.classList.remove('d-none');
+            dropzone.classList.remove('d-none');
+            accionesPaso1.classList.remove('d-none');
+            loadingZone.classList.add('d-none');
+        });
+
+        // Confirmar e importar turnos en lote
+        btnConfirmar?.addEventListener('click', () => {
+            const filas = tbodyTurnos.querySelectorAll('tr');
+            if (filas.length === 0) return;
+
+            const turnosPayload = [];
+            filas.forEach(tr => {
+                const inputFecha = tr.querySelector('.ocr-val-fecha');
+                if (!inputFecha) return;
+
+                const selectRecep = tr.querySelector('.ocr-val-recep');
+                const inputNuevo  = tr.querySelector('.ocr-val-nuevo-nombre');
+                const horaInicio  = tr.querySelector('.ocr-val-inicio').value;
+                const horaFin     = tr.querySelector('.ocr-val-fin').value;
+
+                const esNuevo = selectRecep.value === '__nuevo__';
+                const nombreNuevo = esNuevo ? (inputNuevo.value.trim() || 'Recepcionista') : null;
+                const nombreRecep = esNuevo ? nombreNuevo : selectRecep.selectedOptions[0]?.text?.trim();
+
+                turnosPayload.push({
+                    fecha: inputFecha.value,
+                    id_recepcionista: esNuevo ? null : selectRecep.value,
+                    nombre_nuevo: nombreNuevo,
+                    nombre_recep: nombreRecep,
+                    hora_inicio: horaInicio || null,
+                    hora_fin: horaFin || null,
+                    observaciones: 'Rol de Ventanilla importado desde imagen',
+                });
+            });
+
+            if (turnosPayload.length === 0) {
+                alert('No hay turnos para importar.');
+                return;
+            }
+
+            btnConfirmar.disabled = true;
+            btnVolverPaso1.disabled = true;
+            savingZone.classList.remove('d-none');
+
+            fetch('{{ route("turnos.importar-lote") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    turnos: turnosPayload,
+                    sobrescribir: checkSobrescribir.checked,
+                }),
+            })
+            .then(async (r) => {
+                const res = await r.json();
+                if (!r.ok || !res.success) {
+                    throw new Error(res.error || 'Error al guardar los turnos.');
+                }
+                return res;
+            })
+            .then((res) => {
+                window.location.href = res.url || `{{ route('turnos.index') }}?mes=${res.mes}&anio=${res.anio}`;
+            })
+            .catch((err) => {
+                alert('Ocurrió un error al guardar los turnos: ' + err.message);
+                btnConfirmar.disabled = false;
+                btnVolverPaso1.disabled = false;
+                savingZone.classList.add('d-none');
+            });
         });
     }
 })();

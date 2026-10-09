@@ -59,6 +59,8 @@ Route::middleware(['auth', 'nocache'])->group(function () {
     Route::patch('/familias/{id}/toggle-status', [FamiliaController::class, 'toggleStatus'])->name('familias.toggle-status');
 
     // Módulo de Pacientes
+    Route::post('/pacientes/escanear-cuaderno', [PacienteController::class, 'escanearCuaderno'])->name('pacientes.escanear-cuaderno');
+    Route::post('/pacientes/importar-lote', [PacienteController::class, 'importarLote'])->name('pacientes.importar-lote');
     Route::get('/pacientes/verificar-duplicado', [PacienteController::class, 'checkDuplicate'])->name('pacientes.check-duplicate');
     Route::resource('pacientes', PacienteController::class);
     Route::patch('/pacientes/{id}/toggle-status', [PacienteController::class, 'toggleStatus'])->name('pacientes.toggle-status');
@@ -74,6 +76,8 @@ Route::middleware(['auth', 'nocache'])->group(function () {
     // Turnos del Personal
     Route::get('/turnos', [TurnoController::class, 'index'])->name('turnos.index');
     Route::post('/turnos', [TurnoController::class, 'store'])->name('turnos.store');
+    Route::post('/turnos/escanear', [TurnoController::class, 'escanearRol'])->name('turnos.escanear');
+    Route::post('/turnos/importar-lote', [TurnoController::class, 'importarLote'])->name('turnos.importar-lote');
     Route::put('/turnos/{id}', [TurnoController::class, 'update'])->name('turnos.update');
     Route::delete('/turnos/{id}', [TurnoController::class, 'destroy'])->name('turnos.destroy');
 

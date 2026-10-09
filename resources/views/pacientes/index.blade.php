@@ -4,16 +4,24 @@
 @section('page_title', 'Gestión de Pacientes')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3 gap-2">
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-stretch align-items-sm-center mb-3 gap-2">
     <div>
-        <h3 class="mb-0 text-dark fw-bold" style="font-size: 1.25rem;">Pacientes</h3>
-        <span class="text-secondary small d-md-none">{{ $pacientes->total() }} registros</span>
-        <p class="text-secondary mb-0 small d-none d-md-block">Consulte expedientes y realice búsquedas por DPI, nombre, expediente físico o No. de registro.</p>
+        <div class="d-flex align-items-center gap-2">
+            <h3 class="mb-0 text-dark fw-bold" style="font-size: 1.25rem;">Pacientes</h3>
+            <span class="badge bg-blue-subtle text-primary fw-semibold">{{ $pacientes->total() }} registros</span>
+        </div>
+        <p class="text-secondary mb-0 small d-none d-sm-block">Consulte expedientes y realice búsquedas por DPI, nombre, expediente físico o No. de registro.</p>
     </div>
-    <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-1 shadow-sm px-3 py-1 py-md-2" data-bs-toggle="modal" data-bs-target="#modalCrearPaciente">
-        <i class="ti ti-user-plus fs-2"></i>
-        <span>Nuevo Paciente</span>
-    </button>
+    <div class="d-flex align-items-center gap-2 w-100 w-sm-auto">
+        <button type="button" class="btn btn-outline-primary btn-header-action flex-fill flex-sm-grow-0 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalEscanearCuaderno" title="Escanear cuaderno con cámara">
+            <i class="ti ti-camera fs-3"></i>
+            <span>Escanear Cuaderno</span>
+        </button>
+        <button type="button" class="btn btn-primary btn-header-action flex-fill flex-sm-grow-0 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCrearPaciente" title="Registrar nuevo paciente">
+            <i class="ti ti-user-plus fs-3"></i>
+            <span>Nuevo Paciente</span>
+        </button>
+    </div>
 </div>
 
 @if(session('success'))
@@ -64,6 +72,57 @@
     border: none !important;
     outline: none !important;
     box-shadow: none !important;
+}
+/* ── Acciones responsivas de modal de escaneo ── */
+.modal-ocr-actions {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0.625rem;
+}
+.modal-ocr-actions .btn {
+    width: 100%;
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+@media (min-width: 576px) {
+    .modal-ocr-actions {
+        flex-direction: row;
+        justify-content: flex-end;
+        align-items: center;
+    }
+    .modal-ocr-actions .btn {
+        width: auto;
+        min-height: 38px;
+    }
+    .modal-ocr-actions.justify-between-sm {
+        justify-content: space-between;
+    }
+}
+/* ── Botones de acción en cabecera móvil ── */
+.btn-header-action {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    min-height: 38px;
+    border-radius: 8px;
+    padding: 0.375rem 0.65rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+    letter-spacing: -0.01em;
+}
+
+@media (max-width: 380px) {
+    .btn-header-action {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.4rem;
+        gap: 0.2rem;
+    }
 }
 </style>
 
@@ -511,6 +570,154 @@
         </div>
     </div>
 </div>
+
+{{-- ══════════════════ MODAL ESCANEAR CUADERNO DE PACIENTES ══════════════════ --}}
+<div class="modal fade" id="modalEscanearCuaderno" tabindex="-1" data-bs-backdrop="static" aria-labelledby="modalEscanearCuadernoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow">
+            
+            {{-- Modal Header --}}
+            <div class="modal-header bg-primary text-white py-2 py-md-3">
+                <h5 class="modal-title d-flex align-items-center gap-2" id="modalEscanearCuadernoLabel">
+                    <i class="ti ti-notebook fs-2"></i>
+                    <span>Escanear Cuaderno de Pacientes</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar" id="btnCerrarModalCuaderno"></button>
+            </div>
+
+            {{-- Modal Body --}}
+            <div class="modal-body p-2 p-md-4">
+                
+                {{-- Alerta informativa inicial --}}
+                <div class="alert alert-info d-flex align-items-start gap-2 mb-2 py-2 px-3" role="alert">
+                    <i class="ti ti-info-circle fs-3 text-info flex-shrink-0 mt-1"></i>
+                    <div style="font-size: 0.85rem;">
+                        <strong>¿Cómo funciona?</strong> Toma una foto de la página del cuaderno manuscrito o sube una imagen. El sistema extraerá los nombres, fechas, DPI y direcciones para que los confirmes antes de guardarlos.
+                    </div>
+                </div>
+
+                {{-- Contenedor de Error --}}
+                <div class="alert alert-danger d-none align-items-center gap-2 mb-2" id="cuadernoErrorAlert" role="alert">
+                    <i class="ti ti-alert-triangle fs-3 flex-shrink-0"></i>
+                    <div id="cuadernoErrorMessage" style="font-size: 0.88rem;"></div>
+                </div>
+
+                {{-- PASO 1: Subida de Imagen / Captura --}}
+                <div id="pasoSubirCuaderno">
+                    <div class="ocr-dropzone p-3 p-md-4 text-center border border-2 border-dashed rounded-3 bg-light position-relative mb-2" id="cuadernoDropzone" style="cursor: pointer;">
+                        <input type="file" id="inputArchivoCuaderno" accept="image/*" class="d-none">
+                        <input type="file" id="inputCamaraCuaderno" accept="image/*" capture="environment" class="d-none">
+
+                        <div id="cuadernoPromptZone">
+                            <i class="ti ti-camera-plus text-primary fs-1 mb-1 d-block"></i>
+                            <h6 class="fw-bold mb-1">Arrastra la foto del cuaderno o elige una opción:</h6>
+                            <p class="text-muted small mb-2">Soporta fotos en JPG, PNG o WEBP (hasta 15 MB)</p>
+                            
+                            <div class="d-flex flex-column flex-sm-row justify-content-center gap-2">
+                                <button type="button" class="btn btn-primary d-inline-flex align-items-center justify-content-center py-2 px-3" id="btnDispararCamaraCuaderno">
+                                    <i class="ti ti-camera me-1"></i> Tomar Foto con Cámara
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary d-inline-flex align-items-center justify-content-center py-2 px-3" id="btnDispararArchivoCuaderno">
+                                    <i class="ti ti-folder-open me-1"></i> Seleccionar Imagen
+                                </button>
+                            </div>
+                        </div>
+
+                        {{-- Previsualización de la imagen cargada --}}
+                        <div id="cuadernoPreviewZone" class="d-none">
+                            <div class="position-relative d-inline-block mb-2">
+                                <img id="cuadernoPreviewImg" src="" alt="Previsualización del cuaderno" class="rounded shadow-sm" style="max-height: 250px; max-width: 100%; object-fit: contain;">
+                            </div>
+                            <div class="d-flex align-items-center justify-content-center gap-2">
+                                <span class="badge bg-secondary-lt text-truncate" id="cuadernoPreviewNombre" style="max-width: 250px;"></span>
+                                <button type="button" class="btn btn-xs btn-outline-danger" id="btnQuitarImagenCuaderno" title="Cambiar imagen">
+                                    <i class="ti ti-trash me-1"></i> Cambiar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Animación / Estado de Carga --}}
+                    <div id="cuadernoLoadingZone" class="text-center py-4 d-none">
+                        <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <h6 class="fw-bold text-primary mb-1">Procesando imagen...</h6>
+                        <p class="text-muted small mb-0">Descifrando registros manuscritos del cuaderno y verificando posibles duplicados.</p>
+                    </div>
+
+                    {{-- Botón de Acción Paso 1 --}}
+                    <div class="modal-ocr-actions mt-3 pt-3 border-top" id="cuadernoAccionesPaso1">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" id="btnComenzarAnalisisCuaderno" disabled>
+                            <i class="ti ti-sparkles me-1"></i> Escanear y Extraer Pacientes
+                        </button>
+                    </div>
+                </div>
+
+                {{-- PASO 2: Revisión y Confirmación de Pacientes Detectados --}}
+                <div id="pasoRevisionCuaderno" class="d-none">
+                    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2 p-2 px-3 bg-light rounded-3 mb-3 border">
+                        <div>
+                            <span class="badge bg-primary text-uppercase" id="cuadernoTituloDetectado">Cuaderno de Pacientes</span>
+                            <span class="badge bg-success-lt ms-1" id="cuadernoTotalPacientesBadge">0 pacientes</span>
+                        </div>
+                        <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-2 w-100 w-md-auto">
+                            <label for="selectFamiliaGlobal" class="small fw-semibold text-secondary text-nowrap mb-0">Familia por defecto:</label>
+                            <select id="selectFamiliaGlobal" class="form-select form-select-sm w-100 w-sm-auto" style="min-width: 200px;">
+                                <option value="">-- Asignar o crear individualmente --</option>
+                                @foreach($familias as $fam)
+                                    <option value="{{ $fam->id_family }}">Fam #{{ $fam->numero_familia }} — {{ $fam->apellido_cabeza }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <p class="text-muted small mb-2">
+                        <i class="ti ti-check-double text-success me-1"></i> Revisa los datos detectados antes de guardar. Corrige cualquier letra o número que haya quedado confuso:
+                    </p>
+
+                    <div class="table-responsive border rounded-3 mb-3" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-sm table-hover table-striped align-middle mb-0" id="tablaPacientesCuaderno">
+                            <thead class="table-light sticky-top" style="z-index: 1;">
+                                <tr>
+                                    <th style="width: 40px;" class="text-center">#</th>
+                                    <th style="min-width: 230px;">Nombres y Apellidos</th>
+                                    <th style="min-width: 140px;">F. Nacimiento / Edad</th>
+                                    <th style="width: 80px;">Sexo</th>
+                                    <th style="min-width: 150px;">DPI / CUI</th>
+                                    <th style="min-width: 170px;">Dirección / Comunidad</th>
+                                    <th style="min-width: 200px;">Núcleo Familiar</th>
+                                    <th style="width: 45px;" class="text-center"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyPacientesCuaderno">
+                                {{-- Filas generadas dinámicamente con JS --}}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {{-- Indicador de Guardado --}}
+                    <div id="cuadernoSavingZone" class="text-center py-2 d-none">
+                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                        <span class="small fw-semibold text-primary">Guardando pacientes en el sistema...</span>
+                    </div>
+
+                    {{-- Botones de Acción Paso 2 --}}
+                    <div class="modal-ocr-actions justify-between-sm mt-3 pt-3 border-top" id="cuadernoAccionesPaso2">
+                        <button type="button" class="btn btn-outline-secondary" id="btnVolverPaso1Cuaderno">
+                            <i class="ti ti-arrow-left me-1"></i> Volver a tomar foto
+                        </button>
+                        <button type="button" class="btn btn-success" id="btnConfirmarImportarCuaderno">
+                            <i class="ti ti-user-check me-1"></i> Confirmar y Registrar Pacientes
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
@@ -765,7 +972,380 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Vinculación inicial de eventos
+    // ── Escaneo de Cuaderno de Pacientes ─────────────────────────
+    (function () {
+        let archivoSeleccionado = null;
+        let catalogoFamilias    = [];
+        let catalogoComunidades = [];
+
+        const modalEl           = document.getElementById('modalEscanearCuaderno');
+        const dropzone          = document.getElementById('cuadernoDropzone');
+        const inputArchivo      = document.getElementById('inputArchivoCuaderno');
+        const inputCamara       = document.getElementById('inputCamaraCuaderno');
+        const promptZone        = document.getElementById('cuadernoPromptZone');
+        const previewZone       = document.getElementById('cuadernoPreviewZone');
+        const previewImg        = document.getElementById('cuadernoPreviewImg');
+        const previewNombre     = document.getElementById('cuadernoPreviewNombre');
+        const btnQuitarImg      = document.getElementById('btnQuitarImagenCuaderno');
+        const btnAnalizar       = document.getElementById('btnComenzarAnalisisCuaderno');
+        const loadingZone       = document.getElementById('cuadernoLoadingZone');
+        const accionesPaso1     = document.getElementById('cuadernoAccionesPaso1');
+        const errorAlert        = document.getElementById('cuadernoErrorAlert');
+        const errorMessage      = document.getElementById('cuadernoErrorMessage');
+        const pasoSubir         = document.getElementById('pasoSubirCuaderno');
+        const pasoRevision      = document.getElementById('pasoRevisionCuaderno');
+        const tituloDetectado   = document.getElementById('cuadernoTituloDetectado');
+        const totalBadge        = document.getElementById('cuadernoTotalPacientesBadge');
+        const tbody             = document.getElementById('tbodyPacientesCuaderno');
+        const btnVolver         = document.getElementById('btnVolverPaso1Cuaderno');
+        const btnConfirmar      = document.getElementById('btnConfirmarImportarCuaderno');
+        const savingZone        = document.getElementById('cuadernoSavingZone');
+        const selectFamGlobal   = document.getElementById('selectFamiliaGlobal');
+
+        function mostrarError(msg) {
+            errorMessage.textContent = msg;
+            errorAlert.classList.remove('d-none');
+            errorAlert.classList.add('d-flex');
+        }
+
+        function ocultarError() {
+            errorAlert.classList.add('d-none');
+            errorAlert.classList.remove('d-flex');
+        }
+
+        function setArchivo(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                mostrarError('Por favor selecciona un archivo de imagen válido (JPG, PNG, WEBP).');
+                return;
+            }
+            ocultarError();
+            archivoSeleccionado = file;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImg.src = e.target.result;
+                previewNombre.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                promptZone.classList.add('d-none');
+                previewZone.classList.remove('d-none');
+                btnAnalizar.disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resetSubida() {
+            archivoSeleccionado = null;
+            if (inputArchivo) inputArchivo.value = '';
+            if (inputCamara) inputCamara.value = '';
+            if (previewImg) previewImg.src = '';
+            if (previewNombre) previewNombre.textContent = '';
+            previewZone?.classList.add('d-none');
+            promptZone?.classList.remove('d-none');
+            loadingZone?.classList.add('d-none');
+            accionesPaso1?.classList.remove('d-none');
+            if (btnAnalizar) btnAnalizar.disabled = true;
+            ocultarError();
+        }
+
+        document.getElementById('btnDispararCamaraCuaderno')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            inputCamara.click();
+        });
+
+        document.getElementById('btnDispararArchivoCuaderno')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            inputArchivo.click();
+        });
+
+        dropzone?.addEventListener('click', (e) => {
+            if (e.target.closest('button')) return;
+            inputArchivo.click();
+        });
+
+        inputArchivo?.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) setArchivo(e.target.files[0]);
+        });
+
+        inputCamara?.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) setArchivo(e.target.files[0]);
+        });
+
+        btnQuitarImg?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            resetSubida();
+        });
+
+        ['dragenter', 'dragover'].forEach(name => {
+            dropzone?.addEventListener(name, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.add('border-primary', 'bg-blue-lt');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(name => {
+            dropzone?.addEventListener(name, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.remove('border-primary', 'bg-blue-lt');
+            });
+        });
+
+        dropzone?.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            if (dt && dt.files && dt.files.length) {
+                setArchivo(dt.files[0]);
+            }
+        });
+
+        modalEl?.addEventListener('hidden.bs.modal', () => {
+            resetSubida();
+            pasoSubir?.classList.remove('d-none');
+            pasoRevision?.classList.add('d-none');
+        });
+
+        // Procesar imagen
+        btnAnalizar?.addEventListener('click', () => {
+            if (!archivoSeleccionado) return;
+
+            ocultarError();
+            dropzone.classList.add('d-none');
+            accionesPaso1.classList.add('d-none');
+            loadingZone.classList.remove('d-none');
+
+            const formData = new FormData();
+            formData.append('imagen', archivoSeleccionado);
+
+            fetch('{{ route("pacientes.escanear-cuaderno") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                },
+                body: formData,
+            })
+            .then(async (r) => {
+                const data = await r.json();
+                if (!r.ok || !data.success) {
+                    throw new Error(data.error || 'No se pudo procesar la imagen del cuaderno.');
+                }
+                return data;
+            })
+            .then((data) => {
+                catalogoFamilias    = data.familias || [];
+                catalogoComunidades = data.comunidades || [];
+                tituloDetectado.textContent = data.titulo || 'Pacientes del Cuaderno';
+                totalBadge.textContent = `${data.pacientes.length} pacientes detectados`;
+
+                renderizarFilas(data.pacientes);
+
+                pasoSubir.classList.add('d-none');
+                pasoRevision.classList.remove('d-none');
+            })
+            .catch((err) => {
+                mostrarError(err.message || 'Error al procesar el documento.');
+                dropzone.classList.remove('d-none');
+                accionesPaso1.classList.remove('d-none');
+                loadingZone.classList.add('d-none');
+            });
+        });
+
+        function renderizarFilas(pacientes) {
+            tbody.innerHTML = '';
+
+            if (!pacientes || pacientes.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-3">
+                            No se detectaron registros de pacientes en la imagen. Intenta con una toma más cercana o mejor iluminada.
+                        </td>
+                    </tr>`;
+                btnConfirmar.disabled = true;
+                return;
+            }
+
+            btnConfirmar.disabled = false;
+
+            pacientes.forEach((p, idx) => {
+                const tr = document.createElement('tr');
+                tr.dataset.index = idx;
+
+                const dupDpiBadge = p.dpi_existente 
+                    ? `<span class="badge bg-danger text-wrap d-block mt-1" style="font-size:0.7rem;"><i class="ti ti-ban me-1"></i>${p.dpi_mensaje}</span>` 
+                    : '';
+
+                const dupNombreBadge = p.posible_duplicado 
+                    ? `<span class="badge bg-warning-lt text-wrap d-block mt-1" style="font-size:0.7rem;"><i class="ti ti-alert-triangle me-1"></i>${p.duplicado_mensaje}</span>` 
+                    : '';
+
+                tr.innerHTML = `
+                    <td class="text-center fw-bold text-muted">${idx + 1}</td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm mb-1 fw-bold p-nombres" value="${p.nombres}" placeholder="Nombres">
+                        <input type="text" class="form-control form-control-sm p-apellidos" value="${p.apellidos}" placeholder="Apellidos">
+                        ${dupNombreBadge}
+                    </td>
+                    <td>
+                        <input type="date" class="form-control form-control-sm p-fecha-nac" value="${p.fecha_nacimiento}">
+                        ${p.edad_texto ? `<small class="text-muted d-block mt-1 text-truncate" style="font-size:0.72rem;">Original: ${p.edad_texto}</small>` : ''}
+                    </td>
+                    <td>
+                        <select class="form-select form-select-sm p-sexo">
+                            <option value="M" ${p.sexo === 'M' ? 'selected' : ''}>M</option>
+                            <option value="F" ${p.sexo === 'F' ? 'selected' : ''}>F</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm p-dpi" value="${p.dpi || ''}" maxlength="13" inputmode="numeric" placeholder="13 dígitos">
+                        ${dupDpiBadge}
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm mb-1 p-direccion" value="${p.direccion || ''}" placeholder="Comunidad / Dir">
+                        <select class="form-select form-select-sm p-comunidad">
+                            <option value="">-- Comunidad --</option>
+                            ${catalogoComunidades.map(c => `
+                                <option value="${c.id_comunidad}" ${c.id_comunidad == p.id_comunidad_sugerida ? 'selected' : ''}>
+                                    ${c.nombre}
+                                </option>
+                            `).join('')}
+                        </select>
+                    </td>
+                    <td>
+                        <select class="form-select form-select-sm p-familia">
+                            <option value="__nuevo__">➕ Nueva Familia (con este apellido)</option>
+                            ${catalogoFamilias.map(f => `
+                                <option value="${f.id_family}" ${f.id_family == p.id_family_sugerida ? 'selected' : ''}>
+                                    Fam #${f.numero_familia} (${f.apellido_cabeza})
+                                </option>
+                            `).join('')}
+                        </select>
+                    </td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-xs btn-outline-danger btn-quitar-fila-cuaderno" title="Descartar este paciente">
+                            <i class="ti ti-trash"></i>
+                        </button>
+                    </td>`;
+
+                tr.querySelector('.btn-quitar-fila-cuaderno').addEventListener('click', () => {
+                    tr.remove();
+                    actualizarContador();
+                });
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        function actualizarContador() {
+            const count = tbody.querySelectorAll('tr').length;
+            totalBadge.textContent = `${count} pacientes`;
+            if (count === 0) {
+                btnConfirmar.disabled = true;
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-3">Has descartado todos los pacientes.</td></tr>`;
+            }
+        }
+
+        // Asignación global de familia
+        selectFamGlobal?.addEventListener('change', () => {
+            const val = selectFamGlobal.value;
+            if (!val) return;
+            tbody.querySelectorAll('.p-familia').forEach(sel => {
+                sel.value = val;
+            });
+        });
+
+        // Volver a paso 1
+        btnVolver?.addEventListener('click', () => {
+            pasoRevision.classList.add('d-none');
+            pasoSubir.classList.remove('d-none');
+            dropzone.classList.remove('d-none');
+            accionesPaso1.classList.remove('d-none');
+            loadingZone.classList.add('d-none');
+        });
+
+        // Confirmar e importar pacientes
+        btnConfirmar?.addEventListener('click', () => {
+            const filas = tbody.querySelectorAll('tr');
+            if (filas.length === 0) return;
+
+            const pacientesPayload = [];
+            let hayErrores = false;
+
+            filas.forEach((tr, i) => {
+                const nombres   = tr.querySelector('.p-nombres')?.value.trim();
+                const apellidos = tr.querySelector('.p-apellidos')?.value.trim();
+                const fechaNac  = tr.querySelector('.p-fecha-nac')?.value;
+                const sexo      = tr.querySelector('.p-sexo')?.value;
+                const dpi       = tr.querySelector('.p-dpi')?.value.trim();
+                const direccion = tr.querySelector('.p-direccion')?.value.trim();
+                const idCom     = tr.querySelector('.p-comunidad')?.value;
+                const idFam     = tr.querySelector('.p-familia')?.value;
+
+                if (!nombres || !apellidos) {
+                    alert(`Fila ${i + 1}: El nombre y los apellidos son obligatorios.`);
+                    hayErrores = true;
+                    return;
+                }
+
+                if (!fechaNac) {
+                    alert(`Fila ${i + 1}: Debe indicar una fecha de nacimiento válida.`);
+                    hayErrores = true;
+                    return;
+                }
+
+                if (dpi && dpi.length !== 13) {
+                    alert(`Fila ${i + 1}: El DPI debe tener exactamente 13 dígitos o dejarse vacío.`);
+                    hayErrores = true;
+                    return;
+                }
+
+                pacientesPayload.push({
+                    nombres: nombres,
+                    apellidos: apellidos,
+                    fecha_nacimiento: fechaNac,
+                    sexo: sexo,
+                    dpi: dpi || null,
+                    direccion: direccion || null,
+                    id_comunidad: idCom || null,
+                    id_family: idFam === '__nuevo__' ? null : idFam,
+                });
+            });
+
+            if (hayErrores || pacientesPayload.length === 0) return;
+
+            btnConfirmar.disabled = true;
+            btnVolver.disabled = true;
+            savingZone.classList.remove('d-none');
+
+            fetch('{{ route("pacientes.importar-lote") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    pacientes: pacientesPayload,
+                }),
+            })
+            .then(async (r) => {
+                const res = await r.json();
+                if (!r.ok || !res.success) {
+                    throw new Error(res.error || res.message || 'Error al guardar los pacientes.');
+                }
+                return res;
+            })
+            .then((res) => {
+                window.location.href = res.url || '{{ route("pacientes.index") }}';
+            })
+            .catch((err) => {
+                alert('Ocurrió un error al guardar: ' + err.message);
+                btnConfirmar.disabled = false;
+                btnVolver.disabled = false;
+                savingZone.classList.add('d-none');
+            });
+        });
+    })();
+
+    // Vinculación inicial de eventos de edición
     bindEditEvents();
 
     @if($errors->any() && !old('paciente_id'))

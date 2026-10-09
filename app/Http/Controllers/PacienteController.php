@@ -4,11 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Paciente;
 use App\Models\Familia;
+use App\Models\Comunidad;
 use App\Models\AlertaDuplicado;
 use App\Models\Bitacora;
+use App\Services\GeminiOcrService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
+use Exception;
 
 class PacienteController extends Controller
 {
@@ -418,6 +422,217 @@ class PacienteController extends Controller
         return response()->json([
             'duplicate' => $isDuplicate,
             'message'   => $message
+        ]);
+    }
+
+    // ── Escaneo de Cuaderno de Pacientes ──────────────────────────
+
+    /**
+     * Procesar foto de página de cuaderno de pacientes.
+     */
+    public function escanearCuaderno(Request $request, GeminiOcrService $ocrService): JsonResponse
+    {
+        $request->validate([
+            'imagen' => 'required|image|mimes:jpeg,png,jpg,webp|max:15360',
+        ], [
+            'imagen.required' => 'Debes adjuntar o tomar una foto de la página del cuaderno.',
+            'imagen.image'    => 'El archivo seleccionado debe ser una imagen válida.',
+            'imagen.max'      => 'La imagen no debe superar los 15 MB.',
+        ]);
+
+        try {
+            $datos = $ocrService->escanearCuadernoPacientes($request->file('imagen'));
+
+            $familias    = Familia::with('comunidad')->where('activo', true)->orderBy('numero_familia')->get();
+            $comunidades = Comunidad::orderBy('nombre')->get();
+
+            $pacientesMapeados = collect($datos['pacientes'] ?? [])->map(function ($p) use ($familias, $comunidades) {
+                $nombres   = trim($p['nombres'] ?? '');
+                $apellidos = trim($p['apellidos'] ?? '');
+                $dpi       = !empty($p['dpi']) ? preg_replace('/\D/', '', $p['dpi']) : null;
+                $direccion = trim($p['direccion'] ?? '');
+
+                // Verificar si DPI ya existe en el sistema
+                $dpiExistente = false;
+                $duplicadoDpiMsg = null;
+                if (!empty($dpi) && strlen($dpi) === 13) {
+                    $pDpi = Paciente::where('dpi', $dpi)->first();
+                    if ($pDpi) {
+                        $dpiExistente = true;
+                        $duplicadoDpiMsg = "DPI ya registrado en {$pDpi->nombres} {$pDpi->apellidos} (Exp: {$pDpi->numero_expediente_fisico})";
+                    }
+                }
+
+                // Verificar si ya existe paciente con nombre y apellidos similares
+                $posibleDuplicado = false;
+                $duplicadoNombreMsg = null;
+                if (!empty($nombres) && !empty($apellidos)) {
+                    $pSim = Paciente::where('nombres', 'ilike', "%{$nombres}%")
+                        ->where('apellidos', 'ilike', "%{$apellidos}%")
+                        ->first();
+                    if ($pSim) {
+                        $posibleDuplicado = true;
+                        $duplicadoNombreMsg = "Coincide con {$pSim->nombres} {$pSim->apellidos} (Exp: {$pSim->numero_expediente_fisico})";
+                    }
+                }
+
+                // Sugerencia de comunidad según dirección
+                $comunidadSugeridaId = null;
+                if (!empty($direccion)) {
+                    $normDir = mb_strtolower($direccion, 'UTF-8');
+                    $cMatch = $comunidades->first(function ($c) use ($normDir) {
+                        return str_contains($normDir, mb_strtolower($c->nombre, 'UTF-8'));
+                    });
+                    $comunidadSugeridaId = $cMatch?->id_comunidad;
+                }
+
+                // Sugerencia de familia según primer apellido
+                $familiaSugeridaId = null;
+                if (!empty($apellidos)) {
+                    $primerAp = explode(' ', $apellidos)[0];
+                    $fMatch = $familias->first(function ($f) use ($primerAp) {
+                        return str_contains(mb_strtolower($f->apellido_cabeza, 'UTF-8'), mb_strtolower($primerAp, 'UTF-8'));
+                    });
+                    $familiaSugeridaId = $fMatch?->id_family;
+                }
+
+                return [
+                    'nombres'                   => $nombres,
+                    'apellidos'                 => $apellidos,
+                    'edad_texto'                => $p['edad_texto'] ?? '',
+                    'fecha_nacimiento'          => $p['fecha_nacimiento_estimada'] ?? '2000-01-01',
+                    'sexo'                      => in_array(strtoupper($p['sexo'] ?? ''), ['M', 'F']) ? strtoupper($p['sexo']) : 'M',
+                    'dpi'                       => $dpi,
+                    'direccion'                 => $direccion,
+                    'numero_expediente'         => $p['numero_expediente'] ?? null,
+                    'dpi_existente'             => $dpiExistente,
+                    'dpi_mensaje'               => $duplicadoDpiMsg,
+                    'posible_duplicado'         => $posibleDuplicado,
+                    'duplicado_mensaje'         => $duplicadoNombreMsg,
+                    'id_comunidad_sugerida'     => $comunidadSugeridaId,
+                    'id_family_sugerida'        => $familiaSugeridaId,
+                ];
+            });
+
+            return response()->json([
+                'success'     => true,
+                'titulo'      => $datos['titulo'] ?? 'Pacientes del Cuaderno',
+                'pacientes'   => $pacientesMapeados,
+                'familias'    => $familias,
+                'comunidades' => $comunidades,
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error'   => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Importar pacientes extraídos en lote.
+     */
+    public function importarLote(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'pacientes'                      => 'required|array|min:1',
+            'pacientes.*.nombres'            => 'required|string|max:100',
+            'pacientes.*.apellidos'          => 'required|string|max:100',
+            'pacientes.*.fecha_nacimiento'   => 'required|date|before_or_equal:today',
+            'pacientes.*.sexo'               => 'required|in:M,F',
+            'pacientes.*.dpi'                => 'nullable|string|digits:13',
+            'pacientes.*.direccion'          => 'nullable|string|max:255',
+            'pacientes.*.id_family'          => 'nullable',
+            'pacientes.*.id_comunidad'       => 'nullable',
+            'pacientes.*.numero_expediente'  => 'nullable|string|max:50',
+            'pacientes.*.parentesco'         => 'nullable|string|max:50',
+        ]);
+
+        $guardados = 0;
+        $omitidos  = 0;
+
+        DB::transaction(function () use ($validated, &$guardados, &$omitidos) {
+            foreach ($validated['pacientes'] as $p) {
+                $dpi = !empty($p['dpi']) ? trim($p['dpi']) : null;
+
+                // Omitir si el DPI ya está registrado para no corromper la unicidad
+                if ($dpi && Paciente::where('dpi', $dpi)->exists()) {
+                    $omitidos++;
+                    continue;
+                }
+
+                $idFamily = !empty($p['id_family']) && $p['id_family'] !== '__nuevo__' 
+                    ? (int) $p['id_family'] 
+                    : null;
+
+                $comunidadId = !empty($p['id_comunidad']) 
+                    ? (int) $p['id_comunidad'] 
+                    : Comunidad::first()?->id_comunidad;
+
+                // Si no tiene familia asignada, crear nueva familia automáticamente
+                if (!$idFamily) {
+                    $maxId = (Familia::max('id_family') ?? 0) + 1;
+                    $numFam = 'F-' . str_pad($maxId, 4, '0', STR_PAD_LEFT);
+                    
+                    while (Familia::where('numero_familia', $numFam)->exists()) {
+                        $maxId++;
+                        $numFam = 'F-' . str_pad($maxId, 4, '0', STR_PAD_LEFT);
+                    }
+
+                    $familia = Familia::create([
+                        'numero_familia'  => $numFam,
+                        'apellido_cabeza' => trim($p['apellidos']),
+                        'id_comunidad'    => $comunidadId,
+                        'activo'          => true,
+                        'fecha_registro'  => now(),
+                    ]);
+                    $idFamily = $familia->id_family;
+                    $expediente = !empty($p['numero_expediente']) ? trim($p['numero_expediente']) : $numFam;
+                } else {
+                    $fam = Familia::find($idFamily);
+                    $expediente = !empty($p['numero_expediente']) 
+                        ? trim($p['numero_expediente']) 
+                        : ($fam?->numero_familia ?? 'EXP-' . rand(1000, 9999));
+                }
+
+                $paciente = Paciente::create([
+                    'id_family'                => $idFamily,
+                    'nombres'                  => trim($p['nombres']),
+                    'apellidos'                => trim($p['apellidos']),
+                    'dpi'                      => $dpi,
+                    'numero_expediente_fisico' => $expediente,
+                    'direccion'                => !empty($p['direccion']) ? trim($p['direccion']) : null,
+                    'fecha_nacimiento'         => $p['fecha_nacimiento'],
+                    'sexo'                     => $p['sexo'],
+                    'parentesco_familia'       => $p['parentesco'] ?? 'Miembro',
+                    'activo'                   => true,
+                    'fecha_registro'           => now(),
+                ]);
+
+                Bitacora::registrar(
+                    Auth::id(),
+                    'crear',
+                    'pacientes',
+                    $paciente->id_paciente,
+                    "Paciente {$paciente->nombres} {$paciente->apellidos} importado desde escaneo de cuaderno.",
+                    request()->ip()
+                );
+
+                $guardados++;
+            }
+        });
+
+        $mensaje = "¡Se registraron exitosamente {$guardados} pacientes!";
+        if ($omitidos > 0) {
+            $mensaje .= " ({$omitidos} registros omitidos porque su DPI ya existía).";
+        }
+
+        return response()->json([
+            'success'   => true,
+            'mensaje'   => $mensaje,
+            'guardados' => $guardados,
+            'omitidos'  => $omitidos,
+            'url'       => route('pacientes.index'),
         ]);
     }
 }
