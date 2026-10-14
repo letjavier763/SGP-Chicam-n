@@ -88,10 +88,10 @@
 
                 @if($paciente->numero_registro || $paciente->descripcion_registro)
                 <div class="mb-3">
-                    <label class="form-label text-secondary small fw-bold mb-1">Registro Físico:</label>
+                    <label class="form-label text-secondary small fw-bold mb-1">Ficha / Expediente Físico:</label>
                     <div class="text-dark small">
                         @if($paciente->numero_registro)
-                            <strong>No.:</strong> {{ $paciente->numero_registro }}
+                            <strong># Ficha:</strong> {{ $paciente->numero_registro }}
                         @endif
                         @if($paciente->descripcion_registro)
                             {{ $paciente->numero_registro ? '· ' : '' }}{{ $paciente->descripcion_registro }}
@@ -321,12 +321,12 @@
                         </div>
                     </div>
 
-                    <h6 class="text-secondary border-bottom pb-2 mb-3">3. Datos del Registro Físico</h6>
+                    <h6 class="text-secondary border-bottom pb-2 mb-3">3. Datos de Ficha / Expediente Físico</h6>
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <label class="form-label" for="show_numero_registro">No. de Registro</label>
+                            <label class="form-label" for="show_numero_registro"># Ficha o Expediente</label>
                             <input type="text" id="show_numero_registro" name="numero_registro" class="form-control" value="{{ $paciente->numero_registro }}" inputmode="numeric" pattern="[0-9]*" placeholder="Ej: 1024">
-                            <span class="form-hint">Número entero del registro físico</span>
+                            <span class="form-hint">Número de ficha o expediente físico</span>
                         </div>
                         <div class="col-md-8">
                             <label class="form-label" for="show_descripcion_registro">Descripción / Ubicación del Registro</label>

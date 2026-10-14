@@ -10,7 +10,7 @@
             <h3 class="mb-0 text-dark fw-bold" style="font-size: 1.25rem;">Pacientes</h3>
             <span class="badge bg-blue-subtle text-primary fw-semibold">{{ $pacientes->total() }} registros</span>
         </div>
-        <p class="text-secondary mb-0 small d-none d-sm-block">Consulte expedientes y realice búsquedas por DPI, nombre, expediente físico o No. de registro.</p>
+        <p class="text-secondary mb-0 small d-none d-sm-block">Consulte expedientes y realice búsquedas por DPI, nombre, expediente físico o # de ficha/expediente.</p>
     </div>
     <div class="d-flex align-items-center gap-2 w-100 w-sm-auto">
         <button type="button" class="btn btn-outline-primary btn-header-action flex-fill flex-sm-grow-0 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalEscanearCuaderno" title="Escanear cuaderno con cámara">
@@ -137,7 +137,7 @@
                         <i class="ti ti-search text-secondary me-2 fs-2 flex-shrink-0"></i>
                         <input type="text" id="buscar" name="buscar" class="form-control ps-0 py-1 flex-grow-1" 
                                value="{{ request('buscar') }}" 
-                               placeholder="Buscar por Nombre, DPI, Exp. o No. Reg..." 
+                               placeholder="Buscar por Nombre, DPI, Exp. o # Ficha..." 
                                autocomplete="off">
                         
                         {{-- Botón para alternar filtros avanzados en móvil --}}
@@ -165,7 +165,7 @@
                             <select id="criterio" name="criterio" class="form-select form-select-sm">
                                 <option value="todos" {{ request('criterio') == 'todos' || !request('criterio') ? 'selected' : '' }}>Todos los campos</option>
                                 <option value="nombre" {{ request('criterio') == 'nombre' ? 'selected' : '' }}>Solo Nombre</option>
-                                <option value="numero_registro" {{ request('criterio') == 'numero_registro' ? 'selected' : '' }}>Solo No. Registro</option>
+                                <option value="numero_registro" {{ request('criterio') == 'numero_registro' ? 'selected' : '' }}>Solo # Ficha / Expediente</option>
                                 <option value="familia" {{ request('criterio') == 'familia' ? 'selected' : '' }}>Solo No. Familia</option>
                                 <option value="dpi" {{ request('criterio') == 'dpi' ? 'selected' : '' }}>Solo DPI</option>
                             </select>
@@ -222,7 +222,7 @@
                         <td>
                             <strong class="text-primary">{{ $paciente->numero_expediente_fisico }}</strong>
                             @if($paciente->numero_registro)
-                                <div><span class="badge bg-purple-lt text-purple fw-bold mt-1">Reg. #{{ $paciente->numero_registro }}</span></div>
+                                <div><span class="badge bg-purple-lt text-purple fw-bold mt-1">Ficha #{{ $paciente->numero_registro }}</span></div>
                             @endif
                         </td>
                         <td>
@@ -313,7 +313,7 @@
                         </div>
                         <div class="text-secondary small">
                             Exp: <strong class="text-primary">{{ $paciente->numero_expediente_fisico }}</strong>
-                            @if($paciente->numero_registro) · <span class="badge bg-purple-lt text-purple fw-bold">Reg. #{{ $paciente->numero_registro }}</span> @endif
+                            @if($paciente->numero_registro) · <span class="badge bg-purple-lt text-purple fw-bold">Ficha #{{ $paciente->numero_registro }}</span> @endif
                             @if($paciente->dpi) · DPI: {{ $paciente->dpi }} @endif
                         </div>
                     </div>
@@ -448,13 +448,13 @@
                         </div>
                     </div>
 
-                    <h6 class="text-secondary border-bottom pb-2 mb-3">3. Datos del Registro Físico</h6>
+                    <h6 class="text-secondary border-bottom pb-2 mb-3">3. Datos de Ficha / Expediente Físico</h6>
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <label class="form-label" for="create_numero_registro">No. de Registro</label>
+                            <label class="form-label" for="create_numero_registro"># Ficha o Expediente</label>
                             <input type="text" id="create_numero_registro" name="numero_registro" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="Ej: 1024">
                             <span id="msg-dup-reg-create" class="form-hint fw-bold"></span>
-                            <span class="form-hint text-muted">Número entero del registro físico</span>
+                            <span class="form-hint text-muted">Número de ficha o expediente físico</span>
                         </div>
                         <div class="col-md-8">
                             <label class="form-label" for="create_descripcion_registro">Descripción / Ubicación del Registro</label>
@@ -547,13 +547,13 @@
                         </div>
                     </div>
 
-                    <h6 class="text-secondary border-bottom pb-2 mb-3">3. Datos del Registro Físico</h6>
+                    <h6 class="text-secondary border-bottom pb-2 mb-3">3. Datos de Ficha / Expediente Físico</h6>
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <label class="form-label" for="edit_numero_registro">No. de Registro</label>
+                            <label class="form-label" for="edit_numero_registro"># Ficha o Expediente</label>
                             <input type="text" id="edit_numero_registro" name="numero_registro" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="Ej: 1024">
                             <span id="msg-dup-reg-edit" class="form-hint fw-bold"></span>
-                            <span class="form-hint text-muted">Número entero del registro físico</span>
+                            <span class="form-hint text-muted">Número de ficha o expediente físico</span>
                         </div>
                         <div class="col-md-8">
                             <label class="form-label" for="edit_descripcion_registro">Descripción / Ubicación del Registro</label>
@@ -946,7 +946,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             if (createRegDuplicado) {
                 e.preventDefault();
-                alert('No se puede guardar: El No. de Registro ya está asignado a otro paciente.');
+                alert('No se puede guardar: El # de ficha o expediente ya está asignado a otro paciente.');
                 document.getElementById('create_numero_registro').focus();
                 return false;
             }
@@ -965,7 +965,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             if (editRegDuplicado) {
                 e.preventDefault();
-                alert('No se puede actualizar: El No. de Registro ya pertenece a otro paciente.');
+                alert('No se puede actualizar: El # de ficha o expediente ya pertenece a otro paciente.');
                 document.getElementById('edit_numero_registro').focus();
                 return false;
             }

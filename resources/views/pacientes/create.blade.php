@@ -92,14 +92,14 @@
                         </div>
                     </div>
 
-                    <h4 class="mb-3 text-secondary border-bottom pb-2">3. Datos del Registro Físico</h4>
+                    <h4 class="mb-3 text-secondary border-bottom pb-2">3. Datos de Ficha / Expediente Físico</h4>
 
                     <div class="row g-3 mb-4">
                         <div class="col-md-4">
-                            <label class="form-label" for="numero_registro">No. de Registro</label>
+                            <label class="form-label" for="numero_registro"># Ficha o Expediente</label>
                             <input type="text" id="numero_registro" name="numero_registro" class="form-control" value="{{ old('numero_registro') }}" inputmode="numeric" pattern="[0-9]*" placeholder="Ej: 1024">
                             <span id="msg-dup-reg" class="form-hint fw-bold"></span>
-                            <span class="form-hint text-muted">Número entero que identifica el registro físico</span>
+                            <span class="form-hint text-muted">Número de ficha o expediente físico</span>
                         </div>
                         <div class="col-md-8">
                             <label class="form-label" for="descripcion_registro">Descripción / Ubicación del Registro</label>
@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             if (regDuplicado) {
                 e.preventDefault();
-                alert('No se puede guardar: El No. de Registro ya está asignado a otro paciente.');
+                alert('No se puede guardar: El # de ficha o expediente ya está asignado a otro paciente.');
                 regInput.focus();
                 return false;
             }

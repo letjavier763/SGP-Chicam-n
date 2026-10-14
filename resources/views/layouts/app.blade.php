@@ -23,6 +23,14 @@
     <div id="module-loading-bar" style="position: fixed; top: 0; left: 0; height: 3px; width: 0%; background: linear-gradient(90deg, #38bdf8, #0057cd); z-index: 9999; transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease; opacity: 0; pointer-events: none;"></div>
 
     <div class="page">
+        @auth
+            @if(Auth::user()->username === 'demo')
+                <div class="alert alert-warning mb-0 border-0 rounded-0 text-center py-2 px-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2" style="background-color: #fef3c7; color: #92400e; border-bottom: 2px solid #f59e0b !important; z-index: 1050; position: relative;">
+                    <i class="ti ti-shield-lock fs-2"></i>
+                    <span>MODO DEMOSTRACIÓN: Estás navegando con el usuario de pruebas. Las funciones de creación, edición y eliminación están deshabilitadas para proteger los datos de producción.</span>
+                </div>
+            @endif
+        @endauth
         
         <!-- Sidebar Navigation (Menú Lateral Tabler) -->
         <aside class="navbar navbar-vertical navbar-expand-lg navbar-dark bg-dark">
@@ -209,6 +217,16 @@
             <!-- Cuerpo de Página -->
             <div class="page-body">
                 <div class="container-xl">
+                    @if(session('error'))
+                        <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-3" role="alert">
+                            <div class="d-flex align-items-center">
+                                <i class="ti ti-alert-triangle-filled fs-2 me-2"></i>
+                                <div class="fw-medium">{{ session('error') }}</div>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                        </div>
+                    @endif
+
                     @yield('content')
                 </div>
             </div>

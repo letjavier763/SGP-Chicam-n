@@ -45,8 +45,9 @@ Route::middleware(['auth', 'nocache'])->group(function () {
                                 ->first();
         $usuarios         = \App\Models\Usuario::where('activo', true)->orderBy('nombre_completo')->get();
         $familias         = \App\Models\Familia::where('activo', true)->orderBy('numero_familia')->get();
+        $departamentos    = \App\Models\Departamento::orderBy('nombre')->get();
         
-        return view('dashboard', compact('totalPacientes', 'llegadasHoy', 'alertasDuplicado', 'turnoHoy', 'usuarios', 'familias'));
+        return view('dashboard', compact('totalPacientes', 'llegadasHoy', 'alertasDuplicado', 'turnoHoy', 'usuarios', 'familias', 'departamentos'));
     })->name('dashboard');
 
     // Rutas para cascada de ubicaciones (AJAX)

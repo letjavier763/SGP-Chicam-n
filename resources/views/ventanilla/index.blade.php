@@ -146,7 +146,7 @@
                             <i class="ti ti-search text-primary fs-2"></i>
                         </span>
                         <input type="text" id="buscar_paciente" class="form-control form-control-lg pe-5 ps-5"
-                               placeholder="Nombre, DPI, expediente, No. registro…" autocomplete="off"
+                               placeholder="Nombre, DPI, expediente, # ficha…" autocomplete="off"
                                style="border-radius: 10px; font-size: 0.95rem; height: 46px;">
                         <span id="btn_clear_buscar" class="input-icon-addon pe-2" style="display: none; cursor: pointer; pointer-events: all;" title="Limpiar búsqueda">
                             <i class="ti ti-x text-muted fs-2"></i>
@@ -341,8 +341,12 @@
                     </div>
                     <div class="row g-3 mb-3">
                         <div class="col-md-4">
-                            <label class="form-label required" for="nv_nacimiento">Fecha Nacimiento</label>
-                            <input type="date" id="nv_nacimiento" name="fecha_nacimiento" class="form-control" required>
+                            <label class="form-label required d-flex justify-content-between align-items-center mb-1" for="nv_nacimiento">
+                                <span>Fecha Nacimiento</span>
+                                <span id="nv_edad_badge" class="badge bg-blue-subtle text-primary fw-medium" style="display:none; font-size:0.75rem;"></span>
+                            </label>
+                            <input type="date" id="nv_nacimiento" name="fecha_nacimiento" class="form-control" max="{{ date('Y-m-d') }}" value="{{ old('fecha_nacimiento') }}" required>
+                            <span id="nv_fecha_error" class="form-hint text-danger fw-bold mt-1" style="display:none;"></span>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label required" for="nv_sexo">Sexo</label>
@@ -387,16 +391,16 @@
                             <span id="nv_familia_status" class="form-hint fw-bold mt-1 d-block"></span>
                         </div>
                     </div>
-                    {{-- Datos del Registro Físico --}}
+                    {{-- Datos de Ficha / Expediente Físico --}}
                     <h6 class="text-secondary border-bottom pb-2 mb-3" style="font-size: 0.9rem;">
-                        Datos del Registro Físico
+                        Datos de Ficha / Expediente Físico
                     </h6>
                     <div class="row g-3 mb-3">
                         <div class="col-md-4">
-                            <label class="form-label" for="nv_numero_registro">No. de Registro</label>
+                            <label class="form-label" for="nv_numero_registro"># Ficha o Expediente</label>
                             <input type="text" id="nv_numero_registro" name="numero_registro" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="Ej: 1024">
                             <span id="msg-nv-numero-registro" class="form-hint fw-bold"></span>
-                            <span class="form-hint text-muted">Número del registro físico</span>
+                            <span class="form-hint text-muted">Número de ficha o expediente físico</span>
                         </div>
                         <div class="col-md-8">
                             <label class="form-label" for="nv_descripcion_registro">Descripción / Ubicación del Registro</label>
@@ -639,7 +643,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="ps-4 ms-2 small text-secondary mb-2" style="font-size: 0.78rem;">
                     <div class="d-flex flex-wrap align-items-center gap-1 mb-1">
                         <span>Exp: <strong>${p.numero_expediente_fisico}</strong></span>
-                        ${p.numero_registro ? '<span class="badge bg-purple-lt text-purple fw-bold px-1 py-0">Reg. #' + p.numero_registro + '</span>' : ''}
+                        ${p.numero_registro ? '<span class="badge bg-purple-lt text-purple fw-bold px-1 py-0">Ficha #' + p.numero_registro + '</span>' : ''}
                         ${p.dpi ? '<span class="text-muted">· DPI: ' + p.dpi + '</span>' : ''}
                     </div>
                     <div class="text-truncate">${famInfo}</div>
@@ -746,6 +750,108 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     setupCascadingUbicaciones('nv_id_depto', 'nv_id_muni', 'nv_id_comunidad', 'nv_new_comunidad_wrapper', 'nv_nueva_comunidad');
+
+    // ── Cálculo dinámico de edad y validación de fecha ──
+    function setupDateAndAgeHelper(inputId, badgeId, errorId) {
+        const inputEl = document.getElementById(inputId);
+        const badgeEl = document.getElementById(badgeId);
+        const errorEl = document.getElementById(errorId);
+
+        if (!inputEl) return;
+
+        function updateAge() {
+            const val = inputEl.value;
+            if (!val) {
+                if (badgeEl) {
+                    badgeEl.style.display = 'none';
+                    badgeEl.textContent = '';
+                }
+                if (errorEl) {
+                    errorEl.style.display = 'none';
+                    errorEl.textContent = '';
+                }
+                inputEl.classList.remove('is-invalid');
+                return true;
+            }
+
+            const parts = val.split('-');
+            if (parts.length !== 3) return false;
+
+            const y = parseInt(parts[0], 10);
+            const m = parseInt(parts[1], 10);
+            const d = parseInt(parts[2], 10);
+
+            const birthDate = new Date(y, m - 1, d);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (birthDate > today) {
+                if (errorEl) {
+                    errorEl.textContent = '⚠ La fecha de nacimiento no puede ser futura';
+                    errorEl.style.display = 'block';
+                }
+                inputEl.classList.add('is-invalid');
+                if (badgeEl) {
+                    badgeEl.style.display = 'none';
+                    badgeEl.textContent = '';
+                }
+                return false;
+            }
+
+            if (errorEl) {
+                errorEl.textContent = '';
+                errorEl.style.display = 'none';
+            }
+            inputEl.classList.remove('is-invalid');
+
+            let years = today.getFullYear() - birthDate.getFullYear();
+            let months = today.getMonth() - birthDate.getMonth();
+            let days = today.getDate() - birthDate.getDate();
+
+            if (days < 0) {
+                months--;
+                const prevMonthDays = new Date(today.getFullYear(), today.getMonth(), 0).getDate();
+                days += prevMonthDays;
+            }
+            if (months < 0) {
+                years--;
+                months += 12;
+            }
+
+            let ageText = '';
+            if (years >= 1) {
+                ageText = years === 1 ? '1 año' : `${years} años`;
+                if (years < 3 && months > 0) {
+                    ageText += ` con ${months} ${months === 1 ? 'mes' : 'meses'}`;
+                }
+            } else if (months >= 1) {
+                ageText = `${months} ${months === 1 ? 'mes' : 'meses'}`;
+                if (days > 0) {
+                    ageText += ` con ${days} ${days === 1 ? 'día' : 'días'}`;
+                }
+            } else {
+                ageText = days <= 1 ? 'Recién nacido' : `${days} días`;
+            }
+
+            if (badgeEl) {
+                badgeEl.textContent = 'Edad: ' + ageText;
+                badgeEl.style.display = 'inline-block';
+            }
+
+            return true;
+        }
+
+        inputEl.addEventListener('input', updateAge);
+        inputEl.addEventListener('change', updateAge);
+
+        // Pre-cargar si ya tiene valor
+        if (inputEl.value) {
+            updateAge();
+        }
+    }
+
+    setupDateAndAgeHelper('nv_nacimiento', 'nv_edad_badge', 'nv_fecha_error');
+
 
     // ── Modal Nuevo Paciente: autocompletado de familia 
     const nvNumFamInput  = document.getElementById('nv_numero_familia');
@@ -957,6 +1063,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (formNuevoPaciente) {
         formNuevoPaciente.addEventListener('submit', function (e) {
+            const hiddenNac = document.getElementById('nv_nacimiento');
+            const fechaErr = document.getElementById('nv_fecha_error');
+            if (hiddenNac && (!hiddenNac.value || (fechaErr && fechaErr.style.display !== 'none' && fechaErr.textContent))) {
+                e.preventDefault();
+                alert('Por favor verifique la fecha de nacimiento ingresada.');
+                hiddenNac.focus();
+                return false;
+            }
             if (nvDpiDuplicado) {
                 e.preventDefault();
                 alert('No se puede registrar: El DPI ingresado ya está asignado a otro registro.');
@@ -965,7 +1079,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             if (nvNumRegDuplicado) {
                 e.preventDefault();
-                alert('No se puede registrar: El No. de Registro ya está asignado a otro paciente.');
+                alert('No se puede registrar: El # de ficha o expediente ya está asignado a otro paciente.');
                 nvNumReg.focus();
                 return false;
             }

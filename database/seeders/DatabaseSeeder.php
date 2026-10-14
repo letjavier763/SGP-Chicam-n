@@ -54,6 +54,14 @@ class DatabaseSeeder extends Seeder
                 'ultimo_acceso'   => null,
                 'activo'          => true,
             ],
+            [
+                'id_rol'          => 1,
+                'nombre_completo' => 'Usuario Demostración',
+                'username'        => 'demo',
+                'password_hash'   => Hash::make('Demo@2026!'),
+                'ultimo_acceso'   => null,
+                'activo'          => true,
+            ],
         ]);
 
         // =============================================

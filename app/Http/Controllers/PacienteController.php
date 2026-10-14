@@ -198,7 +198,7 @@ class PacienteController extends Controller
                 ]);
 
                 return back()->withInput()->withErrors([
-                    'numero_registro' => 'El número de registro ' . $validated['numero_registro'] . ' ya está asignado al paciente ' . $regEnPaciente->nombres . ' ' . $regEnPaciente->apellidos . ' (Expediente: ' . $regEnPaciente->numero_expediente_fisico . ').'
+                    'numero_registro' => 'El # de ficha o expediente ' . $validated['numero_registro'] . ' ya está asignado al paciente ' . $regEnPaciente->nombres . ' ' . $regEnPaciente->apellidos . ' (Expediente: ' . $regEnPaciente->numero_expediente_fisico . ').'
                 ]);
             }
         }
@@ -221,8 +221,8 @@ class PacienteController extends Controller
         Bitacora::registrar(Auth::id(), 'crear', 'pacientes', $paciente->id_paciente,
             "{$paciente->nombres} {$paciente->apellidos} registrado.", $request->ip());
 
-        // Lógica especial si proviene del modal de Ventanilla
-        if ($request->has('desde_ventanilla') && $request->filled('turno_id')) {
+        // Lógica especial si proviene del modal de Ventanilla o Dashboard con llegada
+        if ($request->input('desde_ventanilla') == '1' && $request->filled('turno_id')) {
             $turnoId = $request->input('turno_id');
             
             $registro = \App\Models\RegistroLlegada::create([
@@ -329,7 +329,7 @@ class PacienteController extends Controller
                 ]);
 
                 return back()->withInput()->withErrors([
-                    'numero_registro' => 'El número de registro ' . $validated['numero_registro'] . ' ya pertenece a otro paciente: ' . $regEnPaciente->nombres . ' ' . $regEnPaciente->apellidos . ' (Expediente: ' . $regEnPaciente->numero_expediente_fisico . ').'
+                    'numero_registro' => 'El # de ficha o expediente ' . $validated['numero_registro'] . ' ya pertenece a otro paciente: ' . $regEnPaciente->nombres . ' ' . $regEnPaciente->apellidos . ' (Expediente: ' . $regEnPaciente->numero_expediente_fisico . ').'
                 ]);
             }
         }
@@ -415,7 +415,7 @@ class PacienteController extends Controller
             $pExistente = $pacienteQ->first();
             if ($pExistente) {
                 $isDuplicate = true;
-                $message = 'El No. de registro ya pertenece a ' . $pExistente->nombres . ' ' . $pExistente->apellidos . ' (Exp: ' . $pExistente->numero_expediente_fisico . ').';
+                $message = 'El # de ficha o expediente ya pertenece a ' . $pExistente->nombres . ' ' . $pExistente->apellidos . ' (Exp: ' . $pExistente->numero_expediente_fisico . ').';
             }
         }
 
