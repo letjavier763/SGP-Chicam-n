@@ -27,7 +27,7 @@ class DemoModeMiddleware
                     return $next($request);
                 }
 
-                $mensaje = '⚠️ Modo Demostración: Las acciones de creación, modificación y eliminación están deshabilitadas para proteger los datos reales de producción.';
+                $mensaje = 'Modo Demostración: Las acciones de creación, modificación y eliminación están deshabilitadas para proteger los datos reales de producción.';
 
                 // Si la petición es AJAX / API JSON
                 if ($request->expectsJson() || $request->ajax()) {
