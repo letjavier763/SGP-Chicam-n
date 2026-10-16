@@ -86,6 +86,16 @@ class PacienteController extends Controller
 
     public function store(Request $request)
     {
+        // Limpiar DPI y teléfono removiendo espacios, guiones o caracteres no numéricos
+        if ($request->has('dpi')) {
+            $cleanDpi = preg_replace('/\D/', '', (string) $request->input('dpi'));
+            $request->merge(['dpi' => $cleanDpi !== '' ? $cleanDpi : null]);
+        }
+        if ($request->has('telefono')) {
+            $cleanTel = preg_replace('/\D/', '', (string) $request->input('telefono'));
+            $request->merge(['telefono' => $cleanTel !== '' ? $cleanTel : null]);
+        }
+
         $validated = $request->validate([
             'nombres'                   => 'required|string|max:100',
             'apellidos'                 => 'required|string|max:100',
@@ -100,6 +110,9 @@ class PacienteController extends Controller
             'id_family'                 => 'nullable|integer',
             'numero_familia'            => 'nullable|string|max:50',
             'id_comunidad'              => 'nullable',
+        ], [
+            'dpi.digits'      => 'El campo DPI debe contener exactamente 13 dígitos numéricos.',
+            'telefono.digits' => 'El teléfono de contacto debe tener 8 dígitos numéricos.',
         ]);
 
         // Resolver la comunidad si es nueva
@@ -274,6 +287,16 @@ class PacienteController extends Controller
     {
         $paciente = Paciente::findOrFail($id);
 
+        // Limpiar DPI y teléfono removiendo espacios, guiones o caracteres no numéricos
+        if ($request->has('dpi')) {
+            $cleanDpi = preg_replace('/\D/', '', (string) $request->input('dpi'));
+            $request->merge(['dpi' => $cleanDpi !== '' ? $cleanDpi : null]);
+        }
+        if ($request->has('telefono')) {
+            $cleanTel = preg_replace('/\D/', '', (string) $request->input('telefono'));
+            $request->merge(['telefono' => $cleanTel !== '' ? $cleanTel : null]);
+        }
+
         $validated = $request->validate([
             'id_family'                 => 'required|exists:familias,id_family',
             'nombres'                   => 'required|string|max:100',
@@ -286,6 +309,9 @@ class PacienteController extends Controller
             'fecha_nacimiento'          => 'required|date|before_or_equal:today',
             'sexo'                      => 'required|in:M,F',
             'telefono'                  => 'nullable|string|digits:8',
+        ], [
+            'dpi.digits'      => 'El campo DPI debe contener exactamente 13 dígitos numéricos.',
+            'telefono.digits' => 'El teléfono de contacto debe tener 8 dígitos numéricos.',
         ]);
 
         $familia = Familia::findOrFail($validated['id_family']);
@@ -382,6 +408,19 @@ class PacienteController extends Controller
         $message = '';
 
         if ($tipo === 'dpi') {
+            $valor = preg_replace('/\D/', '', (string) $valor);
+            if ($valor === '') {
+                return response()->json(['duplicate' => false, 'message' => '']);
+            }
+            if (strlen($valor) !== 13) {
+                return response()->json([
+                    'duplicate'  => false,
+                    'incomplete' => true,
+                    'length'     => strlen($valor),
+                    'clean_val'  => $valor,
+                    'message'    => 'El DPI debe tener 13 dígitos (' . strlen($valor) . ' de 13 ingresados).'
+                ]);
+            }
             $pacienteQ = Paciente::where('dpi', $valor);
             if ($ignoreId) {
                 $pacienteQ->where('id_paciente', '!=', $ignoreId);
@@ -398,6 +437,12 @@ class PacienteController extends Controller
                     $message = 'El DPI pertenece al cabeza de familia ' . $fExistente->apellido_cabeza . ' (Fam. #' . $fExistente->numero_familia . ').';
                 }
             }
+            return response()->json([
+                'duplicate'  => $isDuplicate,
+                'incomplete' => false,
+                'clean_val'  => $valor,
+                'message'    => $message
+            ]);
         } elseif ($tipo === 'numero_familia') {
             $famQ = Familia::where('numero_familia', $valor);
             if ($ignoreId) {
@@ -534,6 +579,17 @@ class PacienteController extends Controller
      */
     public function importarLote(Request $request): JsonResponse
     {
+        if ($request->has('pacientes') && is_array($request->input('pacientes'))) {
+            $pacientesData = $request->input('pacientes');
+            foreach ($pacientesData as $k => $p) {
+                if (isset($p['dpi'])) {
+                    $cleanDpi = preg_replace('/\D/', '', (string) $p['dpi']);
+                    $pacientesData[$k]['dpi'] = $cleanDpi !== '' ? $cleanDpi : null;
+                }
+            }
+            $request->merge(['pacientes' => $pacientesData]);
+        }
+
         $validated = $request->validate([
             'pacientes'                      => 'required|array|min:1',
             'pacientes.*.nombres'            => 'required|string|max:100',
@@ -546,6 +602,8 @@ class PacienteController extends Controller
             'pacientes.*.id_comunidad'       => 'nullable',
             'pacientes.*.numero_expediente'  => 'nullable|string|max:50',
             'pacientes.*.parentesco'         => 'nullable|string|max:50',
+        ], [
+            'pacientes.*.dpi.digits' => 'El DPI de cada paciente debe tener 13 dígitos numéricos.',
         ]);
 
         $guardados = 0;

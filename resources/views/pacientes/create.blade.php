@@ -76,7 +76,7 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label" for="dpi">DPI (Opcional - 13 dígitos)</label>
-                            <input type="text" id="dpi" name="dpi" class="form-control" value="{{ old('dpi') }}" inputmode="numeric" pattern="[0-9]*" maxlength="13" placeholder="Ej: 1987654320101">
+                            <input type="text" id="dpi" name="dpi" class="form-control" value="{{ old('dpi') }}" inputmode="numeric" maxlength="17" placeholder="Ej: 1987654320101 (13 dígitos)">
                             <span id="msg-dup-dpi" class="form-hint fw-bold"></span>
                         </div>
                     </div>
@@ -133,21 +133,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let regDuplicado = false;
 
     if (dpiInput && msgDpiEl) {
-        dpiInput.addEventListener('input', function() {
-            dpiDuplicado = false;
-            dpiInput.classList.remove('is-invalid');
-            msgDpiEl.textContent = '';
-        });
-
-        dpiInput.addEventListener('blur', function () {
-            const val = this.value.trim();
-            if (!val) {
-                msgDpiEl.textContent = '';
-                dpiDuplicado = false;
-                dpiInput.classList.remove('is-invalid');
-                return;
-            }
-
+        function verificarDpi(val) {
             fetch(`/pacientes/verificar-duplicado?tipo=dpi&valor=${encodeURIComponent(val)}`)
                 .then(res => res.json())
                 .then(data => {
@@ -156,14 +142,69 @@ document.addEventListener('DOMContentLoaded', function () {
                         dpiInput.classList.add('is-invalid');
                         msgDpiEl.className = 'form-hint text-danger fw-bold';
                         msgDpiEl.textContent = '⚠ ' + data.message;
+                    } else if (data.incomplete) {
+                        dpiDuplicado = false;
+                        dpiInput.classList.add('is-invalid');
+                        msgDpiEl.className = 'form-hint text-warning fw-bold';
+                        msgDpiEl.textContent = '⚠ ' + data.message;
                     } else {
                         dpiDuplicado = false;
                         dpiInput.classList.remove('is-invalid');
                         msgDpiEl.className = 'form-hint text-success fw-bold';
-                        msgDpiEl.textContent = '✓ Disponible';
+                        msgDpiEl.textContent = '✓ DPI válido (13 dígitos) y disponible';
                     }
+                })
+                .catch(() => {
+                    dpiDuplicado = false;
                 });
+        }
+
+        dpiInput.addEventListener('input', function() {
+            let clean = this.value.replace(/\D/g, '');
+            if (clean.length > 13) clean = clean.slice(0, 13);
+            if (this.value !== clean) {
+                this.value = clean;
+            }
+
+            dpiDuplicado = false;
+            dpiInput.classList.remove('is-invalid');
+
+            if (!clean) {
+                msgDpiEl.textContent = '';
+                return;
+            }
+
+            if (clean.length < 13) {
+                msgDpiEl.className = 'form-hint text-warning fw-bold';
+                msgDpiEl.textContent = `⚠ Incompleto: ${clean.length} de 13 dígitos`;
+            } else if (clean.length === 13) {
+                msgDpiEl.className = 'form-hint text-muted';
+                msgDpiEl.textContent = 'Verificando DPI...';
+                verificarDpi(clean);
+            }
         });
+
+        dpiInput.addEventListener('blur', function () {
+            let val = this.value.replace(/\D/g, '').trim();
+            if (this.value !== val) this.value = val;
+            if (!val) {
+                msgDpiEl.textContent = '';
+                dpiDuplicado = false;
+                dpiInput.classList.remove('is-invalid');
+                return;
+            }
+            if (val.length !== 13) {
+                dpiInput.classList.add('is-invalid');
+                msgDpiEl.className = 'form-hint text-danger fw-bold';
+                msgDpiEl.textContent = `⚠ El DPI debe tener exactamente 13 dígitos (${val.length} de 13 ingresados).`;
+                return;
+            }
+            verificarDpi(val);
+        });
+
+        if (dpiInput.value) {
+            dpiInput.dispatchEvent(new Event('input'));
+        }
     }
 
     if (regInput && msgRegEl) {
@@ -202,6 +243,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (form) {
         form.addEventListener('submit', function (e) {
+            if (dpiInput) {
+                const dpiVal = dpiInput.value.replace(/\D/g, '').trim();
+                if (dpiVal.length > 0 && dpiVal.length !== 13) {
+                    e.preventDefault();
+                    alert(`El DPI ingresado está incompleto (${dpiVal.length} de 13 dígitos). Debe tener exactamente 13 dígitos numéricos o dejarse vacío.`);
+                    dpiInput.focus();
+                    return false;
+                }
+            }
             if (dpiDuplicado) {
                 e.preventDefault();
                 alert('No se puede guardar: El DPI ya está registrado en el sistema.');

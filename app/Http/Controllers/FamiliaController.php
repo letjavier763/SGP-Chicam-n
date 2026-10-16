@@ -50,12 +50,19 @@ class FamiliaController extends Controller
 
     public function store(Request $request)
     {
+        if ($request->has('dpi')) {
+            $cleanDpi = preg_replace('/\D/', '', (string) $request->input('dpi'));
+            $request->merge(['dpi' => $cleanDpi !== '' ? $cleanDpi : null]);
+        }
+
         $validated = $request->validate([
             'id_comunidad'     => 'required',
             'numero_familia'   => 'required|string|max:20',
             'apellido_cabeza'  => 'required|string|max:100',
             'dpi'              => 'nullable|string|digits:13',
             'fecha_nacimiento' => 'nullable|date',
+        ], [
+            'dpi.digits' => 'El campo DPI debe contener exactamente 13 dígitos numéricos.',
         ]);
 
         // Resolver la comunidad si es nueva
@@ -159,12 +166,19 @@ class FamiliaController extends Controller
     {
         $familia = Familia::findOrFail($id);
 
+        if ($request->has('dpi')) {
+            $cleanDpi = preg_replace('/\D/', '', (string) $request->input('dpi'));
+            $request->merge(['dpi' => $cleanDpi !== '' ? $cleanDpi : null]);
+        }
+
         $validated = $request->validate([
             'id_comunidad'     => 'required',
             'numero_familia'   => 'required|string|max:20|unique:familias,numero_familia,' . $id . ',id_family',
             'apellido_cabeza'  => 'required|string|max:100',
             'dpi'              => 'nullable|string|digits:13',
             'fecha_nacimiento' => 'nullable|date',
+        ], [
+            'dpi.digits' => 'El campo DPI debe contener exactamente 13 dígitos numéricos.',
         ]);
 
         // Resolver la comunidad si es nueva

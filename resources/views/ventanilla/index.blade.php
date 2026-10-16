@@ -332,11 +332,11 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label required" for="nv_nombres">Nombres</label>
-                            <input type="text" id="nv_nombres" name="nombres" class="form-control" required placeholder="Ej: María Mercedes">
+                            <input type="text" id="nv_nombres" name="nombres" class="form-control" required placeholder="Ej: María Mercedes" value="{{ old('nombres') }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label required" for="nv_apellidos">Apellidos</label>
-                            <input type="text" id="nv_apellidos" name="apellidos" class="form-control" required placeholder="Ej: Gómez Pérez">
+                            <input type="text" id="nv_apellidos" name="apellidos" class="form-control" required placeholder="Ej: Gómez Pérez" value="{{ old('apellidos') }}">
                         </div>
                     </div>
                     <div class="row g-3 mb-3">
@@ -352,35 +352,35 @@
                             <label class="form-label required" for="nv_sexo">Sexo</label>
                             <select id="nv_sexo" name="sexo" class="form-select" required>
                                 <option value="">-- Seleccionar --</option>
-                                <option value="M">Masculino (M)</option>
-                                <option value="F">Femenino (F)</option>
+                                <option value="M" {{ old('sexo') === 'M' ? 'selected' : '' }}>Masculino (M)</option>
+                                <option value="F" {{ old('sexo') === 'F' ? 'selected' : '' }}>Femenino (F)</option>
                             </select>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label" for="nv_dpi">DPI (13 dígitos)</label>
-                            <input type="text" id="nv_dpi" name="dpi" class="form-control" inputmode="numeric" pattern="[0-9]*" maxlength="13" placeholder="Ej: 1987654320101">
+                            <input type="text" id="nv_dpi" name="dpi" class="form-control" inputmode="numeric" maxlength="17" placeholder="Ej: 1987654320101 (13 dígitos)" value="{{ old('dpi') }}">
                             <span id="msg-nv-dpi" class="form-hint fw-bold"></span>
                         </div>
                     </div>
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label" for="nv_telefono">Teléfono</label>
-                            <input type="text" id="nv_telefono" name="telefono" class="form-control" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="Ej: 55551234">
+                            <input type="text" id="nv_telefono" name="telefono" class="form-control" inputmode="numeric" maxlength="12" placeholder="Ej: 55551234" value="{{ old('telefono') }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label" for="nv_direccion">Dirección</label>
-                            <input type="text" id="nv_direccion" name="direccion" class="form-control" maxlength="255" placeholder="Ej: Caserío El Centro, Sector 2">
+                            <input type="text" id="nv_direccion" name="direccion" class="form-control" maxlength="255" placeholder="Ej: Caserío El Centro, Sector 2" value="{{ old('direccion') }}">
                         </div>
                     </div>
                     <div class="row g-3 mb-3">
                         <div class="col-12">
                             <label class="form-label required" for="nv_numero_familia">Número de Familia</label>
                             {{-- Campo oculto para id si la familia existe --}}
-                            <input type="hidden" id="nv_id_family" name="id_family">
+                            <input type="hidden" id="nv_id_family" name="id_family" value="{{ old('id_family') }}">
                             <div class="position-relative">
                                 <input type="text" id="nv_numero_familia" name="numero_familia"
                                        class="form-control" inputmode="numeric" pattern="[0-9]*" required autocomplete="off"
-                                       placeholder="Ej: 115 (existente o nuevo)">
+                                       placeholder="Ej: 115 (existente o nuevo)" value="{{ old('numero_familia') }}">
                                 <div id="nv_familia_suggestions"
                                      style="display:none; position:absolute; top:100%; left:0; right:0;
                                             z-index:1080; background:#fff; border:1px solid #cbd5e1;
@@ -398,13 +398,13 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-4">
                             <label class="form-label" for="nv_numero_registro"># Ficha o Expediente</label>
-                            <input type="text" id="nv_numero_registro" name="numero_registro" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="Ej: 1024">
+                            <input type="text" id="nv_numero_registro" name="numero_registro" class="form-control" inputmode="numeric" pattern="[0-9]*" placeholder="Ej: 1024" value="{{ old('numero_registro') }}">
                             <span id="msg-nv-numero-registro" class="form-hint fw-bold"></span>
                             <span class="form-hint text-muted">Número de ficha o expediente físico</span>
                         </div>
                         <div class="col-md-8">
                             <label class="form-label" for="nv_descripcion_registro">Descripción / Ubicación del Registro</label>
-                            <textarea id="nv_descripcion_registro" name="descripcion_registro" class="form-control auto-expand-textarea" rows="1" maxlength="150" placeholder="Ej: Archivero 3, Cajón B, Folder amarillo"></textarea>
+                            <textarea id="nv_descripcion_registro" name="descripcion_registro" class="form-control auto-expand-textarea" rows="1" maxlength="150" placeholder="Ej: Archivero 3, Cajón B, Folder amarillo">{{ old('descripcion_registro') }}</textarea>
                             <span class="form-hint">Máx. 150 caracteres</span>
                         </div>
                     </div>
@@ -992,22 +992,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let nvNumRegDuplicado = false;
 
     if (nvDpi && nvDpiMsg) {
-        nvDpi.addEventListener('input', function() {
-            if (nvDpiDuplicado) {
-                nvDpiDuplicado = false;
-                nvDpi.classList.remove('is-invalid');
-                nvDpiMsg.textContent = '';
-            }
-        });
-
-        nvDpi.addEventListener('blur', function () {
-            const val = this.value.trim();
-            if (!val) { 
-                nvDpiMsg.textContent = ''; 
-                nvDpiDuplicado = false;
-                nvDpi.classList.remove('is-invalid');
-                return; 
-            }
+        function verificarDpi(val) {
             fetch(`/pacientes/verificar-duplicado?tipo=dpi&valor=${encodeURIComponent(val)}`)
                 .then(r => r.json())
                 .then(data => {
@@ -1016,14 +1001,71 @@ document.addEventListener('DOMContentLoaded', function () {
                         nvDpi.classList.add('is-invalid');
                         nvDpiMsg.className = 'form-hint text-danger fw-bold';
                         nvDpiMsg.textContent = '⚠ ' + data.message;
+                    } else if (data.incomplete) {
+                        nvDpiDuplicado = false;
+                        nvDpi.classList.add('is-invalid');
+                        nvDpiMsg.className = 'form-hint text-warning fw-bold';
+                        nvDpiMsg.textContent = '⚠ ' + data.message;
                     } else {
                         nvDpiDuplicado = false;
                         nvDpi.classList.remove('is-invalid');
                         nvDpiMsg.className = 'form-hint text-success fw-bold';
-                        nvDpiMsg.textContent = '✓ Disponible';
+                        nvDpiMsg.textContent = '✓ DPI válido (13 dígitos) y disponible';
                     }
+                })
+                .catch(() => {
+                    nvDpiDuplicado = false;
                 });
+        }
+
+        nvDpi.addEventListener('input', function() {
+            // Limpiar automáticamente espacios, guiones y cualquier carácter no numérico
+            let clean = this.value.replace(/\D/g, '');
+            if (clean.length > 13) clean = clean.slice(0, 13);
+            if (this.value !== clean) {
+                this.value = clean;
+            }
+
+            nvDpiDuplicado = false;
+            nvDpi.classList.remove('is-invalid');
+
+            if (!clean) {
+                nvDpiMsg.textContent = '';
+                return;
+            }
+
+            if (clean.length < 13) {
+                nvDpiMsg.className = 'form-hint text-warning fw-bold';
+                nvDpiMsg.textContent = `⚠ Incompleto: ${clean.length} de 13 dígitos`;
+            } else if (clean.length === 13) {
+                nvDpiMsg.className = 'form-hint text-muted';
+                nvDpiMsg.textContent = 'Verificando DPI...';
+                verificarDpi(clean);
+            }
         });
+
+        nvDpi.addEventListener('blur', function () {
+            let val = this.value.replace(/\D/g, '').trim();
+            if (this.value !== val) this.value = val;
+            if (!val) { 
+                nvDpiMsg.textContent = ''; 
+                nvDpiDuplicado = false;
+                nvDpi.classList.remove('is-invalid');
+                return; 
+            }
+            if (val.length !== 13) {
+                nvDpi.classList.add('is-invalid');
+                nvDpiMsg.className = 'form-hint text-danger fw-bold';
+                nvDpiMsg.textContent = `⚠ El DPI debe tener exactamente 13 dígitos (${val.length} de 13 ingresados).`;
+                return;
+            }
+            verificarDpi(val);
+        });
+
+        // Si ya viene con valor (ej. después de error de validación)
+        if (nvDpi.value) {
+            nvDpi.dispatchEvent(new Event('input'));
+        }
     }
 
     if (nvNumReg && nvNumRegMsg) {
@@ -1071,6 +1113,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 hiddenNac.focus();
                 return false;
             }
+            if (nvDpi) {
+                const dpiVal = nvDpi.value.replace(/\D/g, '').trim();
+                if (dpiVal.length > 0 && dpiVal.length !== 13) {
+                    e.preventDefault();
+                    alert(`El DPI ingresado está incompleto (${dpiVal.length} de 13 dígitos). Debe tener exactamente 13 dígitos numéricos o dejarse vacío si el paciente no tiene DPI.`);
+                    nvDpi.focus();
+                    return false;
+                }
+            }
             if (nvDpiDuplicado) {
                 e.preventDefault();
                 alert('No se puede registrar: El DPI ingresado ya está asignado a otro registro.');
@@ -1086,12 +1137,14 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    @if($errors->any() && old('desde_ventanilla'))
-    const modalNvEl = document.getElementById('modalNuevoPaciente');
-    if (modalNvEl) {
-        const modalNv = new bootstrap.Modal(modalNvEl);
-        modalNv.show();
-    }
+    @if($errors->any() && (old('desde_ventanilla') || session('desde_ventanilla')))
+    setTimeout(function () {
+        const modalNvEl = document.getElementById('modalNuevoPaciente');
+        if (modalNvEl && typeof bootstrap !== 'undefined') {
+            const modalNv = bootstrap.Modal.getOrCreateInstance(modalNvEl);
+            modalNv.show();
+        }
+    }, 150);
     @endif
 });
 
