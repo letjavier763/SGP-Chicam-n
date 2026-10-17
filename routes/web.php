@@ -115,6 +115,10 @@ Route::middleware(['auth', 'nocache'])->group(function () {
         Route::get('/exportar/alertas-duplicidad',    [ReporteController::class, 'exportAlertasDuplicidad'])->name('exportar.alertas-duplicidad');
         Route::get('/exportar/actividad-personal',    [ReporteController::class, 'exportActividadPersonal'])->name('exportar.actividad-personal');
         Route::get('/exportar/resumen-mensual',       [ReporteController::class, 'exportResumenMensual'])->name('exportar.resumen-mensual');
+
+        // ── Reporte interactivo y exportable: Personas por Comunidad ────
+        Route::get('/por-comunidad',                  [ReporteController::class, 'porComunidad'])->name('por-comunidad');
+        Route::get('/exportar/por-comunidad',         [ReporteController::class, 'exportPorComunidad'])->name('exportar.por-comunidad');
     });
 
     // ---------------------------------------------------------------

@@ -7,6 +7,7 @@ use App\Models\RegistroLlegada;
 use App\Models\ReporteDiario;
 use App\Models\Paciente;
 use App\Models\Familia;
+use App\Models\Comunidad;
 use App\Models\AlertaDuplicado;
 use App\Models\Usuario;
 use Illuminate\Http\Request;
@@ -440,6 +441,111 @@ class ReporteController extends Controller
         ]);
 
         return $this->generarPdfGenerico($titulo, $subtitulo, $columnas, $filas, 'resumen-mensual-' . $mes);
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // REPORTE 11: Personas por Comunidad (Seleccionable e interactivo)
+    // ══════════════════════════════════════════════════════════
+    public function porComunidad(Request $request)
+    {
+        $idComunidad = $request->get('id_comunidad');
+        $sexo        = $request->get('sexo');
+        $buscar      = $request->get('buscar');
+
+        // Comunidades con conteo de familias y pacientes activos
+        $comunidades = Comunidad::withCount([
+            'familias as total_familias',
+            'pacientes as total_pacientes' => function ($query) {
+                $query->where('pacientes.activo', true);
+            }
+        ])
+        ->orderBy('nombre')
+        ->get();
+
+        $query = Paciente::with(['familia.comunidad'])
+            ->where('activo', true);
+
+        if (!empty($idComunidad)) {
+            $query->whereHas('familia', function ($q) use ($idComunidad) {
+                $q->where('id_comunidad', $idComunidad);
+            });
+        }
+
+        if (!empty($sexo)) {
+            $query->where('sexo', $sexo);
+        }
+
+        if (!empty($buscar)) {
+            $term = trim($buscar);
+            $query->where(function ($q) use ($term) {
+                $q->where('nombres', 'ilike', "%{$term}%")
+                  ->orWhere('apellidos', 'ilike', "%{$term}%")
+                  ->orWhere('numero_expediente_fisico', 'ilike', "%{$term}%")
+                  ->orWhere('dpi', 'ilike', "%{$term}%")
+                  ->orWhere('direccion', 'ilike', "%{$term}%");
+            });
+        }
+
+        // Estadísticas sobre el conjunto filtrado antes de paginar
+        $statsQuery = clone $query;
+        $totalPersonas = (clone $statsQuery)->count();
+        $hombres       = (clone $statsQuery)->where('sexo', 'M')->count();
+        $mujeres       = (clone $statsQuery)->where('sexo', 'F')->count();
+        $totalFamilias = (clone $statsQuery)->distinct('id_family')->count('id_family');
+
+        $pacientes = $query->orderBy('numero_expediente_fisico')->paginate(25)->withQueryString();
+
+        $comunidadSeleccionada = !empty($idComunidad) ? Comunidad::find($idComunidad) : null;
+
+        return view('reportes.por_comunidad', compact(
+            'comunidades', 'pacientes', 'idComunidad', 'sexo', 'buscar',
+            'totalPersonas', 'hombres', 'mujeres', 'totalFamilias', 'comunidadSeleccionada'
+        ));
+    }
+
+    public function exportPorComunidad(Request $request)
+    {
+        $idComunidad = $request->get('id_comunidad');
+        $sexo        = $request->get('sexo');
+
+        $query = Paciente::with(['familia.comunidad'])->where('activo', true);
+
+        $nombreComunidad = 'Todas las Comunidades';
+        if (!empty($idComunidad)) {
+            $com = Comunidad::find($idComunidad);
+            if ($com) {
+                $nombreComunidad = $com->nombre;
+            }
+            $query->whereHas('familia', function ($q) use ($idComunidad) {
+                $q->where('id_comunidad', $idComunidad);
+            });
+        }
+
+        if (!empty($sexo)) {
+            $query->where('sexo', $sexo);
+        }
+
+        $pacientes = $query->orderBy('numero_expediente_fisico')->get();
+
+        $titulo = 'Reporte de Personas por Comunidad';
+        $subtitulo = "Comunidad: {$nombreComunidad}" . ($sexo ? " · Sexo: {$sexo}" : '') . " · Total: {$pacientes->count()} personas";
+        $columnas = ['No. Exp.', 'Nombres y Apellidos', 'DPI', 'Sexo', 'F. Nac.', 'Edad', 'Comunidad', 'Dirección'];
+
+        $filas = $pacientes->map(function ($p) {
+            $edad = $p->fecha_nacimiento ? $p->fecha_nacimiento->age . ' años' : '—';
+            return [
+                $p->numero_expediente_fisico ?? '—',
+                $p->nombres . ' ' . $p->apellidos,
+                $p->dpi ?? '—',
+                $p->sexo === 'F' ? 'Femenino' : 'Masculino',
+                $p->fecha_nacimiento ? $p->fecha_nacimiento->format('d/m/Y') : '—',
+                $edad,
+                $p->familia?->comunidad?->nombre ?? 'Sin comunidad',
+                $p->direccion ?? '—',
+            ];
+        });
+
+        return $this->generarPdfGenerico($titulo, $subtitulo, $columnas, $filas, 'personas-por-comunidad', 'landscape');
     }
 
     // ══════════════════════════════════════════════════════════

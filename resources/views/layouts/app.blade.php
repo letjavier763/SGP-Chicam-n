@@ -115,8 +115,11 @@
                                         <span class="nav-link-title">Reportería</span>
                                     </a>
                                     <div class="dropdown-menu {{ Request::routeIs('reportes.*') ? 'show' : '' }}">
-                                        <a class="dropdown-item {{ Request::routeIs('reportes.*') ? 'active' : '' }}" href="{{ route('reportes.index') }}">
+                                        <a class="dropdown-item {{ Request::routeIs('reportes.index') ? 'active' : '' }}" href="{{ route('reportes.index') }}">
                                             <i class="ti ti-file-analytics me-2"></i> Estadísticas y Reportes
+                                        </a>
+                                        <a class="dropdown-item {{ Request::routeIs('reportes.por-comunidad') ? 'active' : '' }}" href="{{ route('reportes.por-comunidad') }}">
+                                            <i class="ti ti-map-pins me-2"></i> Personas por Comunidad
                                         </a>
                                     </div>
                                 </li>

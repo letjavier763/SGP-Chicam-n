@@ -21,4 +21,16 @@ class Comunidad extends Model
     {
         return $this->hasMany(Familia::class, 'id_comunidad', 'id_comunidad');
     }
+
+    public function pacientes()
+    {
+        return $this->hasManyThrough(
+            Paciente::class,
+            Familia::class,
+            'id_comunidad', // Foreign key on familias table...
+            'id_family',    // Foreign key on pacientes table...
+            'id_comunidad', // Local key on comunidades table...
+            'id_family'     // Local key on familias table...
+        );
+    }
 }

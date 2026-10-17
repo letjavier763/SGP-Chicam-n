@@ -326,6 +326,18 @@ $reportes = [
         'desc'      => 'Consolidado mensual con desglose por días y turnos.',
         'ruta'      => 'reportes.exportar.resumen-mensual',
     ],
+    [
+        'num'       => '11',
+        'cat'       => 'pacientes',
+        'cat_label' => 'Pacientes',
+        'icon'      => 'ti-map-pins',
+        'color'     => '#0284c7',
+        'bg_color'  => '#e0f2fe',
+        'titulo'    => 'Personas por Comunidad',
+        'desc'      => 'Censo interactivo y seleccionable por comunidad o aldea.',
+        'ruta'      => 'reportes.exportar.por-comunidad',
+        'ruta_ver'  => 'reportes.por-comunidad',
+    ],
 ];
 @endphp
 
@@ -636,6 +648,14 @@ $reportes = [
                     </p>
 
                     <div class="d-flex gap-1.5 pt-1 border-top">
+                        @if(isset($r['ruta_ver']))
+                        <a href="{{ route($r['ruta_ver']) }}"
+                           class="btn btn-sm btn-outline-info flex-fill d-inline-flex align-items-center justify-content-center py-1.5"
+                           style="border-radius: 6px; font-weight: 600; font-size: 0.78rem;"
+                           title="Abrir censo interactivo con filtros">
+                            <i class="ti ti-table me-1"></i> Filtrar
+                        </a>
+                        @endif
                         <button type="button"
                                 class="btn btn-sm btn-outline-primary flex-fill btn-preview-pdf d-inline-flex align-items-center justify-content-center py-1.5"
                                 data-preview-url="{{ route($r['ruta'], ['fecha_desde' => $fechaDesde, 'fecha_hasta' => $fechaHasta, 'preview' => 1]) }}"
@@ -679,6 +699,14 @@ $reportes = [
                     </div>
                 </div>
                 <div class="d-flex gap-1.5 pt-1.5 border-top">
+                    @if(isset($r['ruta_ver']))
+                    <a href="{{ route($r['ruta_ver']) }}"
+                       class="btn btn-sm btn-outline-info flex-fill d-inline-flex align-items-center justify-content-center py-1"
+                       style="height: 32px; border-radius: 6px; font-weight: 600; font-size: 0.76rem;"
+                       title="Abrir censo con filtros">
+                        <i class="ti ti-table me-1"></i>Ver
+                    </a>
+                    @endif
                     <button type="button"
                             class="btn btn-sm btn-outline-primary flex-fill btn-preview-pdf d-inline-flex align-items-center justify-content-center py-1"
                             data-preview-url="{{ route($r['ruta'], ['fecha_desde' => $fechaDesde, 'fecha_hasta' => $fechaHasta, 'preview' => 1]) }}"
