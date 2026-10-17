@@ -62,10 +62,72 @@ class ReporteController extends Controller
             ->paginate(15)
             ->withQueryString();
 
+        // ── 2. Métricas del Censo y Padrón Poblacional (fuera de ventanilla / histórico) ──
+        $totalCensoPacientes = Paciente::where('activo', true)->count();
+        $totalCensoFamilias  = Familia::where('activo', true)->count();
+        $totalComunidadesActivas = Comunidad::whereHas('familias.pacientes', function ($q) {
+            $q->where('activo', true);
+        })->count();
+
+        $censoSinVentanilla = Paciente::where('activo', true)->doesntHave('registrosLlegada')->count();
+        $censoConVentanilla = $totalCensoPacientes - $censoSinVentanilla;
+
+        $censoMujeres = Paciente::where('activo', true)->where('sexo', 'F')->count();
+        $censoHombres = Paciente::where('activo', true)->where('sexo', 'M')->count();
+
+        // Top 8 Comunidades con más personas censadas
+        $censoComunidades = Comunidad::join('familias', 'comunidades.id_comunidad', '=', 'familias.id_comunidad')
+            ->join('pacientes', 'familias.id_family', '=', 'pacientes.id_family')
+            ->where('pacientes.activo', true)
+            ->select('comunidades.nombre', DB::raw('COUNT(pacientes.id_paciente) as total'))
+            ->groupBy('comunidades.id_comunidad', 'comunidades.nombre')
+            ->orderByRaw('COUNT(pacientes.id_paciente) DESC')
+            ->limit(8)
+            ->get();
+
+        // Pirámide de grupos de edad de la población
+        $gruposEdad = [
+            '0-5 años'   => 0,
+            '6-12 años'  => 0,
+            '13-17 años' => 0,
+            '18-35 años' => 0,
+            '36-59 años' => 0,
+            '60+ años'   => 0,
+        ];
+        $sinFecha = 0;
+        $edadesPacientes = Paciente::where('activo', true)->select('fecha_nacimiento')->get();
+        foreach ($edadesPacientes as $p) {
+            if (!$p->fecha_nacimiento) {
+                $sinFecha++;
+                continue;
+            }
+            $edad = $p->fecha_nacimiento->age;
+            if ($edad <= 5) {
+                $gruposEdad['0-5 años']++;
+            } elseif ($edad <= 12) {
+                $gruposEdad['6-12 años']++;
+            } elseif ($edad <= 17) {
+                $gruposEdad['13-17 años']++;
+            } elseif ($edad <= 35) {
+                $gruposEdad['18-35 años']++;
+            } elseif ($edad <= 59) {
+                $gruposEdad['36-59 años']++;
+            } else {
+                $gruposEdad['60+ años']++;
+            }
+        }
+        if ($sinFecha > 0) {
+            $gruposEdad['Sin fecha'] = $sinFecha;
+        }
+
         return view('reportes.index', compact(
             'fechaDesde', 'fechaHasta',
             'totalLlegadas', 'totalNuevos', 'totalRecurrentes',
-            'llegadasPorDia', 'porSexo', 'turnos'
+            'llegadasPorDia', 'porSexo', 'turnos',
+            'totalCensoPacientes', 'totalCensoFamilias', 'totalComunidadesActivas',
+            'censoSinVentanilla', 'censoConVentanilla',
+            'censoMujeres', 'censoHombres',
+            'censoComunidades', 'gruposEdad'
         ));
     }
 

@@ -437,150 +437,379 @@ $reportes = [
 </div>
 
 {{-- ══════════════════════════════════════════════════════════════
-     PESTAÑA 1: MÉTRICAS & GRÁFICAS
+     PESTAÑA 1: MÉTRICAS & GRÁFICAS (CENSO Y VENTANILLA)
      ══════════════════════════════════════════════════════════════ --}}
 <div id="tab-resumen" class="reportes-tab-pane">
-    {{-- Tarjetas de Métricas (2x2 en móvil, 4 columnas en desktop) --}}
-    <div class="row g-2 mb-3">
-        {{-- Total Llegadas --}}
-        <div class="col-6 col-md-3">
-            <div class="card h-100 p-2.5 stat-metric-card">
-                <div class="d-flex align-items-center justify-content-between mb-1">
-                    <span class="text-secondary small fw-semibold" style="font-size: 0.72rem;">Llegadas</span>
-                    <div class="avatar avatar-xs rounded-circle" style="width: 28px; height: 28px; background: #e0f2fe; color: #0284c7;">
-                        <i class="ti ti-calendar-stats fs-3"></i>
-                    </div>
+
+    {{-- Control de Sub-Vistas (Todo / Censo Poblacional / Flujo Ventanilla) --}}
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-1 border-bottom">
+        <div>
+            <div class="fw-bold text-dark d-flex align-items-center gap-1.5" style="font-size: 0.9rem;">
+                <i class="ti ti-chart-dots text-primary fs-3"></i>
+                <span>Tablero Estadístico de Salud</span>
+            </div>
+            <span class="text-secondary small" style="font-size: 0.73rem;">
+                Visualice tanto el padrón general censado como las atenciones registradas en ventanilla
+            </span>
+        </div>
+        <div class="btn-group btn-group-sm p-0.5 rounded-pill bg-light border shadow-none" role="group" id="filtro-vista-metricas">
+            <button type="button" class="btn btn-sm rounded-pill btn-primary px-3 py-1 fw-semibold active" data-vista="todas" style="font-size: 0.74rem;">
+                <i class="ti ti-layout-grid me-1"></i> Todo
+            </button>
+            <button type="button" class="btn btn-sm rounded-pill btn-ghost-secondary px-3 py-1 fw-semibold text-secondary" data-vista="censo" style="font-size: 0.74rem;">
+                <i class="ti ti-users-group me-1"></i> Censo y Padrón
+            </button>
+            <button type="button" class="btn btn-sm rounded-pill btn-ghost-secondary px-3 py-1 fw-semibold text-secondary" data-vista="ventanilla" style="font-size: 0.74rem;">
+                <i class="ti ti-calendar-time me-1"></i> Flujo Ventanilla
+            </button>
+        </div>
+    </div>
+
+    {{-- ──────────────────────────────────────────────────────────
+         SECCIÓN A: CENSO GENERAL & PADRÓN DE PACIENTES (FUERA DE VENTANILLA)
+         ────────────────────────────────────────────────────────── --}}
+    <div id="bloque-censo" class="mb-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2.5">
+            <div class="d-flex align-items-center gap-2">
+                <div class="avatar avatar-xs rounded-2" style="background: #e0f2fe; color: #0284c7; width: 30px; height: 30px;">
+                    <i class="ti ti-users-group fs-3"></i>
                 </div>
-                <div class="fw-bold fs-2 text-dark lh-1 tabular my-1" style="color: #0b1c30 !important;">{{ number_format($totalLlegadas) }}</div>
-                <div class="text-secondary small text-truncate" style="font-size: 0.68rem;">Atenciones registradas</div>
+                <div>
+                    <h4 class="fw-bold text-dark mb-0" style="font-size: 0.88rem; color: #0b1c30;">Censo Poblacional y Familias Registradas</h4>
+                    <span class="text-secondary small" style="font-size: 0.72rem;">Datos base de personas y núcleos familiares (incluye expedientes físicos y archivo histórico)</span>
+                </div>
+            </div>
+            <a href="{{ route('reportes.por-comunidad') }}" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center py-1 px-2.5" style="border-radius: 8px; font-size: 0.75rem; font-weight: 600;">
+                <i class="ti ti-map-pins me-1.5"></i> Explorar Padrón por Comunidad
+            </a>
+        </div>
+
+        {{-- Métricas del Censo (4 Tarjetas) --}}
+        <div class="row g-2 mb-3">
+            {{-- Total Pacientes en Censo --}}
+            <div class="col-6 col-md-3">
+                <div class="card h-100 p-2.5 stat-metric-card">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <span class="text-secondary small fw-semibold" style="font-size: 0.72rem;">Población en Censo</span>
+                        <div class="avatar avatar-xs rounded-circle" style="width: 28px; height: 28px; background: #e0f2fe; color: #0284c7;">
+                            <i class="ti ti-users fs-3"></i>
+                        </div>
+                    </div>
+                    <div class="fw-bold fs-2 text-dark lh-1 tabular my-1" style="color: #0b1c30 !important;">{{ number_format($totalCensoPacientes) }}</div>
+                    <div class="text-secondary small text-truncate" style="font-size: 0.68rem;">Personas censadas en total</div>
+                </div>
+            </div>
+
+            {{-- Núcleos Familiares --}}
+            <div class="col-6 col-md-3">
+                <div class="card h-100 p-2.5 stat-metric-card">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <span class="text-secondary small fw-semibold" style="font-size: 0.72rem;">Familias</span>
+                        <div class="avatar avatar-xs rounded-circle" style="width: 28px; height: 28px; background: #ccfbf1; color: #0d9488;">
+                            <i class="ti ti-home-heart fs-3"></i>
+                        </div>
+                    </div>
+                    <div class="fw-bold fs-2 text-dark lh-1 tabular my-1" style="color: #0b1c30 !important;">{{ number_format($totalCensoFamilias) }}</div>
+                    <div class="text-secondary small text-truncate" style="font-size: 0.68rem;">Núcleos con expediente</div>
+                </div>
+            </div>
+
+            {{-- Comunidades Activas --}}
+            <div class="col-6 col-md-3">
+                <div class="card h-100 p-2.5 stat-metric-card">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <span class="text-secondary small fw-semibold" style="font-size: 0.72rem;">Comunidades</span>
+                        <div class="avatar avatar-xs rounded-circle" style="width: 28px; height: 28px; background: #ffedd5; color: #ea580c;">
+                            <i class="ti ti-map-pin fs-3"></i>
+                        </div>
+                    </div>
+                    <div class="fw-bold fs-2 text-dark lh-1 tabular my-1" style="color: #0b1c30 !important;">{{ number_format($totalComunidadesActivas) }}</div>
+                    <div class="text-secondary small text-truncate" style="font-size: 0.68rem;">Aldeas con familias</div>
+                </div>
+            </div>
+
+            {{-- Solo en Archivo (Sin Ventanilla Aún) --}}
+            <div class="col-6 col-md-3">
+                <div class="card h-100 p-2.5 stat-metric-card">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <span class="text-secondary small fw-semibold" style="font-size: 0.72rem;">En Archivo Histórico</span>
+                        <div class="avatar avatar-xs rounded-circle" style="width: 28px; height: 28px; background: #f3e8ff; color: #7c3aed;">
+                            <i class="ti ti-archive fs-3"></i>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-baseline gap-1 my-1">
+                        <span class="fw-bold fs-2 text-dark lh-1 tabular" style="color: #0b1c30 !important;">{{ number_format($censoSinVentanilla) }}</span>
+                        @if($totalCensoPacientes > 0)
+                            <span class="badge rounded-pill fw-semibold px-1.5 py-0.5" style="font-size: 0.65rem; background: #f5f3ff; color: #7c3aed;">
+                                {{ round(($censoSinVentanilla / $totalCensoPacientes) * 100) }}%
+                            </span>
+                        @endif
+                    </div>
+                    <div class="text-secondary small text-truncate" style="font-size: 0.68rem;">Pendiente de atención en ventanilla</div>
+                </div>
             </div>
         </div>
 
-        {{-- Pacientes Nuevos --}}
-        <div class="col-6 col-md-3">
-            <div class="card h-100 p-2.5 stat-metric-card">
-                <div class="d-flex align-items-center justify-content-between mb-1">
-                    <span class="text-secondary small fw-semibold" style="font-size: 0.72rem;">Nuevos</span>
-                    <div class="avatar avatar-xs rounded-circle" style="width: 28px; height: 28px; background: #f3e8ff; color: #7c3aed;">
-                        <i class="ti ti-user-plus fs-3"></i>
+        {{-- 3 Gráficas del Censo Poblacional --}}
+        <div class="row g-2.5">
+            {{-- Gráfica Horizontal: Top Comunidades --}}
+            <div class="col-12 col-lg-6">
+                <div class="card h-100 border-0" style="border-radius: 12px; border: 1px solid rgba(11,28,48,0.08) !important; box-shadow: 0 2px 8px rgba(11,28,48,0.04);">
+                    <div class="card-header py-2 px-3 bg-white border-bottom">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-1.5">
+                                <i class="ti ti-building-community text-primary fs-3"></i>
+                                <h4 class="card-title mb-0 fw-bold" style="color: #0b1c30; font-size: 0.86rem;">Top Comunidades con Mayor Población</h4>
+                            </div>
+                            <span class="badge bg-light text-secondary border fw-normal" style="font-size: 0.68rem;">
+                                Top {{ $censoComunidades->count() }} aldeas
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body p-2 p-md-3">
+                        @if($censoComunidades->count() > 0)
+                            <div style="position: relative; width: 100%; height: 230px;">
+                                <canvas id="chartCensoComunidades"></canvas>
+                            </div>
+                        @else
+                            <div class="d-flex flex-column align-items-center justify-content-center text-secondary py-4" style="min-height: 200px;">
+                                <i class="ti ti-map-off fs-1 mb-2 opacity-50"></i>
+                                <span class="small fw-semibold">No hay comunidades asignadas a pacientes.</span>
+                            </div>
+                        @endif
                     </div>
                 </div>
-                <div class="d-flex align-items-baseline gap-1 my-1">
-                    <span class="fw-bold fs-2 text-dark lh-1 tabular" style="color: #0b1c30 !important;">{{ number_format($totalNuevos) }}</span>
-                    @if($totalLlegadas > 0)
-                        <span class="badge rounded-pill fw-semibold px-1.5 py-0.5" style="font-size: 0.65rem; background: #f5f3ff; color: #7c3aed;">{{ $pctNuevos }}%</span>
-                    @endif
-                </div>
-                <div class="text-secondary small text-truncate" style="font-size: 0.68rem;">Primera vez en CAP</div>
             </div>
-        </div>
 
-        {{-- Recurrentes --}}
-        <div class="col-6 col-md-3">
-            <div class="card h-100 p-2.5 stat-metric-card">
-                <div class="d-flex align-items-center justify-content-between mb-1">
-                    <span class="text-secondary small fw-semibold" style="font-size: 0.72rem;">Recurrentes</span>
-                    <div class="avatar avatar-xs rounded-circle" style="width: 28px; height: 28px; background: #ecfdf5; color: #059669;">
-                        <i class="ti ti-refresh fs-3"></i>
+            {{-- Gráfica de Barras: Pirámide de Grupos Etarios --}}
+            <div class="col-12 col-md-7 col-lg-3">
+                <div class="card h-100 border-0" style="border-radius: 12px; border: 1px solid rgba(11,28,48,0.08) !important; box-shadow: 0 2px 8px rgba(11,28,48,0.04);">
+                    <div class="card-header py-2 px-3 bg-white border-bottom">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-1.5">
+                                <i class="ti ti-chart-bar text-teal fs-3"></i>
+                                <h4 class="card-title mb-0 fw-bold" style="color: #0b1c30; font-size: 0.86rem;">Grupos de Edad</h4>
+                            </div>
+                            <span class="badge bg-light text-secondary border fw-normal" style="font-size: 0.68rem;">
+                                Padrón
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body p-2 p-md-3">
+                        <div style="position: relative; width: 100%; height: 230px;">
+                            <canvas id="chartCensoEdades"></canvas>
+                        </div>
                     </div>
                 </div>
-                <div class="d-flex align-items-baseline gap-1 my-1">
-                    <span class="fw-bold fs-2 text-dark lh-1 tabular" style="color: #0b1c30 !important;">{{ number_format($totalRecurrentes) }}</span>
-                    @if($totalLlegadas > 0)
-                        <span class="badge rounded-pill fw-semibold px-1.5 py-0.5" style="font-size: 0.65rem; background: #ecfdf5; color: #059669;">{{ $pctRecurrentes }}%</span>
-                    @endif
-                </div>
-                <div class="text-secondary small text-truncate" style="font-size: 0.68rem;">Seguimiento / Control</div>
             </div>
-        </div>
 
-        {{-- Turnos Cubiertos --}}
-        <div class="col-6 col-md-3">
-            <div class="card h-100 p-2.5 stat-metric-card">
-                <div class="d-flex align-items-center justify-content-between mb-1">
-                    <span class="text-secondary small fw-semibold" style="font-size: 0.72rem;">Turnos</span>
-                    <div class="avatar avatar-xs rounded-circle" style="width: 28px; height: 28px; background: #fff7ed; color: #ea580c;">
-                        <i class="ti ti-clock-check fs-3"></i>
+            {{-- Gráfica Dona: Sexo del Censo General --}}
+            <div class="col-12 col-md-5 col-lg-3">
+                <div class="card h-100 border-0" style="border-radius: 12px; border: 1px solid rgba(11,28,48,0.08) !important; box-shadow: 0 2px 8px rgba(11,28,48,0.04);">
+                    <div class="card-header py-2 px-3 bg-white border-bottom">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-1.5">
+                                <i class="ti ti-gender-intergender text-pink fs-3"></i>
+                                <h4 class="card-title mb-0 fw-bold" style="color: #0b1c30; font-size: 0.86rem;">Sexo (Censo)</h4>
+                            </div>
+                            <span class="badge bg-light text-secondary border fw-normal" style="font-size: 0.68rem;">
+                                {{ number_format($totalCensoPacientes) }} total
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body p-2 p-md-3 d-flex flex-column align-items-center justify-content-center">
+                        @if($totalCensoPacientes > 0)
+                            <div style="position: relative; width: 100%; height: 155px;">
+                                <canvas id="chartCensoSexo"></canvas>
+                            </div>
+                            <div class="d-flex justify-content-center gap-1.5 mt-2 pt-2 border-top w-100 flex-wrap">
+                                @php
+                                    $pctM = $totalCensoPacientes > 0 ? round(($censoMujeres / $totalCensoPacientes) * 100) : 0;
+                                    $pctH = $totalCensoPacientes > 0 ? round(($censoHombres / $totalCensoPacientes) * 100) : 0;
+                                @endphp
+                                <div class="donut-stat-pill" style="background: #fce7f3; color: #be185d;">
+                                    <span class="badge rounded-circle p-1" style="background: #e11d48;"></span>
+                                    <span>Mujeres: <strong>{{ $censoMujeres }}</strong> ({{ $pctM }}%)</span>
+                                </div>
+                                <div class="donut-stat-pill" style="background: #e0f2fe; color: #0369a1;">
+                                    <span class="badge rounded-circle p-1" style="background: #0057cd;"></span>
+                                    <span>Hombres: <strong>{{ $censoHombres }}</strong> ({{ $pctH }}%)</span>
+                                </div>
+                            </div>
+                        @else
+                            <div class="d-flex flex-column align-items-center justify-content-center text-secondary py-4" style="min-height: 180px;">
+                                <i class="ti ti-chart-pie-off fs-1 mb-2 opacity-50"></i>
+                                <span class="small fw-semibold">Sin datos demográficos en censo</span>
+                            </div>
+                        @endif
                     </div>
                 </div>
-                <div class="fw-bold fs-2 text-dark lh-1 tabular my-1" style="color: #0b1c30 !important;">{{ number_format($totalTurnosPeriodo) }}</div>
-                <div class="text-secondary small text-truncate" style="font-size: 0.68rem;">Jornadas en el rango</div>
             </div>
         </div>
     </div>
 
-    {{-- Gráficas Estadísticas --}}
-    <div class="row g-2.5 mb-3">
-        {{-- Gráfica de línea: Llegadas por Día --}}
-        <div class="col-12 col-lg-8">
-            <div class="card h-100 border-0" style="border-radius: 12px; border: 1px solid rgba(11,28,48,0.08) !important; box-shadow: 0 2px 8px rgba(11,28,48,0.04);">
-                <div class="card-header py-2 px-3 bg-white border-bottom">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div class="d-flex align-items-center gap-1.5">
-                            <i class="ti ti-chart-line text-primary fs-3"></i>
-                            <h4 class="card-title mb-0 fw-bold" style="color: #0b1c30; font-size: 0.88rem;">Llegadas por Día</h4>
-                        </div>
-                        <span class="badge bg-light text-secondary border fw-normal" style="font-size: 0.70rem;">
-                            {{ $llegadasPorDia->count() }} día(s)
-                        </span>
-                    </div>
+    {{-- ──────────────────────────────────────────────────────────
+         SECCIÓN B: ATENCIONES Y FLUJO EN VENTANILLA (FILTRADO POR FECHAS)
+         ────────────────────────────────────────────────────────── --}}
+    <div id="bloque-ventanilla">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2.5">
+            <div class="d-flex align-items-center gap-2">
+                <div class="avatar avatar-xs rounded-2" style="background: #e0f2fe; color: #0284c7; width: 30px; height: 30px;">
+                    <i class="ti ti-calendar-time fs-3"></i>
                 </div>
-                <div class="card-body p-2 p-md-3">
-                    @if($llegadasPorDia->count() > 0)
-                        <div style="position: relative; width: 100%; height: 210px;">
-                            <canvas id="chartLlegadasDia"></canvas>
+                <div>
+                    <h4 class="fw-bold text-dark mb-0" style="font-size: 0.88rem; color: #0b1c30;">Atenciones y Flujo en Ventanilla</h4>
+                    <span class="text-secondary small" style="font-size: 0.72rem;">
+                        Actividad operativa filtrada del <strong>{{ \Carbon\Carbon::parse($fechaDesde)->format('d/m/Y') }}</strong> al <strong>{{ \Carbon\Carbon::parse($fechaHasta)->format('d/m/Y') }}</strong>
+                    </span>
+                </div>
+            </div>
+            <span class="badge bg-blue-lt fw-semibold" style="font-size: 0.72rem;">
+                <i class="ti ti-filter me-1"></i> Período seleccionado
+            </span>
+        </div>
+
+        {{-- Tarjetas de Métricas de Ventanilla --}}
+        <div class="row g-2 mb-3">
+            {{-- Total Llegadas --}}
+            <div class="col-6 col-md-3">
+                <div class="card h-100 p-2.5 stat-metric-card">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <span class="text-secondary small fw-semibold" style="font-size: 0.72rem;">Llegadas Ventanilla</span>
+                        <div class="avatar avatar-xs rounded-circle" style="width: 28px; height: 28px; background: #e0f2fe; color: #0284c7;">
+                            <i class="ti ti-calendar-stats fs-3"></i>
                         </div>
-                    @else
-                        <div class="d-flex flex-column align-items-center justify-content-center text-secondary py-4" style="min-height: 180px;">
-                            <i class="ti ti-chart-dots fs-1 mb-2 opacity-50"></i>
-                            <span class="small fw-semibold">No se registran llegadas en el período seleccionado.</span>
+                    </div>
+                    <div class="fw-bold fs-2 text-dark lh-1 tabular my-1" style="color: #0b1c30 !important;">{{ number_format($totalLlegadas) }}</div>
+                    <div class="text-secondary small text-truncate" style="font-size: 0.68rem;">Atenciones en el rango</div>
+                </div>
+            </div>
+
+            {{-- Pacientes Nuevos --}}
+            <div class="col-6 col-md-3">
+                <div class="card h-100 p-2.5 stat-metric-card">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <span class="text-secondary small fw-semibold" style="font-size: 0.72rem;">Nuevos</span>
+                        <div class="avatar avatar-xs rounded-circle" style="width: 28px; height: 28px; background: #f3e8ff; color: #7c3aed;">
+                            <i class="ti ti-user-plus fs-3"></i>
                         </div>
-                    @endif
+                    </div>
+                    <div class="d-flex align-items-baseline gap-1 my-1">
+                        <span class="fw-bold fs-2 text-dark lh-1 tabular" style="color: #0b1c30 !important;">{{ number_format($totalNuevos) }}</span>
+                        @if($totalLlegadas > 0)
+                            <span class="badge rounded-pill fw-semibold px-1.5 py-0.5" style="font-size: 0.65rem; background: #f5f3ff; color: #7c3aed;">{{ $pctNuevos }}%</span>
+                        @endif
+                    </div>
+                    <div class="text-secondary small text-truncate" style="font-size: 0.68rem;">Primera vez en CAP</div>
+                </div>
+            </div>
+
+            {{-- Recurrentes --}}
+            <div class="col-6 col-md-3">
+                <div class="card h-100 p-2.5 stat-metric-card">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <span class="text-secondary small fw-semibold" style="font-size: 0.72rem;">Recurrentes</span>
+                        <div class="avatar avatar-xs rounded-circle" style="width: 28px; height: 28px; background: #ecfdf5; color: #059669;">
+                            <i class="ti ti-refresh fs-3"></i>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-baseline gap-1 my-1">
+                        <span class="fw-bold fs-2 text-dark lh-1 tabular" style="color: #0b1c30 !important;">{{ number_format($totalRecurrentes) }}</span>
+                        @if($totalLlegadas > 0)
+                            <span class="badge rounded-pill fw-semibold px-1.5 py-0.5" style="font-size: 0.65rem; background: #ecfdf5; color: #059669;">{{ $pctRecurrentes }}%</span>
+                        @endif
+                    </div>
+                    <div class="text-secondary small text-truncate" style="font-size: 0.68rem;">Seguimiento / Control</div>
+                </div>
+            </div>
+
+            {{-- Turnos Cubiertos --}}
+            <div class="col-6 col-md-3">
+                <div class="card h-100 p-2.5 stat-metric-card">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <span class="text-secondary small fw-semibold" style="font-size: 0.72rem;">Turnos</span>
+                        <div class="avatar avatar-xs rounded-circle" style="width: 28px; height: 28px; background: #fff7ed; color: #ea580c;">
+                            <i class="ti ti-clock-check fs-3"></i>
+                        </div>
+                    </div>
+                    <div class="fw-bold fs-2 text-dark lh-1 tabular my-1" style="color: #0b1c30 !important;">{{ number_format($totalTurnosPeriodo) }}</div>
+                    <div class="text-secondary small text-truncate" style="font-size: 0.68rem;">Jornadas en el rango</div>
                 </div>
             </div>
         </div>
 
-        {{-- Gráfica dona: Distribución por Sexo --}}
-        <div class="col-12 col-lg-4">
-            <div class="card h-100 border-0" style="border-radius: 12px; border: 1px solid rgba(11,28,48,0.08) !important; box-shadow: 0 2px 8px rgba(11,28,48,0.04);">
-                <div class="card-header py-2 px-3 bg-white border-bottom">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div class="d-flex align-items-center gap-1.5">
-                            <i class="ti ti-chart-donut text-pink fs-3"></i>
-                            <h4 class="card-title mb-0 fw-bold" style="color: #0b1c30; font-size: 0.88rem;">Por Sexo</h4>
+        {{-- Gráficas de Ventanilla --}}
+        <div class="row g-2.5 mb-3">
+            {{-- Gráfica de línea: Llegadas por Día --}}
+            <div class="col-12 col-lg-8">
+                <div class="card h-100 border-0" style="border-radius: 12px; border: 1px solid rgba(11,28,48,0.08) !important; box-shadow: 0 2px 8px rgba(11,28,48,0.04);">
+                    <div class="card-header py-2 px-3 bg-white border-bottom">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-1.5">
+                                <i class="ti ti-chart-line text-primary fs-3"></i>
+                                <h4 class="card-title mb-0 fw-bold" style="color: #0b1c30; font-size: 0.88rem;">Llegadas por Día</h4>
+                            </div>
+                            <span class="badge bg-light text-secondary border fw-normal" style="font-size: 0.70rem;">
+                                {{ $llegadasPorDia->count() }} día(s)
+                            </span>
                         </div>
-                        <span class="badge bg-light text-secondary border fw-normal" style="font-size: 0.70rem;">
-                            {{ number_format($totalLlegadas) }} total
-                        </span>
+                    </div>
+                    <div class="card-body p-2 p-md-3">
+                        @if($llegadasPorDia->count() > 0)
+                            <div style="position: relative; width: 100%; height: 210px;">
+                                <canvas id="chartLlegadasDia"></canvas>
+                            </div>
+                        @else
+                            <div class="d-flex flex-column align-items-center justify-content-center text-secondary py-4" style="min-height: 180px;">
+                                <i class="ti ti-chart-dots fs-1 mb-2 opacity-50"></i>
+                                <span class="small fw-semibold">No se registran llegadas en ventanilla en el período seleccionado.</span>
+                            </div>
+                        @endif
                     </div>
                 </div>
-                <div class="card-body p-2 p-md-3 d-flex flex-column align-items-center justify-content-center">
-                    @if($porSexo->count() > 0)
-                        <div style="position: relative; width: 100%; height: 160px;">
-                            <canvas id="chartSexo"></canvas>
+            </div>
+
+            {{-- Gráfica dona: Distribución por Sexo en Ventanilla --}}
+            <div class="col-12 col-lg-4">
+                <div class="card h-100 border-0" style="border-radius: 12px; border: 1px solid rgba(11,28,48,0.08) !important; box-shadow: 0 2px 8px rgba(11,28,48,0.04);">
+                    <div class="card-header py-2 px-3 bg-white border-bottom">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-1.5">
+                                <i class="ti ti-chart-donut text-pink fs-3"></i>
+                                <h4 class="card-title mb-0 fw-bold" style="color: #0b1c30; font-size: 0.88rem;">Sexo en Ventanilla</h4>
+                            </div>
+                            <span class="badge bg-light text-secondary border fw-normal" style="font-size: 0.70rem;">
+                                {{ number_format($totalLlegadas) }} atenciones
+                            </span>
                         </div>
-                        {{-- Leyenda detallada con porcentajes --}}
-                        <div class="d-flex justify-content-center gap-2 mt-2 pt-2 border-top w-100 flex-wrap">
-                            @php
-                                $totalSexo = $porSexo->sum('total');
-                            @endphp
-                            @foreach($porSexo as $s)
+                    </div>
+                    <div class="card-body p-2 p-md-3 d-flex flex-column align-items-center justify-content-center">
+                        @if($porSexo->count() > 0)
+                            <div style="position: relative; width: 100%; height: 160px;">
+                                <canvas id="chartSexo"></canvas>
+                            </div>
+                            <div class="d-flex justify-content-center gap-2 mt-2 pt-2 border-top w-100 flex-wrap">
                                 @php
-                                    $esF = ($s->sexo === 'F');
-                                    $pct = $totalSexo > 0 ? round(($s->total / $totalSexo) * 100) : 0;
+                                    $totalSexo = $porSexo->sum('total');
                                 @endphp
-                                <div class="donut-stat-pill" style="background: {{ $esF ? '#fce7f3' : '#e0f2fe' }}; color: {{ $esF ? '#be185d' : '#0369a1' }};">
-                                    <span class="badge rounded-circle p-1" style="background: {{ $esF ? '#e11d48' : '#0057cd' }};"></span>
-                                    <span>{{ $esF ? 'Femenino' : 'Masculino' }}: <strong>{{ $s->total }}</strong> ({{ $pct }}%)</span>
-                                </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="d-flex flex-column align-items-center justify-content-center text-secondary py-4" style="min-height: 180px;">
-                            <i class="ti ti-chart-pie-off fs-1 mb-2 opacity-50"></i>
-                            <span class="small fw-semibold">Sin datos demográficos</span>
-                        </div>
-                    @endif
+                                @foreach($porSexo as $s)
+                                    @php
+                                        $esF = ($s->sexo === 'F');
+                                        $pct = $totalSexo > 0 ? round(($s->total / $totalSexo) * 100) : 0;
+                                    @endphp
+                                    <div class="donut-stat-pill" style="background: {{ $esF ? '#fce7f3' : '#e0f2fe' }}; color: {{ $esF ? '#be185d' : '#0369a1' }};">
+                                        <span class="badge rounded-circle p-1" style="background: {{ $esF ? '#e11d48' : '#0057cd' }};"></span>
+                                        <span>{{ $esF ? 'Femenino' : 'Masculino' }}: <strong>{{ $s->total }}</strong> ({{ $pct }}%)</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="d-flex flex-column align-items-center justify-content-center text-secondary py-4" style="min-height: 180px;">
+                                <i class="ti ti-chart-pie-off fs-1 mb-2 opacity-50"></i>
+                                <span class="small fw-semibold">Sin atenciones en ventanilla en este rango</span>
+                            </div>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>
@@ -1066,6 +1295,187 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
+    }
+
+    // ── 3.1 Chart 3: Top Comunidades del Censo (Horizontal Bar) ──
+    const canvasCensoCom = document.getElementById('chartCensoComunidades');
+    if (canvasCensoCom) {
+        const comData = @json($censoComunidades);
+        if (comData && comData.length > 0) {
+            new Chart(canvasCensoCom.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: comData.map(c => c.nombre),
+                    datasets: [{
+                        label: 'Personas censadas',
+                        data: comData.map(c => c.total),
+                        backgroundColor: '#0057cd',
+                        hoverBackgroundColor: '#00419e',
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        barPercentage: 0.75,
+                        categoryPercentage: 0.85
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#0b1c30',
+                            titleFont: { size: 12, weight: 'bold' },
+                            bodyFont: { size: 12 },
+                            padding: 8,
+                            cornerRadius: 8,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.parsed.x} persona(s) registrada(s)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0,0,0,0.05)' },
+                            ticks: { stepSize: 1, font: { size: 10 }, color: '#64748b' }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { font: { size: 11, weight: '500' }, color: '#1e293b' }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // ── 3.2 Chart 4: Grupos de Edad (Censo General) ─────────────
+    const canvasCensoEdades = document.getElementById('chartCensoEdades');
+    if (canvasCensoEdades) {
+        const edadesData = @json($gruposEdad);
+        const labels = Object.keys(edadesData);
+        const values = Object.values(edadesData);
+        
+        new Chart(canvasCensoEdades.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Población',
+                    data: values,
+                    backgroundColor: '#0d9488',
+                    hoverBackgroundColor: '#0f766e',
+                    borderRadius: 5,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0b1c30',
+                        padding: 8,
+                        cornerRadius: 8,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.parsed.y} paciente(s)`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 9 }, color: '#64748b', maxRotation: 45, minRotation: 45 }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0,0,0,0.05)' },
+                        ticks: { stepSize: 1, font: { size: 10 }, color: '#64748b' }
+                    }
+                }
+            }
+        });
+    }
+
+    // ── 3.3 Chart 5: Demografía por Sexo (Censo General) ────────
+    const canvasCensoSexo = document.getElementById('chartCensoSexo');
+    if (canvasCensoSexo) {
+        const censoM = {{ (int) $censoHombres }};
+        const censoF = {{ (int) $censoMujeres }};
+        const totalCensoS = censoM + censoF;
+
+        if (totalCensoS > 0) {
+            new Chart(canvasCensoSexo.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Femenino', 'Masculino'],
+                    datasets: [{
+                        data: [censoF, censoM],
+                        backgroundColor: ['#e11d48', '#0057cd'],
+                        hoverBackgroundColor: ['#be185d', '#00419e'],
+                        borderWidth: 2.5,
+                        borderColor: '#ffffff',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#0b1c30',
+                            padding: 8,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    const pct = totalCensoS > 0 ? Math.round((context.raw / totalCensoS) * 100) : 0;
+                                    return ` ${context.label}: ${context.raw} (${pct}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // ── 3.4 Filtro de Sub-vistas en Estadísticas (Todo / Censo / Ventanilla) ──
+    const subViewButtons = document.querySelectorAll('#filtro-vista-metricas button');
+    const bloqueCenso = document.getElementById('bloque-censo');
+    const bloqueVentanilla = document.getElementById('bloque-ventanilla');
+
+    if (subViewButtons && bloqueCenso && bloqueVentanilla) {
+        subViewButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                subViewButtons.forEach(b => {
+                    b.classList.remove('active', 'btn-primary');
+                    b.classList.add('btn-ghost-secondary', 'text-secondary');
+                });
+                this.classList.add('active', 'btn-primary');
+                this.classList.remove('btn-ghost-secondary', 'text-secondary');
+                const vista = this.getAttribute('data-vista');
+
+                if (vista === 'todas') {
+                    bloqueCenso.classList.remove('d-none');
+                    bloqueVentanilla.classList.remove('d-none');
+                } else if (vista === 'censo') {
+                    bloqueCenso.classList.remove('d-none');
+                    bloqueVentanilla.classList.add('d-none');
+                } else if (vista === 'ventanilla') {
+                    bloqueCenso.classList.add('d-none');
+                    bloqueVentanilla.classList.remove('d-none');
+                }
+            });
+        });
     }
 
     // ── 4. Selector rápido de fechas (Presets) ───────────────────
