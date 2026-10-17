@@ -920,9 +920,30 @@
                 body: formData,
             })
             .then(async (r) => {
-                const data = await r.json();
-                if (!r.ok || !data.success) {
-                    throw new Error(data.error || 'No se pudo procesar la imagen.');
+                let data = null;
+                const contentType = r.headers.get('content-type') || '';
+                if (contentType.includes('application/json')) {
+                    try {
+                        data = await r.json();
+                    } catch (e) {
+                        data = null;
+                    }
+                }
+
+                if (!r.ok || !data || !data.success) {
+                    if (r.status === 413) {
+                        throw new Error('La imagen es demasiado pesada para el servidor (error 413).');
+                    }
+                    if (r.status === 419) {
+                        throw new Error('La sesión de usuario expiró (error 419). Por favor recarga la página.');
+                    }
+                    if (r.status === 504 || r.status === 502) {
+                        throw new Error('Tiempo de espera agotado al conectar con el servidor (error ' + r.status + '). Intenta de nuevo.');
+                    }
+                    const errMsg = (data && (data.error || data.message))
+                        ? (data.error || data.message)
+                        : `Error del servidor (${r.status} ${r.statusText}). Asegúrate de tener conexión y de que GEMINI_API_KEY esté activa.`;
+                    throw new Error(errMsg);
                 }
                 return data;
             })

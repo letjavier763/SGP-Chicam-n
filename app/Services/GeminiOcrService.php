@@ -121,6 +121,7 @@ INSTRUCCIONES ESTRICTAS:
    - "FN:", "F/N:", "FN." antes de una fecha = prefijo de Fecha de Nacimiento.
    - Una secuencia "DD-MM-AA" o "DD/MM/AA" o "DD.MM.AA" al final de la línea es casi siempre la fecha de nacimiento.
    - Ignora encabezados de página, fechas de la hoja del cuaderno, tachones de texto que no sean pacientes y notas de margen.
+   - ORIENTACIÓN: La imagen puede estar girada (90° a la derecha, 90° a la izquierda o de cabeza). Detecta y lee el texto correctamente sin importar la orientación en la que fue tomada la foto.
 
 4. Devuelve la respuesta en formato JSON estricto con la siguiente estructura (sin texto adicional):
 {
@@ -183,7 +184,8 @@ PROMPT;
             'gemini-3.8-flash',
             'gemini-3.7-flash',
             'gemini-3.6-flash',
-            'gemini-2.5-flash',
+            'gemini-3.5-flash',
+            'gemini-flash-latest',
         ]);
 
         $payload = [
@@ -217,7 +219,7 @@ PROMPT;
                 try {
                     $response = Http::withHeaders([
                         'Content-Type' => 'application/json',
-                    ])->timeout(45)->post($endpoint, $payload);
+                    ])->timeout(65)->post($endpoint, $payload);
                 } catch (Exception $e) {
                     Log::error("Error de conexión con la API de procesamiento [{$model}]: " . $e->getMessage());
                     $lastError = 'No se pudo conectar con el servicio de procesamiento. Verifica la conexión del servidor.';

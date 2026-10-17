@@ -574,10 +574,15 @@ class PacienteController extends Controller
                 'familias'    => $familias,
                 'comunidades' => $comunidades,
             ]);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Error escaneando cuaderno con OCR: ' . $e->getMessage(), [
+                'exception' => get_class($e),
+                'file'      => $e->getFile() . ':' . $e->getLine(),
+            ]);
+
             return response()->json([
                 'success' => false,
-                'error'   => $e->getMessage(),
+                'error'   => $e->getMessage() ?: 'Error inesperado al procesar la imagen del cuaderno.',
             ], 422);
         }
     }

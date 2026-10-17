@@ -628,8 +628,14 @@
                             <div class="position-relative d-inline-block mb-2">
                                 <img id="cuadernoPreviewImg" src="" alt="Previsualización del cuaderno" class="rounded shadow-sm" style="max-height: 250px; max-width: 100%; object-fit: contain;">
                             </div>
-                            <div class="d-flex align-items-center justify-content-center gap-2">
-                                <span class="badge bg-secondary-lt text-truncate" id="cuadernoPreviewNombre" style="max-width: 250px;"></span>
+                            <div class="d-flex flex-wrap align-items-center justify-content-center gap-2">
+                                <span class="badge bg-secondary-lt text-truncate" id="cuadernoPreviewNombre" style="max-width: 200px;"></span>
+                                <button type="button" class="btn btn-xs btn-outline-secondary" id="btnRotarIzqCuaderno" title="Girar 90° a la izquierda">
+                                    <i class="ti ti-rotate-2 me-1"></i> Girar Izq
+                                </button>
+                                <button type="button" class="btn btn-xs btn-outline-secondary" id="btnRotarDerCuaderno" title="Girar 90° a la derecha">
+                                    <i class="ti ti-rotate-clockwise-2 me-1"></i> Girar Der
+                                </button>
                                 <button type="button" class="btn btn-xs btn-outline-danger" id="btnQuitarImagenCuaderno" title="Cambiar imagen">
                                     <i class="ti ti-trash me-1"></i> Cambiar
                                 </button>
@@ -987,6 +993,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const previewImg        = document.getElementById('cuadernoPreviewImg');
         const previewNombre     = document.getElementById('cuadernoPreviewNombre');
         const btnQuitarImg      = document.getElementById('btnQuitarImagenCuaderno');
+        const btnRotarIzq       = document.getElementById('btnRotarIzqCuaderno');
+        const btnRotarDer       = document.getElementById('btnRotarDerCuaderno');
         const btnAnalizar       = document.getElementById('btnComenzarAnalisisCuaderno');
         const loadingZone       = document.getElementById('cuadernoLoadingZone');
         const accionesPaso1     = document.getElementById('cuadernoAccionesPaso1');
@@ -1013,24 +1021,113 @@ document.addEventListener('DOMContentLoaded', function () {
             errorAlert.classList.remove('d-flex');
         }
 
-        function setArchivo(file) {
+        // Optimizar/rotar imagen en cliente para no saturar límites de subida de Nginx
+        function optimizarImagen(file, rotacionExtra = 0) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                const url = URL.createObjectURL(file);
+                img.onload = () => {
+                    URL.revokeObjectURL(url);
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const maxDim = 2048;
+
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                        } else {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
+                        }
+                    }
+
+                    const rad = (rotacionExtra % 360) * Math.PI / 180;
+                    if (rotacionExtra % 180 !== 0) {
+                        canvas.width = height;
+                        canvas.height = width;
+                    } else {
+                        canvas.width = width;
+                        canvas.height = height;
+                    }
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.translate(canvas.width / 2, canvas.height / 2);
+                    ctx.rotate(rad);
+                    ctx.drawImage(img, -width / 2, -height / 2, width, height);
+
+                    canvas.toBlob((blob) => {
+                        if (!blob) {
+                            resolve(file);
+                            return;
+                        }
+                        const optimizedFile = new File([blob], (file.name || 'foto_cuaderno').replace(/\.[^/.]+$/, "") + ".jpg", {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                        resolve(optimizedFile);
+                    }, 'image/jpeg', 0.88);
+                };
+                img.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    resolve(file);
+                };
+                img.src = url;
+            });
+        }
+
+        async function setArchivo(file, optimizar = true) {
             if (!file || !file.type.startsWith('image/')) {
                 mostrarError('Por favor selecciona un archivo de imagen válido (JPG, PNG, WEBP).');
                 return;
             }
             ocultarError();
-            archivoSeleccionado = file;
+
+            let targetFile = file;
+            if (optimizar && file.size > 1.2 * 1024 * 1024) {
+                try {
+                    targetFile = await optimizarImagen(file, 0);
+                } catch (e) {
+                    targetFile = file;
+                }
+            }
+
+            archivoSeleccionado = targetFile;
 
             const reader = new FileReader();
             reader.onload = (e) => {
                 previewImg.src = e.target.result;
-                previewNombre.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                previewNombre.textContent = `${targetFile.name} (${(targetFile.size / 1024 / 1024).toFixed(2)} MB)`;
                 promptZone.classList.add('d-none');
                 previewZone.classList.remove('d-none');
                 btnAnalizar.disabled = false;
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(targetFile);
         }
+
+        async function rotarActual(grados) {
+            if (!archivoSeleccionado) return;
+            btnAnalizar.disabled = true;
+            try {
+                const nuevo = await optimizarImagen(archivoSeleccionado, grados);
+                await setArchivo(nuevo, false);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                btnAnalizar.disabled = false;
+            }
+        }
+
+        btnRotarIzq?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            rotarActual(270);
+        });
+
+        btnRotarDer?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            rotarActual(90);
+        });
 
         function resetSubida() {
             archivoSeleccionado = null;
@@ -1124,9 +1221,30 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: formData,
             })
             .then(async (r) => {
-                const data = await r.json();
-                if (!r.ok || !data.success) {
-                    throw new Error(data.error || 'No se pudo procesar la imagen del cuaderno.');
+                let data = null;
+                const contentType = r.headers.get('content-type') || '';
+                if (contentType.includes('application/json')) {
+                    try {
+                        data = await r.json();
+                    } catch (e) {
+                        data = null;
+                    }
+                }
+
+                if (!r.ok || !data || !data.success) {
+                    if (r.status === 413) {
+                        throw new Error('La imagen es demasiado pesada para el servidor (error 413). Puedes girarla o tomar una foto más cercana.');
+                    }
+                    if (r.status === 419) {
+                        throw new Error('La sesión de usuario expiró (error 419). Por favor recarga la página e intenta nuevamente.');
+                    }
+                    if (r.status === 504 || r.status === 502) {
+                        throw new Error('Tiempo de espera agotado al conectar con el servidor (error ' + r.status + '). Intenta de nuevo.');
+                    }
+                    const errMsg = (data && (data.error || data.message))
+                        ? (data.error || data.message)
+                        : `Error del servidor (${r.status} ${r.statusText}). Asegúrate de tener conexión y de que GEMINI_API_KEY esté activa.`;
+                    throw new Error(errMsg);
                 }
                 return data;
             })
