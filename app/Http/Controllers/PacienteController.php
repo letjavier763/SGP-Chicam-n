@@ -492,10 +492,16 @@ class PacienteController extends Controller
             $comunidades = Comunidad::orderBy('nombre')->get();
 
             $pacientesMapeados = collect($datos['pacientes'] ?? [])->map(function ($p) use ($familias, $comunidades) {
-                $nombres   = trim($p['nombres'] ?? '');
-                $apellidos = trim($p['apellidos'] ?? '');
-                $dpi       = !empty($p['dpi']) ? preg_replace('/\D/', '', $p['dpi']) : null;
-                $direccion = trim($p['direccion'] ?? '');
+                $nombres          = trim($p['nombres'] ?? '');
+                $apellidos        = trim($p['apellidos'] ?? '');
+                $dpi              = !empty($p['dpi']) ? preg_replace('/\D/', '', $p['dpi']) : null;
+                $direccion        = trim($p['direccion'] ?? '');
+                $datosFamilia     = trim($p['datos_familia'] ?? '');
+                $tachado          = (bool) ($p['tachado'] ?? false);
+                // Normalizar número de expediente: quitar comas, puntos y espacios
+                $numExpediente    = isset($p['numero_expediente'])
+                    ? preg_replace('/[,\.\s]/', '', (string) $p['numero_expediente'])
+                    : null;
 
                 // Verificar si DPI ya existe en el sistema
                 $dpiExistente = false;
@@ -549,7 +555,9 @@ class PacienteController extends Controller
                     'sexo'                      => in_array(strtoupper($p['sexo'] ?? ''), ['M', 'F']) ? strtoupper($p['sexo']) : 'M',
                     'dpi'                       => $dpi,
                     'direccion'                 => $direccion,
-                    'numero_expediente'         => $p['numero_expediente'] ?? null,
+                    'numero_expediente'         => $numExpediente,
+                    'datos_familia'             => $datosFamilia ?: null,
+                    'tachado'                   => $tachado,
                     'dpi_existente'             => $dpiExistente,
                     'dpi_mensaje'               => $duplicadoDpiMsg,
                     'posible_duplicado'         => $posibleDuplicado,

@@ -67,35 +67,76 @@ PROMPT;
 Eres un asistente médico experto en transcripción de cuadernos clínicos y censos de salud de Guatemala.
 Analiza la imagen adjunta, que corresponde a una página manuscrita (escrita a mano) de un CUADERNO DE REGISTRO DE PACIENTES o LIBRO DE CONSULTAS.
 
-Instrucciones estrictas:
-1. Extrae cada una de las filas correspondientes a personas/pacientes anotadas en el cuaderno.
-2. Descifra la letra manuscrita con atención y extrae:
-   - "nombres": Nombres de pila del paciente en mayúsculas (ej: "JUAN CARLOS", "MARÍA ELENA"). Si están juntos con los apellidos, sepáralos lo más coherentemente posible.
-   - "apellidos": Apellidos en mayúsculas (ej: "PÉREZ GÓMEZ", "LÓPEZ CASTRO").
-   - "edad_texto": Texto original sobre su edad tal cual está escrito (ej: "28 a", "35 años", "8 meses", "12/03/1990").
+FORMATO TÍPICO DE CADA LÍNEA:
+Cada fila generalmente sigue este patrón (aunque puede variar según el cuaderno):
+  [Número de expediente]  [Apellido(s) Nombre(s)]  —  [Dirección / Comunidad]  [FN: DD/MM/AA | F/N: DD-MM-AAAA | fecha completa]
+
+Ejemplos reales que puedes encontrar en este tipo de cuadernos guatemaltecos:
+  "11,485  Guillema Casilda  — Chicamán  22-06-94"
+  "11,486  Angelina Caal  — Chiquimula  FN: 10-03-1985"
+  "11,487  Margarita Lux  — Pueblo Nuevo  F/N: 05-09-03"
+  "13,493  Odilia López Cec —  Annas  FN 13.09.87"
+  "13,494  María Cristina Xna Caal — Beleján 16  FN: 06-08-85"
+  "17,535  Tostfina Maldonado Roa — Las Flores  FN: 15-04-1975"
+  "17,536  Juana De León — Chacrual  FN: 13-07-1954"
+  "13,541  Sara Jiménez — Monte Saó  FN:07-01-03"
+  "11,449  Faustina Arreaga — Mixqui  F/N: 04-02-1963"
+  "17,449  Tami Maquín — Con Sebastián Beirjú  fam. Chic"
+  "14,540  Ambrosio Caal — La Conquista  FN: 12-05-1968"
+  "11,503  Fanny Tzoc — El Soch  FN: 03-11-1989"
+
+INSTRUCCIONES ESTRICTAS:
+1. Extrae CADA fila que corresponda a una persona o paciente. Extrae TODAS las filas visibles, sin omitir ninguna.
+2. Para cada registro, interpreta y extrae los siguientes campos:
+   - "nombres": Nombre(s) de pila en MAYÚSCULAS (ej: "CASILDA", "JUAN CARLOS", "MARÍA ELENA").
+     Generalmente van después de los apellidos en el cuaderno. Si no puedes separar con certeza, pon el nombre completo en "nombres" y deja "apellidos" vacío.
+   - "apellidos": Apellido(s) en MAYÚSCULAS (ej: "GUILLEMA", "MALDONADO ROA", "MAQUÍN CAJ").
+     Generalmente van primero en la línea, justo después del número de expediente.
+   - "edad_texto": Copia TEXTUALMENTE lo que ves sobre la edad o fecha de nacimiento
+     (ej: "FN: 22-06-94", "F/N: 10-03-1985", "13/03/1990", "28 años", "6 meses", "FN: 07-01-03").
    - "fecha_nacimiento_estimada": Fecha de nacimiento en formato 'YYYY-MM-DD'.
-     * Si viene fecha exacta, conviértela a ISO 'YYYY-MM-DD'.
-     * Si sólo indica edad en años (ej: 28 años), calcula el año restando al año actual 2026 (ej: 2026 - 28 = 1998 -> "1998-01-01").
-     * Si indica meses (ej: 6 meses), calcula los meses hacia atrás respecto al año 2026.
-     * Si no se indica edad o nacimiento, devuelve "2000-01-01".
-   - "sexo": "M" para masculino o "F" para femenino. Infiérelo del contexto o del nombre si no está explícito.
-   - "dpi": Cadena numérica de 13 dígitos del DPI/CUI si está anotado. Si no hay o es menor de edad, devuelve null.
-   - "direccion": Comunidad, caserío, aldea o dirección anotada (ej: "Chicamán", "Pueblo Nuevo", "Chixoy"). Si no hay, null.
-   - "numero_expediente": Número de expediente, folio o registro físico si está escrito. Si no hay, null.
-3. Ignora encabezados de página, tachones descartados y notas de margen que no correspondan a pacientes.
-4. Devuelve la respuesta en formato JSON estricto con la siguiente estructura:
+     * Si viene "FN: DD/MM/AA" o "F/N: DD-MM-AA" (dos dígitos de año):
+       - Si AA >= 26: año completo = 1900 + AA  (ej: 94 → 1994, 87 → 1987, 63 → 1963)
+       - Si AA < 26:  año completo = 2000 + AA  (ej: 03 → 2003, 05 → 2005, 24 → 2024)
+     * Si viene fecha completa "DD-MM-AAAA" o "DD/MM/AAAA": conviértela directamente a YYYY-MM-DD.
+     * Si sólo indica edad en años (ej: "28 años"): resta al año 2026 → "1998-01-01".
+     * Si indica meses (ej: "6 meses"): calcula los meses hacia atrás desde 2026-10.
+     * Si no hay fecha ni edad recognoscible: devuelve "2000-01-01".
+   - "sexo": "M" para masculino o "F" para femenino. Infiérelo del nombre si no está explícito.
+     Nombres típicamente femeninos guatemaltecos: Casilda, Angelina, Margarita, Odilia, María, Faustina, Tami, Tostfina, Juana, Sara, Fanny, Candelaria, Evelyn, etc.
+   - "dpi": Cadena numérica de 13 dígitos del DPI/CUI si está claramente anotado. Si no hay o no se puede leer, devuelve null.
+   - "direccion": La comunidad, caserío, aldea, municipio o dirección anotada después del guión largo "—" o guión "-".
+     No incluyas la fecha en la dirección. Ejemplos: "Chicamán", "Pueblo Nuevo", "Chixoy", "Beleján 16", "Con Sebastián Beirjú", "El Soch", "La Conquista".
+     Si no hay dirección identificable, devuelve null.
+   - "numero_expediente": El número de expediente o ficha que aparece al INICIO de la fila.
+     Elimina comas, puntos y espacios del número (ej: "11,485" → "11485", "13,493" → "13493", "17,535" → "17535").
+     Si no hay número visible, devuelve null.
+   - "datos_familia": Cualquier referencia a familia o núcleo familiar (ej: "fam. Chic", "Fam 23", "núcleo 5", "Fam. García"). Si no hay, devuelve null.
+   - "tachado": true si la fila está cruzada con una línea horizontal (tachón). Si no está tachada, devuelve false.
+
+3. REGLAS CLAVE DE INTERPRETACIÓN:
+   - El número al inicio de cada línea (ej: "11,485", "13,493") = NÚMERO DE EXPEDIENTE.
+   - El texto entre el expediente y el guión "—" = NOMBRE COMPLETO (primero apellidos, luego nombres).
+   - El texto después del guión "—" = DIRECCIÓN + FECHA DE NACIMIENTO.
+   - "FN:", "F/N:", "FN." antes de una fecha = prefijo de Fecha de Nacimiento.
+   - Una secuencia "DD-MM-AA" o "DD/MM/AA" o "DD.MM.AA" al final de la línea es casi siempre la fecha de nacimiento.
+   - Ignora encabezados de página, fechas de la hoja del cuaderno, tachones de texto que no sean pacientes y notas de margen.
+
+4. Devuelve la respuesta en formato JSON estricto con la siguiente estructura (sin texto adicional):
 {
   "titulo": "Registro de Cuaderno de Pacientes",
   "pacientes": [
     {
-      "nombres": "JUAN CARLOS",
-      "apellidos": "LÓPEZ PÉREZ",
-      "edad_texto": "28 años",
-      "fecha_nacimiento_estimada": "1998-01-01",
-      "sexo": "M",
+      "nombres": "CASILDA",
+      "apellidos": "GUILLEMA",
+      "edad_texto": "22-06-94",
+      "fecha_nacimiento_estimada": "1994-06-22",
+      "sexo": "F",
       "dpi": null,
       "direccion": "Chicamán",
-      "numero_expediente": null
+      "numero_expediente": "11485",
+      "datos_familia": null,
+      "tachado": false
     }
   ]
 }
