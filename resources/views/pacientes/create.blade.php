@@ -28,6 +28,13 @@
                 <h3 class="card-title text-primary"><i class="ti ti-user-plus me-2"></i> Formulario de Registro de Paciente</h3>
             </div>
             <div class="card-body">
+                <div class="alert alert-info py-2 px-3 mb-3 d-flex align-items-center gap-2" style="border-radius: 8px;">
+                    <i class="ti ti-info-circle fs-3 text-info"></i>
+                    <div class="small">
+                        <strong>Modo Flexible Habilitado:</strong> Puede ingresar pacientes con datos incompletos (sin fecha de nacimiento, sin apellido, sin DPI completo o sin familia asignada) para facilitar la transcripción de fichas y expedientes físicos.
+                    </div>
+                </div>
+
                 <form action="{{ route('pacientes.store') }}" method="POST" id="pacienteForm">
                     @csrf
 
@@ -35,16 +42,27 @@
 
                     <div class="row g-3 mb-3">
                         <div class="col-12">
-                            <label class="form-label required" for="id_family">Núcleo Familiar / Expediente Compartido</label>
-                            <select id="id_family" name="id_family" class="form-select" required>
-                                <option value="">-- Seleccione un núcleo familiar registrado --</option>
+                            <label class="form-label" for="id_family">
+                                Núcleo Familiar / Expediente Compartido 
+                                <span class="badge bg-light text-secondary ms-1">Opcional</span>
+                            </label>
+                            <select id="id_family" name="id_family" class="form-select">
+                                <option value="">-- Sin núcleo familiar asignado (Se creará/asignará expediente general S/F) --</option>
                                 @foreach($familias as $fam)
                                     <option value="{{ $fam->id_family }}" data-numero-familia="{{ $fam->numero_familia }}" {{ (old('id_family', $selectedFamilyId) == $fam->id_family) ? 'selected' : '' }}>
                                         No. Familia: {{ $fam->numero_familia }} — Cabeza: {{ $fam->apellido_cabeza }} ({{ $fam->comunidad->nombre ?? 'Sin comunidad' }})
                                     </option>
                                 @endforeach
                             </select>
-                            <span class="form-hint">¿No encuentra el núcleo familiar? <a href="{{ route('familias.create') }}" target="_blank">Registrar nueva familia</a></span>
+                            <span class="form-hint">Si no selecciona una familia existente, puede indicar un número nuevo o dejarlo vacío para asignar a expediente general.</span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="numero_familia">O Escriba No. de Familia / Expediente Nuevo <span class="badge bg-light text-secondary ms-1">Opcional</span></label>
+                            <input type="text" id="numero_familia" name="numero_familia" class="form-control" value="{{ old('numero_familia') }}" placeholder="Ej: 17569 (si es una familia nueva)">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="numero_expediente_fisico">No. Expediente Físico en Archivo <span class="badge bg-light text-secondary ms-1">Opcional</span></label>
+                            <input type="text" id="numero_expediente_fisico" name="numero_expediente_fisico" class="form-control" value="{{ old('numero_expediente_fisico') }}" placeholder="Ej: 17569 o S/N">
                         </div>
                     </div>
 
@@ -52,43 +70,43 @@
 
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label class="form-label required" for="nombres">Nombres</label>
-                            <input type="text" id="nombres" name="nombres" class="form-control" value="{{ old('nombres') }}" required placeholder="Ej: María Mercedes">
+                            <label class="form-label" for="nombres">Nombres <span class="badge bg-light text-secondary ms-1">Opcional</span></label>
+                            <input type="text" id="nombres" name="nombres" class="form-control" value="{{ old('nombres') }}" placeholder="Ej: María Mercedes (opcional)">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label required" for="apellidos">Apellidos</label>
-                            <input type="text" id="apellidos" name="apellidos" class="form-control" value="{{ old('apellidos') }}" required placeholder="Ej: Gómez Pérez">
+                            <label class="form-label" for="apellidos">Apellidos <span class="badge bg-light text-secondary ms-1">Opcional</span></label>
+                            <input type="text" id="apellidos" name="apellidos" class="form-control" value="{{ old('apellidos') }}" placeholder="Ej: Gómez Pérez (opcional)">
                         </div>
                     </div>
 
                     <div class="row g-3 mb-4">
                         <div class="col-md-4">
-                            <label class="form-label required" for="fecha_nacimiento">Fecha de Nacimiento</label>
-                            <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" class="form-control" value="{{ old('fecha_nacimiento') }}" required>
+                            <label class="form-label" for="fecha_nacimiento">Fecha de Nacimiento <span class="badge bg-light text-secondary ms-1">Opcional</span></label>
+                            <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" class="form-control" value="{{ old('fecha_nacimiento') }}">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label required" for="sexo">Sexo</label>
-                            <select id="sexo" name="sexo" class="form-select" required>
-                                <option value="">-- Seleccionar --</option>
+                            <label class="form-label" for="sexo">Sexo <span class="badge bg-light text-secondary ms-1">Opcional</span></label>
+                            <select id="sexo" name="sexo" class="form-select">
+                                <option value="">-- Sin especificar / Opcional --</option>
                                 <option value="M" {{ old('sexo') === 'M' ? 'selected' : '' }}>Masculino (M)</option>
                                 <option value="F" {{ old('sexo') === 'F' ? 'selected' : '' }}>Femenino (F)</option>
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label" for="dpi">DPI (Opcional - 13 dígitos)</label>
-                            <input type="text" id="dpi" name="dpi" class="form-control" value="{{ old('dpi') }}" inputmode="numeric" maxlength="17" placeholder="Ej: 1987654320101 (13 dígitos)">
+                            <label class="form-label" for="dpi">DPI / CUI <span class="badge bg-light text-secondary ms-1">Opcional</span></label>
+                            <input type="text" id="dpi" name="dpi" class="form-control" value="{{ old('dpi') }}" inputmode="numeric" maxlength="20" placeholder="Ej: 1987654320101 (completo o parcial)">
                             <span id="msg-dup-dpi" class="form-hint fw-bold"></span>
                         </div>
                     </div>
 
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <label class="form-label" for="telefono">Teléfono de Contacto (Opcional - 8 dígitos)</label>
-                            <input type="text" id="telefono" name="telefono" class="form-control" value="{{ old('telefono') }}" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="Ej: 55551234">
+                            <label class="form-label" for="telefono">Teléfono de Contacto <span class="badge bg-light text-secondary ms-1">Opcional</span></label>
+                            <input type="text" id="telefono" name="telefono" class="form-control" value="{{ old('telefono') }}" maxlength="20" placeholder="Ej: 55551234 (opcional)">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label" for="direccion">Dirección</label>
-                            <input type="text" id="direccion" name="direccion" class="form-control" value="{{ old('direccion') }}" maxlength="255" placeholder="Ej: Caserío El Centro, Sector 2">
+                            <label class="form-label" for="direccion">Dirección o Aldea <span class="badge bg-light text-secondary ms-1">Opcional</span></label>
+                            <input type="text" id="direccion" name="direccion" class="form-control" value="{{ old('direccion') }}" maxlength="255" placeholder="Ej: Caserío El Centro, Sector 2 (opcional)">
                         </div>
                     </div>
 
@@ -96,13 +114,13 @@
 
                     <div class="row g-3 mb-4">
                         <div class="col-md-4">
-                            <label class="form-label" for="numero_registro"># Ficha o Expediente</label>
+                            <label class="form-label" for="numero_registro"># Ficha o Expediente <span class="badge bg-light text-secondary ms-1">Opcional</span></label>
                             <input type="text" id="numero_registro" name="numero_registro" class="form-control" value="{{ old('numero_registro') }}" inputmode="numeric" pattern="[0-9]*" placeholder="Ej: 1024">
                             <span id="msg-dup-reg" class="form-hint fw-bold"></span>
                             <span class="form-hint text-muted">Número de ficha o expediente físico</span>
                         </div>
                         <div class="col-md-8">
-                            <label class="form-label" for="descripcion_registro">Descripción / Ubicación del Registro</label>
+                            <label class="form-label" for="descripcion_registro">Descripción / Ubicación del Registro <span class="badge bg-light text-secondary ms-1">Opcional</span></label>
                             <textarea id="descripcion_registro" name="descripcion_registro" class="form-control auto-expand-textarea" rows="1" maxlength="150" placeholder="Ej: Archivero 3, Cajón B, Folder amarillo">{{ old('descripcion_registro') }}</textarea>
                             <span class="form-hint">Máx. 150 caracteres — indica dónde se encuentra el expediente físico</span>
                         </div>
@@ -194,9 +212,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
             if (val.length !== 13) {
-                dpiInput.classList.add('is-invalid');
-                msgDpiEl.className = 'form-hint text-danger fw-bold';
-                msgDpiEl.textContent = `⚠ El DPI debe tener exactamente 13 dígitos (${val.length} de 13 ingresados).`;
+                dpiInput.classList.remove('is-invalid');
+                msgDpiEl.className = 'form-hint text-warning fw-semibold';
+                msgDpiEl.textContent = `ℹ DPI incompleto (${val.length} dígitos) - se guardará como parcial.`;
                 return;
             }
             verificarDpi(val);
@@ -243,15 +261,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (form) {
         form.addEventListener('submit', function (e) {
-            if (dpiInput) {
-                const dpiVal = dpiInput.value.replace(/\D/g, '').trim();
-                if (dpiVal.length > 0 && dpiVal.length !== 13) {
-                    e.preventDefault();
-                    alert(`El DPI ingresado está incompleto (${dpiVal.length} de 13 dígitos). Debe tener exactamente 13 dígitos numéricos o dejarse vacío.`);
-                    dpiInput.focus();
-                    return false;
-                }
-            }
+            // Nota: Se permite el envío de DPI incompleto en el modo de ingreso flexible
             if (dpiDuplicado) {
                 e.preventDefault();
                 alert('No se puede guardar: El DPI ya está registrado en el sistema.');

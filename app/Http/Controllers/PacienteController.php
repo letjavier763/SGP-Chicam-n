@@ -96,24 +96,46 @@ class PacienteController extends Controller
             $request->merge(['telefono' => $cleanTel !== '' ? $cleanTel : null]);
         }
 
-        $validated = $request->validate([
-            'nombres'                   => 'required|string|max:100',
-            'apellidos'                 => 'required|string|max:100',
-            'dpi'                       => 'nullable|string|digits:13',
-            'numero_expediente_fisico'  => 'nullable|string|max:50',
-            'numero_registro'           => 'nullable|integer',
-            'descripcion_registro'      => 'nullable|string|max:150',
-            'direccion'                 => 'nullable|string|max:255',
-            'fecha_nacimiento'          => 'required|date|before_or_equal:today',
-            'sexo'                      => 'required|in:M,F',
-            'telefono'                  => 'nullable|string|digits:8',
-            'id_family'                 => 'nullable|integer',
-            'numero_familia'            => 'nullable|string|max:50',
-            'id_comunidad'              => 'nullable',
-        ], [
-            'dpi.digits'      => 'El campo DPI debe contener exactamente 13 dígitos numéricos.',
-            'telefono.digits' => 'El teléfono de contacto debe tener 8 dígitos numéricos.',
-        ]);
+        $esDesdeVentanilla = ($request->input('desde_ventanilla') == '1');
+
+        if (!$esDesdeVentanilla) {
+            // En la opción de "Ingresar Paciente", se admiten datos incompletos
+            $validated = $request->validate([
+                'nombres'                   => 'nullable|string|max:100',
+                'apellidos'                 => 'nullable|string|max:100',
+                'dpi'                       => 'nullable|string|max:20',
+                'numero_expediente_fisico'  => 'nullable|string|max:50',
+                'numero_registro'           => 'nullable|integer',
+                'descripcion_registro'      => 'nullable|string|max:150',
+                'direccion'                 => 'nullable|string|max:255',
+                'fecha_nacimiento'          => 'nullable|date|before_or_equal:today',
+                'sexo'                      => 'nullable|in:M,F,I',
+                'telefono'                  => 'nullable|string|max:20',
+                'id_family'                 => 'nullable',
+                'numero_familia'            => 'nullable|string|max:50',
+                'id_comunidad'              => 'nullable',
+            ]);
+        } else {
+            // Desde ventanilla se mantiene validación completa
+            $validated = $request->validate([
+                'nombres'                   => 'required|string|max:100',
+                'apellidos'                 => 'required|string|max:100',
+                'dpi'                       => 'nullable|string|digits:13',
+                'numero_expediente_fisico'  => 'nullable|string|max:50',
+                'numero_registro'           => 'nullable|integer',
+                'descripcion_registro'      => 'nullable|string|max:150',
+                'direccion'                 => 'nullable|string|max:255',
+                'fecha_nacimiento'          => 'required|date|before_or_equal:today',
+                'sexo'                      => 'required|in:M,F',
+                'telefono'                  => 'nullable|string|digits:8',
+                'id_family'                 => 'nullable|integer',
+                'numero_familia'            => 'nullable|string|max:50',
+                'id_comunidad'              => 'nullable',
+            ], [
+                'dpi.digits'      => 'El campo DPI debe contener exactamente 13 dígitos numéricos.',
+                'telefono.digits' => 'El teléfono de contacto debe tener 8 dígitos numéricos.',
+            ]);
+        }
 
         // Resolver la comunidad si es nueva
         $comunidadId = $request->input('id_comunidad');
@@ -141,22 +163,17 @@ class PacienteController extends Controller
         // Resolver la familia: usar id_family directo, o buscar/crear por numero_familia
         $familia = null;
         if (!empty($validated['id_family'])) {
-            $familia = Familia::findOrFail($validated['id_family']);
+            $familia = Familia::find($validated['id_family']);
         } elseif (!empty($validated['numero_familia'])) {
             $familia = Familia::where('numero_familia', $validated['numero_familia'])->first();
             if (!$familia) {
-                // Si la familia no existe, la comunidad es obligatoria
-                if (empty($comunidadId)) {
-                    return back()->withInput()->withErrors([
-                        'id_comunidad' => 'La comunidad es obligatoria para registrar un nuevo núcleo familiar.'
-                    ]);
-                }
+                $apellidoCabeza = !empty($validated['apellidos']) ? $validated['apellidos'] : (!empty($validated['nombres']) ? $validated['nombres'] : 'Sin Familia Asignada');
+                $idCom = !empty($comunidadId) ? $comunidadId : (Comunidad::first()->id_comunidad ?? 1);
 
-                // Crear familia nueva con el número proporcionado
                 $familia = Familia::create([
                     'numero_familia'  => $validated['numero_familia'],
-                    'apellido_cabeza' => $validated['apellidos'],
-                    'id_comunidad'    => $comunidadId,
+                    'apellido_cabeza' => $apellidoCabeza,
+                    'id_comunidad'    => $idCom,
                     'activo'          => true,
                     'fecha_registro'  => now(),
                 ]);
@@ -168,12 +185,26 @@ class PacienteController extends Controller
             }
         }
 
+        // Si no se proporcionó familia en la opción "Ingresar Paciente", asignar a núcleo general
         if (!$familia) {
-            return back()->withInput()->withErrors(['numero_familia' => 'Debe indicar un número de familia válido.']);
+            if (!$esDesdeVentanilla) {
+                $comunidadDefault = Comunidad::first()->id_comunidad ?? 1;
+                $familia = Familia::firstOrCreate(
+                    ['numero_familia' => 'S/F'],
+                    [
+                        'apellido_cabeza' => 'Sin Familia Asignada',
+                        'id_comunidad'    => $comunidadDefault,
+                        'activo'          => true,
+                        'fecha_registro'  => now(),
+                    ]
+                );
+            } else {
+                return back()->withInput()->withErrors(['numero_familia' => 'Debe indicar un número de familia válido.']);
+            }
         }
 
         $expInput = $request->input('numero_expediente_fisico');
-        $expedienteNumero = !empty($expInput) ? $expInput : $familia->numero_familia;
+        $expedienteNumero = !empty($expInput) ? $expInput : ($familia ? $familia->numero_familia : 'S/N');
 
         // Verificación de duplicidad de DPI si fue ingresado
         if (!empty($validated['dpi'])) {
@@ -216,17 +247,23 @@ class PacienteController extends Controller
             }
         }
 
+        $nombres = !empty($validated['nombres']) ? trim($validated['nombres']) : null;
+        $apellidos = !empty($validated['apellidos']) ? trim($validated['apellidos']) : null;
+        if (empty($nombres) && empty($apellidos)) {
+            $nombres = 'Paciente No Identificado';
+        }
+
         $paciente = Paciente::create([
-            'id_family'                => $familia->id_family,
-            'nombres'                  => $validated['nombres'],
-            'apellidos'                => $validated['apellidos'],
+            'id_family'                => $familia ? $familia->id_family : null,
+            'nombres'                  => $nombres ?? '—',
+            'apellidos'                => $apellidos,
             'dpi'                      => $validated['dpi'] ?? null,
             'numero_expediente_fisico' => $expedienteNumero,
             'numero_registro'          => $validated['numero_registro'] ?? null,
             'descripcion_registro'     => $validated['descripcion_registro'] ?? null,
             'direccion'                => $validated['direccion'] ?? null,
-            'fecha_nacimiento'         => $validated['fecha_nacimiento'],
-            'sexo'                     => $validated['sexo'],
+            'fecha_nacimiento'         => !empty($validated['fecha_nacimiento']) ? $validated['fecha_nacimiento'] : null,
+            'sexo'                     => !empty($validated['sexo']) ? $validated['sexo'] : null,
             'telefono'                 => $validated['telefono'] ?? null,
             'activo'                   => true,
         ]);
@@ -298,26 +335,23 @@ class PacienteController extends Controller
         }
 
         $validated = $request->validate([
-            'id_family'                 => 'required|exists:familias,id_family',
-            'nombres'                   => 'required|string|max:100',
-            'apellidos'                 => 'required|string|max:100',
-            'dpi'                       => 'nullable|string|digits:13',
+            'id_family'                 => 'nullable|exists:familias,id_family',
+            'nombres'                   => 'nullable|string|max:100',
+            'apellidos'                 => 'nullable|string|max:100',
+            'dpi'                       => 'nullable|string|max:20',
             'numero_expediente_fisico'  => 'nullable|string|max:50',
             'numero_registro'           => 'nullable|integer',
             'descripcion_registro'      => 'nullable|string|max:150',
             'direccion'                 => 'nullable|string|max:255',
-            'fecha_nacimiento'          => 'required|date|before_or_equal:today',
-            'sexo'                      => 'required|in:M,F',
-            'telefono'                  => 'nullable|string|digits:8',
-        ], [
-            'dpi.digits'      => 'El campo DPI debe contener exactamente 13 dígitos numéricos.',
-            'telefono.digits' => 'El teléfono de contacto debe tener 8 dígitos numéricos.',
+            'fecha_nacimiento'          => 'nullable|date|before_or_equal:today',
+            'sexo'                      => 'nullable|in:M,F,I',
+            'telefono'                  => 'nullable|string|max:20',
         ]);
 
-        $familia = Familia::findOrFail($validated['id_family']);
+        $familia = !empty($validated['id_family']) ? Familia::find($validated['id_family']) : $paciente->familia;
         $expedienteNumero = !empty($validated['numero_expediente_fisico']) 
             ? $validated['numero_expediente_fisico'] 
-            : $familia->numero_familia;
+            : ($familia ? $familia->numero_familia : $paciente->numero_expediente_fisico);
 
         if (!empty($validated['dpi']) && $validated['dpi'] !== $paciente->dpi) {
             $dpiEnPaciente = Paciente::where('dpi', $validated['dpi'])->where('id_paciente', '!=', $id)->first();
@@ -360,17 +394,20 @@ class PacienteController extends Controller
             }
         }
 
+        $nombres = !empty($validated['nombres']) ? trim($validated['nombres']) : $paciente->nombres;
+        $apellidos = !empty($validated['apellidos']) ? trim($validated['apellidos']) : null;
+
         $paciente->update([
-            'id_family'                => $familia->id_family,
-            'nombres'                  => $validated['nombres'],
-            'apellidos'                => $validated['apellidos'],
+            'id_family'                => $familia ? $familia->id_family : $paciente->id_family,
+            'nombres'                  => $nombres,
+            'apellidos'                => $apellidos,
             'dpi'                      => $validated['dpi'] ?? null,
             'numero_expediente_fisico' => $expedienteNumero,
             'numero_registro'          => $validated['numero_registro'] ?? null,
             'descripcion_registro'     => $validated['descripcion_registro'] ?? null,
             'direccion'                => $validated['direccion'] ?? null,
-            'fecha_nacimiento'         => $validated['fecha_nacimiento'],
-            'sexo'                     => $validated['sexo'],
+            'fecha_nacimiento'         => !empty($validated['fecha_nacimiento']) ? $validated['fecha_nacimiento'] : null,
+            'sexo'                     => !empty($validated['sexo']) ? $validated['sexo'] : null,
             'telefono'                 => $validated['telefono'] ?? null,
         ]);
 
